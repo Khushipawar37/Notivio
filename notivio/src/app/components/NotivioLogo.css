@@ -1,0 +1,37 @@
+.drawing-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    flex-direction: column;
+  }
+  
+  .pencil {
+    width: 50px;
+    height: 50px;
+    animation: none;
+    transition: transform 1s ease;
+  }
+  
+  .pencil.animate {
+    animation: movePencil 3s ease-in-out forwards;
+  }
+  
+  @keyframes movePencil {
+    0% {
+      transform: translateX(0) translateY(0);
+    }
+    50% {
+      transform: translateX(200px) translateY(100px);
+    }
+    100% {
+      transform: translateX(400px) translateY(0);
+    }
+  }
+  
+  .drawn-text {
+    margin-top: 20px;
+    font-size: 1.5em;
+    color: #333;
+  }
+  

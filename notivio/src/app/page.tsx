@@ -1,7 +1,9 @@
-import Image from "next/image";
+import WritingAnimation from "./components/writingAnimation";
 
 export default function Home() {
   return (
-    <div className = "text-red-600 text-2xl text-center">WELCOME</div>
+    <main>
+    <WritingAnimation/>
+  </main>
   );
 }
