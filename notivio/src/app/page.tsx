@@ -1,9 +1,11 @@
-import WritingAnimation from "./components/writingAnimation";
+"use client"
+
+import HeroSection from "./components/Hero"
 
 export default function Home() {
   return (
-    <main>
-    <WritingAnimation/>
-  </main>
-  );
+    <main className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+      <HeroSection/>
+    </main>
+  )
 }
