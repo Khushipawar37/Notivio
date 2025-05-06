@@ -42,7 +42,7 @@ const NavItem = ({ href, icon, label, isActive, onClick, index, activeTab }: Nav
   return (
     <Link
       href={href}
-      className={`relative flex flex-col items-center justify-center w-[5.5rem] h-16 transition-colors duration-200 z-10`}
+      className={`relative flex flex-col items-center justify-center w-[6rem] h-16 transition-colors duration-200 z-10`}
       onClick={onClick}
     >
       {/* Only render the icon and label on the active indicator if this is the active tab */}
@@ -93,7 +93,7 @@ export default function Navbar() {
 
     // Calculate the position based on the index
     // Each nav item is 5.5rem (w-[5.5rem]) wide
-    const position = index * 88 + 44 - 32 // center of the item minus half the indicator width
+    const position = index * 96 + 48 - 32 // center of the item minus half the indicator width
     setIndicatorPosition(position)
   }
 
@@ -107,11 +107,11 @@ export default function Navbar() {
       <div ref={navRef} className="relative flex items-center bg-black rounded-full h-16 px-4 shadow-lg">
         {/* Animated indicator - positioned to create the bulging effect */}
         <motion.div
-          className="absolute w-16 h-16 bg-green-400 rounded-full z-0"
+          className="absolute w-16 h-16 bg-[#cfcfcd] rounded-full z-0"
           initial={{ x: indicatorPosition }}
           animate={{
             x: indicatorPosition,
-            y: -8, // Move it up significantly to create the pronounced "bulging out" effect
+            y: -10, // Move it up significantly to create the pronounced "bulging out" effect
           }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           style={{
