@@ -1,6 +1,7 @@
 "use client"
 
 import AboutSection from "./components/About"
+import ContactPage from "./components/Contact"
 import HeroSection from "./components/Hero"
 
 export default function Home() {
@@ -8,6 +9,7 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <HeroSection/>
       <AboutSection/>
+      <ContactPage/>
     </main>
   )
 }
