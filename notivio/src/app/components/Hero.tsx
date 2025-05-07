@@ -246,7 +246,7 @@ export default function HeroSection() {
   return (
     <motion.div
       ref={containerRef}
-      className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center px-4 py-[8rem] bg-gradient-to-b from-black via-gray-950 to-black"
+      className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center px-4 py-[10rem] bg-gradient-to-b from-black via-gray-950 to-black"
       style={{ opacity, scale, y }}
     >
       {/* Simple gradient background */}
@@ -260,11 +260,6 @@ export default function HeroSection() {
             transition={{ duration: 0.8 }}
             className="space-y-6"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-900 border border-gray-800 text-white text-sm">
-              <Sparkles className="w-4 h-4 text-[#c6ac8f]" />
-              <span>Revolutionizing note-taking with AI</span>
-            </div>
-
             <h1 className="text-5xl md:text-6xl font-bold text-white">
               Transform How You Learn with <TypingEffect text ="Notivio" className="text-[#c6ac8f]" />
             </h1>
