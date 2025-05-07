@@ -158,7 +158,6 @@ export default function Navbar() {
             </Link>
           </div>
         </div>
-
         {/* Contact Us button on the right */}
         <Link
           href="/contact"
