@@ -53,13 +53,13 @@ const NavItem = ({ href, icon, label, isActive, onClick, index, activeTab }: Nav
           animate={{ y: -14 }} // Move up slightly to sit on the bulge
           transition={{ duration: 0.2 }}
         >
-          <div className="text-black">{icon}</div>
-          <span className="text-xs mt-1 font-medium text-black">{label}</span>
+          <div className="text-[#cfcfcd]">{icon}</div>
+          <span className="text-xs mt-1 font-medium text-[#cfcfcd]">{label}</span>
         </motion.div>
       ) : (
         <>
-          <div className="text-gray-400">{icon}</div>
-          <span className="text-xs mt-1 font-medium text-gray-400">{label}</span>
+          <div className="text-black">{icon}</div>
+          <span className="text-xs mt-1 font-medium text-black">{label}</span>
         </>
       )}
     </Link>
@@ -104,10 +104,10 @@ export default function Navbar() {
 
   return (
     <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 sm:bottom-auto sm:top-8">
-      <div ref={navRef} className="relative flex items-center bg-black rounded-full h-16 px-4 shadow-lg">
+      <div ref={navRef} className="relative flex items-center bg-[#cfcfcd] rounded-full h-16 px-4 shadow-lg">
         {/* Animated indicator - positioned to create the bulging effect */}
         <motion.div
-          className="absolute w-16 h-16 bg-[#cfcfcd] rounded-full z-0"
+          className="absolute w-16 h-16 bg-black rounded-full z-0"
           initial={{ x: indicatorPosition }}
           animate={{
             x: indicatorPosition,
@@ -115,7 +115,7 @@ export default function Navbar() {
           }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           style={{
-            boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)",
+            boxShadow: "0px 3px 10px rgb(239, 232, 232)",
           }}
         />
 
@@ -137,7 +137,7 @@ export default function Navbar() {
         <div className="h-8 w-px bg-gray-700 mx-2"></div>
         <Link
           href="/login"
-          className="flex flex-col items-center justify-center w-[5.5rem] h-16 text-gray-400 hover:text-white transition-colors duration-200 z-10"
+          className="flex flex-col items-center justify-center w-[5.5rem] h-16 text-[black]hover:text-white transition-colors duration-200 z-10"
         >
           <User size={24} />
           <span className="text-xs mt-1 font-medium">Login</span>

@@ -4,39 +4,40 @@ import { useEffect, useRef, useState } from "react"
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
 import { Sparkles, BookOpen, Brain, Zap, FileText, Lightbulb, Pencil } from "lucide-react"
 
-// Interactive typing effect with optimized performance
-const TypingEffect = ({ text }: { text: string }) => {
+type TypingEffectProps = {
+  text: string
+  className?: string
+}
+
+const TypingEffect = ({ text, className }: TypingEffectProps) => {
   const [displayText, setDisplayText] = useState("")
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
-    const timeout = setTimeout(
-      () => {
-        if (!isDeleting && currentIndex < text.length) {
-          setDisplayText(text.substring(0, currentIndex + 1))
-          setCurrentIndex((prev) => prev + 1)
-        } else if (isDeleting && currentIndex > 0) {
-          setDisplayText(text.substring(0, currentIndex - 1))
-          setCurrentIndex((prev) => prev - 1)
-        } else if (currentIndex === text.length) {
-          setTimeout(() => setIsDeleting(true), 2000)
-        } else if (currentIndex === 0) {
-          setIsDeleting(false)
-        }
-      },
-      isDeleting ? 50 : 100,
-    )
+    const timeout = setTimeout(() => {
+      if (!isDeleting && currentIndex < text.length) {
+        setDisplayText(text.substring(0, currentIndex + 1))
+        setCurrentIndex((prev) => prev + 1)
+      } else if (isDeleting && currentIndex > 0) {
+        setDisplayText(text.substring(0, currentIndex - 1))
+        setCurrentIndex((prev) => prev - 1)
+      } else if (currentIndex === text.length) {
+        setTimeout(() => setIsDeleting(true), 2000)
+      } else if (currentIndex === 0) {
+        setIsDeleting(false)
+      }
+    }, isDeleting ? 50 : 100)
 
     return () => clearTimeout(timeout)
   }, [currentIndex, isDeleting, text])
 
   return (
-    <span className="relative">
+    <span className={`relative ${className}`}>
       {displayText}
       <span className="absolute right-[-4px] top-0 h-full w-[2px] bg-white animate-blink"></span>
     </span>
-  )
+  )  
 }
 
 // Feature card component
@@ -75,39 +76,12 @@ const FeatureCard = ({
 const EnhancedNotebook = () => {
   const notebookRef = useRef<HTMLDivElement>(null)
   const [isHovered, setIsHovered] = useState(false)
-  const [isWriting, setIsWriting] = useState(false)
   const [writtenText, setWrittenText] = useState("")
-  const fullText = "Notivio"
-
-  // Handle the writing animation when hovered
-  useEffect(() => {
-    if (isHovered && !isWriting) {
-      setIsWriting(true)
-      setWrittenText("")
-
-      let index = 0
-      const writeInterval = setInterval(() => {
-        if (index < fullText.length) {
-          setWrittenText((prev) => prev + fullText[index])
-          index++
-        } else {
-          clearInterval(writeInterval)
-        }
-      }, 150)
-
-      return () => clearInterval(writeInterval)
-    }
-
-    if (!isHovered) {
-      setIsWriting(false)
-      setWrittenText("")
-    }
-  }, [isHovered])
 
   return (
     <div
       ref={notebookRef}
-      className="relative w-full max-w-md transition-all duration-300 ease-out group"
+      className="relative w-full max-w-md mt-[4rem] transition-all duration-300 ease-out group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -154,38 +128,12 @@ const EnhancedNotebook = () => {
         </div>
       </div>
 
-      {/* Pencil animation */}
-      <AnimatePresence>
-        {isHovered && (
-          <motion.div
-            initial={{ opacity: 0, x: -50, y: 50, rotate: 0 }}
-            animate={{
-              opacity: 1,
-              x: isWriting ? [50, 60, 70, 80, 90, 100, 110, 120] : 50,
-              y: isWriting ? [100, 100, 100, 100, 100, 100, 100, 100] : 100,
-              rotate: isWriting ? [30, 32, 30, 28, 30, 32, 30, 28] : 30,
-            }}
-            exit={{ opacity: 0, x: -50, y: 50 }}
-            transition={{
-              duration: isWriting ? 1.2 : 0.3,
-              ease: "easeInOut",
-            }}
-            className="absolute bottom-0 right-1/2 z-20"
-          >
-            <div className="relative">
-              <Pencil className="w-10 h-10 text-yellow-600" />
-              <div className="absolute top-0 left-0 w-2 h-2 bg-gray-800 rounded-full"></div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Sticky notes */}
       <motion.div
         initial={{ opacity: 0, y: 20, rotate: -5 }}
         animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 20 }}
         transition={{ duration: 0.3 }}
-        className="absolute -left-20 top-10 bg-yellow-300 p-3 w-24 h-24 shadow-md transform -rotate-6"
+        className="absolute -left-20 top-10 bg-[#c6ac8f] p-3 w-24 h-24 shadow-md transform -rotate-6"
         style={{ zIndex: 5 }}
       >
         <div className="text-black text-xs font-medium">Remember to review quantum mechanics</div>
@@ -195,7 +143,7 @@ const EnhancedNotebook = () => {
         initial={{ opacity: 0, y: -20, rotate: 5 }}
         animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : -20 }}
         transition={{ duration: 0.3, delay: 0.1 }}
-        className="absolute -right-16 top-5 bg-blue-200 p-3 w-20 h-20 shadow-md transform rotate-3"
+        className="absolute -right-16 top-55 bg-[#c6ac8f] p-3 w-20 h-20 shadow-md transform rotate-3"
         style={{ zIndex: 5 }}
       >
         <div className="text-black text-xs font-medium">Quiz tomorrow!</div>
@@ -208,10 +156,6 @@ const EnhancedNotebook = () => {
         transition={{ duration: 0.3, delay: 0.2 }}
         className="absolute -right-36 bottom-20 bg-black border border-gray-800 rounded-lg p-3 text-white text-sm shadow-lg w-32"
       >
-        <div className="flex items-center gap-2">
-          <Brain className="w-4 h-4 text-blue-400" />
-          <span>AI-generated summaries</span>
-        </div>
       </motion.div>
 
       <motion.div
@@ -220,30 +164,9 @@ const EnhancedNotebook = () => {
         transition={{ duration: 0.3, delay: 0.3 }}
         className="absolute -bottom-16 left-10 bg-black border border-gray-800 rounded-lg p-3 text-white text-sm shadow-lg w-36"
       >
-        <div className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-green-400" />
-          <span>Export to PDF, Markdown</span>
-        </div>
       </motion.div>
 
-      {/* Highlighter marker */}
-      <motion.div
-        initial={{ opacity: 0, x: -50, rotate: -30 }}
-        animate={{
-          opacity: isHovered ? 1 : 0,
-          x: isHovered ? [-30, -20, -10, 0, 10, 20] : -50,
-          y: isHovered ? [30, 30, 30, 30, 30, 30] : 30,
-        }}
-        transition={{
-          duration: 1,
-          delay: 0.5,
-          repeat: isHovered ? 0 : 0,
-          repeatType: "reverse",
-        }}
-        className="absolute top-1/4 left-1/4 z-20"
-      >
-        <div className="w-12 h-3 bg-yellow-300 rounded-sm transform -rotate-12"></div>
-      </motion.div>
+
     </div>
   )
 }
@@ -251,8 +174,8 @@ const EnhancedNotebook = () => {
 // Optimized floating note component
 const FloatingNote = ({ index, text }: { index: number; text: string }) => {
   const positions = [
-    { top: "20%", left: "10%", delay: 0 },
-    { top: "30%", right: "15%", delay: 0.5 },
+    { top: "23%", left: "10%", delay: 0 },
+    { top: "30%", right: "5%", delay: 0.5 },
     { top: "60%", left: "5%", delay: 1 },
     { top: "70%", right: "10%", delay: 1.5 },
     { bottom: "10%", left: "20%", delay: 2 },
@@ -289,9 +212,7 @@ export default function HeroSection() {
 
   const floatingNotes = [
     "Automated notes from YouTube videos",
-    "Generate flashcards for better retention",
     "AI-powered summaries",
-    "Important questions highlighted",
     "Download notes as PDF",
   ]
 
@@ -325,7 +246,7 @@ export default function HeroSection() {
   return (
     <motion.div
       ref={containerRef}
-      className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center px-4 py-20 bg-gradient-to-b from-black via-gray-950 to-black"
+      className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center px-4 py-[8rem] bg-gradient-to-b from-black via-gray-950 to-black"
       style={{ opacity, scale, y }}
     >
       {/* Simple gradient background */}
@@ -340,12 +261,12 @@ export default function HeroSection() {
             className="space-y-6"
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-900 border border-gray-800 text-white text-sm">
-              <Sparkles className="w-4 h-4 text-yellow-400" />
+              <Sparkles className="w-4 h-4 text-[#c6ac8f]" />
               <span>Revolutionizing note-taking with AI</span>
             </div>
 
             <h1 className="text-5xl md:text-6xl font-bold text-white">
-              Transform How You Learn with <TypingEffect text="Notivio" />
+              Transform How You Learn with <TypingEffect text ="Notivio" className="text-[#c6ac8f]" />
             </h1>
 
             <p className="text-xl text-gray-300 max-w-lg">
@@ -383,7 +304,7 @@ export default function HeroSection() {
           </motion.div>
 
           {/* Static floating notes - reduced number for better performance */}
-          <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute inset-0 pointer-events-none z-50">
             {floatingNotes.slice(0, 3).map((text, i) => (
               <FloatingNote key={i} index={i} text={text} />
             ))}
