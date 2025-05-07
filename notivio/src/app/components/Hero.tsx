@@ -201,14 +201,6 @@ const FloatingNote = ({ index, text }: { index: number; text: string }) => {
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"],
-  })
-
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
-  const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.8])
-  const y = useTransform(scrollYProgress, [0, 0.5], [0, -100])
 
   const floatingNotes = [
     "Automated notes from YouTube videos",
@@ -247,7 +239,6 @@ export default function HeroSection() {
     <motion.div
       ref={containerRef}
       className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center px-4 py-[10rem] bg-gradient-to-b from-black via-gray-950 to-black"
-      style={{ opacity, scale, y }}
     >
       {/* Simple gradient background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black opacity-70"></div>
