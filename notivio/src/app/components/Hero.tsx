@@ -171,33 +171,6 @@ const EnhancedNotebook = () => {
   )
 }
 
-// Optimized floating note component
-const FloatingNote = ({ index, text }: { index: number; text: string }) => {
-  const positions = [
-    { top: "23%", left: "10%", delay: 0 },
-    { top: "30%", right: "5%", delay: 0.5 },
-    { top: "60%", left: "5%", delay: 1 },
-    { top: "70%", right: "10%", delay: 1.5 },
-    { bottom: "10%", left: "20%", delay: 2 },
-  ]
-
-  const pos = positions[index % positions.length]
-
-  return (
-    <motion.div
-      className="absolute bg-black border border-gray-800 rounded-lg shadow-lg p-3 w-40 flex items-center justify-center text-center text-sm text-white"
-      style={{
-        ...pos,
-        zIndex: 10 - index,
-      }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5, delay: pos.delay }}
-    >
-      {text}
-    </motion.div>
-  )
-}
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -289,12 +262,6 @@ export default function HeroSection() {
             <EnhancedNotebook />
           </motion.div>
 
-          {/* Static floating notes - reduced number for better performance */}
-          <div className="absolute inset-0 pointer-events-none z-50">
-            {floatingNotes.slice(0, 3).map((text, i) => (
-              <FloatingNote key={i} index={i} text={text} />
-            ))}
-          </div>
         </div>
       </div>
 
