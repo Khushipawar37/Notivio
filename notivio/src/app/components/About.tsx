@@ -182,16 +182,27 @@ const FeatureCarousel = () => {
         </div>
       </div>
 
-      {/* Navigation Controls */}
-      <div className="absolute bottom-0 left-0 right-0 flex justify-between items-center px-4 py-6 z-20">
+      {/* Navigation Arrows - Now positioned beside the boxes */}
+      <div className="absolute top-1/2 left-0 right-0 flex justify-between items-center px-4 z-20 -translate-y-1/2 pointer-events-none">
         <button
           onClick={prevSlide}
-          className="p-3 rounded-full bg-black border border-gray-800 text-white hover:border-[#c6ac8f]/50 transition-colors"
+          className="p-3 rounded-full bg-black/80 border border-gray-800 text-white hover:border-[#c6ac8f]/50 transition-colors shadow-lg pointer-events-auto"
           aria-label="Previous feature"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
+        <button
+          onClick={nextSlide}
+          className="p-3 rounded-full bg-black/80 border border-gray-800 text-white hover:border-[#c6ac8f]/50 transition-colors shadow-lg pointer-events-auto"
+          aria-label="Next feature"
+        >
+          <ArrowRight className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Navigation Dots - Remain at the bottom */}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-center items-center py-6 z-20">
         <div className="flex space-x-2">
           {features.map((_, index) => (
             <button
@@ -204,14 +215,6 @@ const FeatureCarousel = () => {
             />
           ))}
         </div>
-
-        <button
-          onClick={nextSlide}
-          className="p-3 rounded-full bg-black border border-gray-800 text-white hover:border-[#c6ac8f]/50 transition-colors"
-          aria-label="Next feature"
-        >
-          <ArrowRight className="w-5 h-5" />
-        </button>
       </div>
     </div>
   )
@@ -306,7 +309,7 @@ const InteractiveWorkflow = () => {
       initial={{ opacity: 0 }}
       animate={isInView ? { opacity: 1 } : { opacity: 0 }}
       transition={{ duration: 0.6 }}
-      className="relative w-full"
+      className="relative w-full h-[400px]" // Fixed height to prevent content shifting
     >
       <div className="relative z-10">
         <div className="flex flex-col items-center mb-10">
@@ -401,12 +404,24 @@ export default function AboutSection() {
           className="text-center mb-20"
         >
           <h2 className="text-6xl md:text-7xl font-bold text-white mb-6">
-            About <TypingEffect text="Notivio" className="text-[#c6ac8f]" />
+            About <span className="text-[#c6ac8f]">Notivio</span>
           </h2>
-          <p className="text-xl text-gray-300 max-w-4xl mx-auto mb-32">
-            Notivio is an AI-powered note-taking platform that transforms video content into structured, editable notes
-            and study materials, helping you learn more effectively.
-          </p>
+          <div className="max-w-4xl mx-auto mb-32">
+            <p className="text-xl text-gray-300 mb-4">
+              Notivio is an AI-powered note-taking platform that transforms video content into structured, editable
+              notes and study materials, helping you learn more effectively.
+            </p>
+            <p className="text-lg text-gray-400 mb-4">
+              Whether you're a student trying to keep up with lectures, a professional developing new skills, or an
+              educator creating learning materials, Notivio streamlines your workflow and enhances your learning
+              experience.
+            </p>
+            <div className="flex justify-center mt-8">
+              <div className="h-0.5 w-16 bg-[#c6ac8f] mx-2 rounded-full"></div>
+              <div className="h-0.5 w-32 bg-[#c6ac8f] mx-2 rounded-full"></div>
+              <div className="h-0.5 w-16 bg-[#c6ac8f] mx-2 rounded-full"></div>
+            </div>
+          </div>
         </motion.div>
 
         {/* Features Carousel - Now placed BEFORE How Notivio Works */}
