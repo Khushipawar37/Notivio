@@ -242,7 +242,6 @@ export default function HeroSection() {
           </motion.div>
         </div>
       </div>
-
       {/* Simple glow effect */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-1/3 bg-[#c6ac8f]/10 blur-[100px] rounded-full"></div>
     </motion.div>
