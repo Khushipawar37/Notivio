@@ -118,7 +118,7 @@ export default function Navbar() {
 
         {/* Center Navigation */}
         <div className="mx-auto">
-          <div ref={navRef} className="relative flex items-center bg-[#cfcfcd] rounded-full h-16 px-4 shadow-lg">
+          <div ref={navRef} className="relative flex items-center bg-[#c6ac8f] rounded-full h-16 px-4 shadow-lg">
             {/* Animated indicator - positioned to create the bulging effect */}
             <motion.div
               className="absolute w-16 h-16 bg-black rounded-full z-0"
@@ -128,9 +128,6 @@ export default function Navbar() {
                 y: -10, // Move it up significantly to create the pronounced "bulging out" effect
               }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              style={{
-                boxShadow: "0px 3px 10px rgb(239, 232, 232)",
-              }}
             />
 
             {/* Nav items */}
