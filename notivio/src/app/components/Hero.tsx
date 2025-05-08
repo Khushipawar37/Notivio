@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion"
-import { Sparkles, BookOpen, Brain, Zap, FileText, Lightbulb, Pencil } from "lucide-react"
+import { motion } from "framer-motion"
+import { BookOpen, Brain, Zap, Lightbulb } from "lucide-react"
 
 type TypingEffectProps = {
   text: string
@@ -15,19 +15,22 @@ const TypingEffect = ({ text, className }: TypingEffectProps) => {
   const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (!isDeleting && currentIndex < text.length) {
-        setDisplayText(text.substring(0, currentIndex + 1))
-        setCurrentIndex((prev) => prev + 1)
-      } else if (isDeleting && currentIndex > 0) {
-        setDisplayText(text.substring(0, currentIndex - 1))
-        setCurrentIndex((prev) => prev - 1)
-      } else if (currentIndex === text.length) {
-        setTimeout(() => setIsDeleting(true), 2000)
-      } else if (currentIndex === 0) {
-        setIsDeleting(false)
-      }
-    }, isDeleting ? 50 : 100)
+    const timeout = setTimeout(
+      () => {
+        if (!isDeleting && currentIndex < text.length) {
+          setDisplayText(text.substring(0, currentIndex + 1))
+          setCurrentIndex((prev) => prev + 1)
+        } else if (isDeleting && currentIndex > 0) {
+          setDisplayText(text.substring(0, currentIndex - 1))
+          setCurrentIndex((prev) => prev - 1)
+        } else if (currentIndex === text.length) {
+          setTimeout(() => setIsDeleting(true), 2000)
+        } else if (currentIndex === 0) {
+          setIsDeleting(false)
+        }
+      },
+      isDeleting ? 50 : 100,
+    )
 
     return () => clearTimeout(timeout)
   }, [currentIndex, isDeleting, text])
@@ -35,9 +38,9 @@ const TypingEffect = ({ text, className }: TypingEffectProps) => {
   return (
     <span className={`relative ${className}`}>
       {displayText}
-      <span className="absolute right-[-4px] top-0 h-full w-[2px] bg-white animate-blink"></span>
+      <span className="absolute right-[-4px] top-0 h-full w-[2px] bg-[#8a7559] animate-blink"></span>
     </span>
-  )  
+  )
 }
 
 // Feature card component
@@ -57,15 +60,15 @@ const FeatureCard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay }}
-      className="bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-700 transition-all duration-300 group"
+      className="bg-white border border-[#c6ac8f]/30 rounded-xl p-4 hover:border-[#c6ac8f] transition-all duration-300 group shadow-sm"
     >
       <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-black border border-gray-800 text-white">
+        <div className="p-2 rounded-lg bg-[#c6ac8f]/20 border border-[#c6ac8f]/30 text-[#8a7559]">
           <Icon className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-white font-medium text-lg">{title}</h3>
-          <p className="text-gray-400 text-sm mt-1 group-hover:text-gray-300 transition-colors">{description}</p>
+          <h3 className="text-black font-medium text-lg">{title}</h3>
+          <p className="text-gray-600 text-sm mt-1 group-hover:text-gray-700 transition-colors">{description}</p>
         </div>
       </div>
     </motion.div>
@@ -88,13 +91,13 @@ const EnhancedNotebook = () => {
       {/* Notebook container with enhanced hover effect */}
       <div className="relative h-80 transform transition-all duration-500 ease-out group-hover:translate-y-[-10px] group-hover:rotate-1">
         {/* Notebook cover */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black rounded-lg shadow-lg border border-gray-800 transition-all duration-300 group-hover:shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3)]">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#c6ac8f] to-[#d8c0a5] rounded-lg shadow-lg border border-[#c6ac8f]/50 transition-all duration-300 group-hover:shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)]">
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-white text-2xl font-bold opacity-30">Notivio</div>
+            <div className="text-black text-2xl font-bold opacity-30">Notivio</div>
           </div>
 
           {/* Notebook binding */}
-          <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-gray-800 to-gray-900 rounded-l-lg"></div>
+          <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-[#b39a7d] to-[#c6ac8f] rounded-l-lg"></div>
 
           {/* Notebook pages */}
           <div className="absolute top-2 right-2 bottom-2 left-8 bg-gray-100 rounded-r-lg shadow-inner overflow-hidden">
@@ -148,38 +151,14 @@ const EnhancedNotebook = () => {
       >
         <div className="text-black text-xs font-medium">Quiz tomorrow!</div>
       </motion.div>
-
-      {/* Feature highlights */}
-      <motion.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : 20 }}
-        transition={{ duration: 0.3, delay: 0.2 }}
-        className="absolute -right-36 bottom-20 bg-black border border-gray-800 rounded-lg p-3 text-white text-sm shadow-lg w-32"
-      >
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 20 }}
-        transition={{ duration: 0.3, delay: 0.3 }}
-        className="absolute -bottom-16 left-10 bg-black border border-gray-800 rounded-lg p-3 text-white text-sm shadow-lg w-36"
-      >
-      </motion.div>
-
-
     </div>
   )
 }
 
-
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const floatingNotes = [
-    "Automated notes from YouTube videos",
-    "AI-powered summaries",
-    "Download notes as PDF",
-  ]
+  const floatingNotes = ["Automated notes from YouTube videos", "AI-powered summaries", "Download notes as PDF"]
 
   const features = [
     {
@@ -211,10 +190,10 @@ export default function HeroSection() {
   return (
     <motion.div
       ref={containerRef}
-      className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center px-4 py-[10rem] bg-gradient-to-b from-black via-gray-950 to-black"
+      className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center px-4 py-[10rem] bg-gradient-to-b from-[#f5f0e8] via-[#f5f0e8] to-[#f5f0e8]"
     >
       {/* Simple gradient background */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black opacity-70"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#f5f0e8] via-[#f5f0e8] to-[#f5f0e8] opacity-70"></div>
 
       <div className="container mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
         <div className="space-y-8">
@@ -224,11 +203,11 @@ export default function HeroSection() {
             transition={{ duration: 0.8 }}
             className="space-y-6"
           >
-            <h1 className="text-5xl md:text-6xl font-bold text-white">
-              Transform How You Learn with <TypingEffect text ="Notivio" className="text-[#c6ac8f]" />
+            <h1 className="text-5xl md:text-6xl font-bold text-black">
+              Transform How You Learn with <TypingEffect text="Notivio" className="text-[#8a7559]" />
             </h1>
 
-            <p className="text-xl text-gray-300 max-w-lg">
+            <p className="text-xl text-gray-700 max-w-lg">
               AI-powered note-taking that automatically generates structured notes, flashcards, and study materials from
               any video content.
             </p>
@@ -261,12 +240,11 @@ export default function HeroSection() {
           >
             <EnhancedNotebook />
           </motion.div>
-
         </div>
       </div>
 
       {/* Simple glow effect */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-1/3 bg-blue-900/20 blur-[100px] rounded-full"></div>
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-1/3 bg-[#c6ac8f]/10 blur-[100px] rounded-full"></div>
     </motion.div>
   )
 }

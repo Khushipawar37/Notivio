@@ -70,6 +70,7 @@ export default function ContactPage() {
 
   return (
     <section className="py-24 bg-[#f5f0e8]">
+      <div className ="text-6xl text-center mb-18 font-bold">We’re Just One <span className="text-[#8a7559]">Message</span> Away</div>
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -90,7 +91,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h4 className="font-medium text-black">Our Location</h4>
-                      <p className="text-black/70 mt-1">123 Learning Street, Education City</p>
+                      <p className="text-black/70 mt-1">India</p>
                     </div>
                   </div>
 
@@ -110,7 +111,7 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h4 className="font-medium text-black">Phone Number</h4>
-                      <p className="text-black/70 mt-1">+1 (234) 567-8901</p>
+                      <p className="text-black/70 mt-1">+91 9355765466</p>
                     </div>
                   </div>
                 </div>

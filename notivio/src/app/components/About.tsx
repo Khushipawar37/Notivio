@@ -29,7 +29,7 @@ const FeatureCarousel = () => {
       description:
         "Transform any YouTube video into comprehensive, structured notes with a single click. Save hours of manual note-taking.",
       color: "#c6ac8f",
-      bgGradient: "from-purple-900/30 to-purple-900/5",
+      bgGradient: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
     {
       icon: Pencil,
@@ -37,7 +37,7 @@ const FeatureCarousel = () => {
       description:
         "Customize and edit your generated notes with our intuitive editor. Add your own insights and annotations.",
       color: "#c6ac8f",
-      bgGradient: "from-blue-900/30 to-blue-900/5",
+      bgGradient: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
     {
       icon: CheckCircle,
@@ -45,7 +45,7 @@ const FeatureCarousel = () => {
       description:
         "Our AI automatically scans notes and corrects any inaccurate information, ensuring your study material is reliable.",
       color: "#c6ac8f",
-      bgGradient: "from-green-900/30 to-green-900/5",
+      bgGradient: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
     {
       icon: Layers,
@@ -53,7 +53,7 @@ const FeatureCarousel = () => {
       description:
         "Notes are automatically grouped under specific headings and topics for easier navigation and comprehension.",
       color: "#c6ac8f",
-      bgGradient: "from-amber-900/30 to-amber-900/5",
+      bgGradient: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
     {
       icon: Brain,
@@ -61,7 +61,7 @@ const FeatureCarousel = () => {
       description:
         "Create memorable mnemonics to help retain complex information and key concepts with our AI assistant.",
       color: "#c6ac8f",
-      bgGradient: "from-pink-900/30 to-pink-900/5",
+      bgGradient: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
     {
       icon: Zap,
@@ -69,7 +69,7 @@ const FeatureCarousel = () => {
       description:
         "Generate flashcards from your notes for effective revision and quick knowledge testing before exams.",
       color: "#c6ac8f",
-      bgGradient: "from-indigo-900/30 to-indigo-900/5",
+      bgGradient: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
   ]
 
@@ -143,8 +143,8 @@ const FeatureCarousel = () => {
                 transition={{ duration: 0.6, ease: "easeOut" }}
               >
                 <div
-                  className={`bg-gray-900 border border-gray-800 rounded-xl p-8 shadow-xl transition-all duration-300 ${
-                    index === activeIndex ? "border-[#c6ac8f]/50" : ""
+                  className={`bg-black border border-gray-200 rounded-xl p-8 shadow-xl transition-all duration-300 ${
+                    index === activeIndex ? "border-[#c6ac8f]" : ""
                   }`}
                 >
                   <div
@@ -153,22 +153,22 @@ const FeatureCarousel = () => {
 
                   <div className="relative z-10">
                     <div className="flex items-center gap-4 mb-6">
-                      <div className="p-3 rounded-lg bg-black border border-gray-800 text-[#c6ac8f]">
+                      <div className="p-3 rounded-lg bg-[#c6ac8f] border border-[#c6ac8f]/30 text-[#8a7559]">
                         <Icon className="w-8 h-8" />
                       </div>
                       <h3 className="text-white font-semibold text-2xl">{feature.title}</h3>
                     </div>
 
-                    <p className="text-gray-300 text-lg">{feature.description}</p>
+                    <p className="text-gray-200 text-lg">{feature.description}</p>
 
                     {index === activeIndex && (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2, duration: 0.3 }}
-                        className="mt-6 pt-4 border-t border-gray-800"
+                        className="mt-6 pt-4 border-t border-gray-200"
                       >
-                        <div className="flex items-center text-[#c6ac8f] font-medium">
+                        <div className="flex items-center text-[#8a7559] font-medium">
                           <span>Learn more</span>
                           <ArrowRight className="ml-2 w-5 h-5" />
                         </div>
@@ -186,7 +186,7 @@ const FeatureCarousel = () => {
       <div className="absolute top-1/2 left-0 right-0 flex justify-between items-center px-4 z-20 -translate-y-1/2 pointer-events-none">
         <button
           onClick={prevSlide}
-          className="p-3 rounded-full bg-black/80 border border-gray-800 text-white hover:border-[#c6ac8f]/50 transition-colors shadow-lg pointer-events-auto"
+          className="p-3 rounded-full bg-white/90 border border-[#c6ac8f]/30 text-[#8a7559] hover:border-[#c6ac8f] transition-colors shadow-lg pointer-events-auto"
           aria-label="Previous feature"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -194,7 +194,7 @@ const FeatureCarousel = () => {
 
         <button
           onClick={nextSlide}
-          className="p-3 rounded-full bg-black/80 border border-gray-800 text-white hover:border-[#c6ac8f]/50 transition-colors shadow-lg pointer-events-auto"
+          className="p-3 rounded-full bg-white/90 border border-[#c6ac8f]/30 text-[#8a7559] hover:border-[#c6ac8f] transition-colors shadow-lg pointer-events-auto"
           aria-label="Next feature"
         >
           <ArrowRight className="w-5 h-5" />
@@ -209,7 +209,7 @@ const FeatureCarousel = () => {
               key={index}
               onClick={() => goToSlide(index)}
               className={`w-3 h-3 rounded-full transition-colors ${
-                index === activeIndex ? "bg-[#c6ac8f]" : "bg-gray-700"
+                index === activeIndex ? "bg-[#c6ac8f]" : "bg-gray-300"
               }`}
               aria-label={`Go to feature ${index + 1}`}
             />
@@ -266,31 +266,31 @@ const InteractiveWorkflow = () => {
       title: "Input",
       description: "Paste any YouTube URL or upload your own video",
       icon: Youtube,
-      color: "from-purple-500/20 to-purple-900/5",
+      color: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
     {
       title: "Process",
       description: "AI analyzes content, extracts key information, and organizes it",
       icon: Brain,
-      color: "from-blue-500/20 to-blue-900/5",
+      color: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
     {
       title: "Structure",
       description: "Content is organized into topics, subtopics, and key points",
       icon: Layers,
-      color: "from-green-500/20 to-green-900/5",
+      color: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
     {
       title: "Enhance",
       description: "Generate flashcards, summaries, and study materials",
       icon: Sparkles,
-      color: "from-amber-500/20 to-amber-900/5",
+      color: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
     {
       title: "Study",
       description: "Use the generated materials to learn effectively",
       icon: BookOpen,
-      color: "from-red-500/20 to-red-900/5",
+      color: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
   ]
 
@@ -313,13 +313,13 @@ const InteractiveWorkflow = () => {
     >
       <div className="relative z-10">
         <div className="flex flex-col items-center mb-10">
-          <h3 className="text-2xl font-bold text-white mb-2">How Notivio Works</h3>
+          <h3 className="text-2xl font-bold text-black mb-2">How Notivio Works</h3>
           <div className="h-1 w-20 bg-[#c6ac8f]"></div>
         </div>
 
         <div className="relative">
           {/* Progress bar */}
-          <div className="absolute top-12 left-0 right-0 h-1 bg-gray-800 z-0">
+          <div className="absolute top-12 left-0 right-0 h-1 bg-gray-200 z-0">
             <motion.div
               className="h-full bg-[#c6ac8f]"
               initial={{ width: "0%" }}
@@ -336,7 +336,7 @@ const InteractiveWorkflow = () => {
                 <div key={index} className="flex flex-col items-center">
                   <motion.button
                     onClick={() => setActiveStep(index)}
-                    className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 ${index <= activeStep ? "bg-black" : "bg-gray-900"} border-2 ${index === activeStep ? "border-[#c6ac8f]" : index < activeStep ? "border-gray-700" : "border-gray-800"}`}
+                    className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 ${index <= activeStep ? "bg-black" : "bg-gray-100"} border-2 ${index === activeStep ? "border-[#c6ac8f]" : index < activeStep ? "border-[#c6ac8f]/50" : "border-gray-200"}`}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -346,17 +346,17 @@ const InteractiveWorkflow = () => {
                     ></div>
 
                     <Icon
-                      className={`relative z-10 w-8 h-8 ${index <= activeStep ? "text-[#c6ac8f]" : "text-gray-600"}`}
+                      className={`relative z-10 w-8 h-8 ${index <= activeStep ? "text-white" : "text-gray-400"}`}
                     />
 
                     {/* Step number */}
-                    <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-black border border-gray-800 flex items-center justify-center text-xs font-medium text-white">
+                    <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border border-[#c6ac8f]/30 flex items-center justify-center text-xs font-medium text-[#8a7559]">
                       {index + 1}
                     </div>
                   </motion.button>
 
                   <div className="mt-4 text-center">
-                    <h4 className={`font-medium ${index <= activeStep ? "text-white" : "text-gray-500"}`}>
+                    <h4 className={`font-medium ${index <= activeStep ? "text-black" : "text-gray-400"}`}>
                       {step.title}
                     </h4>
                     <AnimatePresence>
@@ -366,7 +366,7 @@ const InteractiveWorkflow = () => {
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="text-sm text-gray-400 mt-2"
+                          className="text-sm text-gray-600 mt-2"
                         >
                           {step.description}
                         </motion.p>
@@ -389,10 +389,10 @@ export default function AboutSection() {
   const isHeaderInView = useInView(headerRef, { once: true, amount: 0.3 })
 
   return (
-    <section className="relative w-full overflow-hidden bg-black py-24">
+    <section className="relative w-full overflow-hidden bg-[#f5f0e8] py-24">
       {/* Background elements */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-900 via-black to-black opacity-70"></div>
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-1/3 bg-blue-900/10 blur-[100px] rounded-full"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#f5f0e8] via-[#f5f0e8] to-[#f5f0e8] opacity-70"></div>
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-1/3 bg-[#c6ac8f]/10 blur-[100px] rounded-full"></div>
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
@@ -403,15 +403,15 @@ export default function AboutSection() {
           transition={{ duration: 0.8 }}
           className="text-center mb-20"
         >
-          <h2 className="text-6xl md:text-7xl font-bold text-white mb-6">
-            About <span className="text-[#c6ac8f]">Notivio</span>
+          <h2 className="text-6xl md:text-7xl font-bold text-black mb-6">
+            About <span className="text-[#8a7559]">Notivio</span>
           </h2>
           <div className="max-w-4xl mx-auto mb-32">
-            <p className="text-xl text-gray-300 mb-4">
+            <p className="text-xl text-gray-700 mb-4">
               Notivio is an AI-powered note-taking platform that transforms video content into structured, editable
               notes and study materials, helping you learn more effectively.
             </p>
-            <p className="text-lg text-gray-400 mb-4">
+            <p className="text-lg text-gray-600 mb-4">
               Whether you're a student trying to keep up with lectures, a professional developing new skills, or an
               educator creating learning materials, Notivio streamlines your workflow and enhances your learning
               experience.
@@ -431,7 +431,7 @@ export default function AboutSection() {
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-4xl font-bold text-white text-center "
+            className="text-4xl font-bold text-black text-center"
           >
             Powerful Features
           </motion.h3>
@@ -450,11 +450,11 @@ export default function AboutSection() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="relative bg-gradient-to-br from-gray-900 to-black border border-gray-800 rounded-2xl p-10 overflow-hidden"
+          className="relative bg-[#c6ac8f] border border-[#c6ac8f]/20 rounded-2xl p-10 overflow-hidden"
         >
           <div className="relative z-10 text-center">
-            <h3 className="text-3xl font-bold text-white mb-4">Ready to Transform Your Learning?</h3>
-            <p className="text-gray-300 max-w-2xl mx-auto mb-8">
+            <h3 className="text-5xl font-bold text-black mb-4">Ready to Transform Your Learning?</h3>
+            <p className="text-gray-700 max-w-2xl mx-auto text-xl mb-8">
               Join thousands of students and educators who are already using Notivio to enhance their learning
               experience.
             </p>
@@ -462,7 +462,7 @@ export default function AboutSection() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-3 bg-[#c6ac8f] text-black font-medium rounded-lg hover:bg-[#d8c0a5] transition-colors"
+              className="px-8 py-3 bg-black text-white font-medium rounded-lg transition-colors"
             >
               Get Started Free
             </motion.button>
