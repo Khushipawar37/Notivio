@@ -31,7 +31,6 @@ const TypingEffect = ({ text, className }: TypingEffectProps) => {
       },
       isDeleting ? 50 : 100,
     )
-
     return () => clearTimeout(timeout)
   }, [currentIndex, isDeleting, text])
 
