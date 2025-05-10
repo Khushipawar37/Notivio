@@ -9,16 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.2.2",
+    "@radix-ui/react-tabs": "^1.1.11",
     "@react-three/drei": "^10.0.7",
     "@react-three/fiber": "^9.1.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "framer-motion": "^12.9.7",
     "gsap": "^3.13.0",
     "lucide-react": "^0.507.0",
     "next": "^15.3.2",
     "nodemailer": "^7.0.3",
+    "pdfkit": "^0.17.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "three": "^0.176.0"
+    "tailwind-merge": "^3.2.0",
+    "three": "^0.176.0",
+    "youtube-transcript": "^1.2.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
