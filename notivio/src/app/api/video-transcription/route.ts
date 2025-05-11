@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     // Get video metadata
     const videoInfoResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${process.env.YOUTUBE_API_KEY || "YOUR_YOUTUBE_API_KEY"}`,
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${process.env.YOUTUBE_API_KEY || "AIzaSyARJ0FnnBPeLo950We6CZF_hMVCRL_sg_E"}`,
     )
 
     if (!videoInfoResponse.ok) {
