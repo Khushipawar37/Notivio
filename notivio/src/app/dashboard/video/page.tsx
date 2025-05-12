@@ -32,7 +32,6 @@ type NoteSection = {
   content: string[]
   subsections?: { title: string; content: string[] }[]
 }
-
 type Notes = {
   title: string
   transcript: string
