@@ -13,11 +13,11 @@ import { Label } from "../../components/ui/label"
 import { Separator } from "../../components/ui/separator"
 import { Alert, AlertDescription } from "../../components/ui/alert"
 import {
-  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
   FacebookAuthProvider,
-  sendPasswordResetEmail,
+  updateProfile,
   onAuthStateChanged,
 } from "firebase/auth"
 import { initializeApp, getApps, getApp } from "firebase/app"
@@ -38,15 +38,16 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
 const auth = getAuth(app)
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [formData, setFormData] = useState({
+    fullName: "",
     email: "",
     password: "",
+    phoneNumber: "",
   })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [forgotPassword, setForgotPassword] = useState(false)
   const router = useRouter()
 
   // Check if user is already logged in
@@ -77,6 +78,21 @@ export default function LoginPage() {
       return false
     }
 
+    // Phone number validation (if provided)
+    if (formData.phoneNumber) {
+      const phoneRegex = /^\d{10}$/
+      if (!phoneRegex.test(formData.phoneNumber)) {
+        setError("Phone number must be 10 digits")
+        return false
+      }
+    }
+
+    // Full name validation
+    if (!formData.fullName.trim()) {
+      setError("Please enter your full name")
+      return false
+    }
+
     return true
   }
 
@@ -94,22 +110,20 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      if (forgotPassword) {
-        await sendPasswordResetEmail(auth, formData.email)
-        setError("Password reset email sent! Check your inbox.")
-        setForgotPassword(false)
-        setLoading(false)
-        return
-      }
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password)
 
-      await signInWithEmailAndPassword(auth, formData.email, formData.password)
+      // Update profile with full name
+      await updateProfile(userCredential.user, {
+        displayName: formData.fullName,
+      })
+
       router.push("/dashboard")
     } catch (err: any) {
       console.error(err)
 
       // Handle specific Firebase errors with user-friendly messages
-      if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
-        setError("Invalid email or password")
+      if (err.code === "auth/email-already-in-use") {
+        setError("Email is already registered")
       } else if (err.code === "auth/network-request-failed") {
         setError("Network error. Please check your connection")
       } else {
@@ -156,75 +170,6 @@ export default function LoginPage() {
     setShowPassword(!showPassword)
   }
 
-  if (forgotPassword) {
-    return (
-      <main className="min-h-screen flex">
-        {/* Left side - Illustration */}
-        <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-[#c6ac8f] to-[#f5f0e8] p-8 flex-col justify-between relative overflow-hidden">
-          <div className="z-10">
-            <h2 className="text-3xl font-bold text-[#8a7559]">Notivio</h2>
-            <p className="text-[#8a7559]/80 mt-2 max-w-md">Find 3d Objects, Mockups and Illustrations here</p>
-          </div>
-
-          <div className="relative z-10 flex-1 flex items-center justify-center">
-            <Image
-              src="/laptop-illustration.png"
-              alt="Laptop with Notivio"
-              width={500}
-              height={400}
-              className="transform hover:scale-105 transition-transform duration-500"
-            />
-          </div>
-
-          {/* Decorative elements */}
-          <div className="absolute bottom-0 left-0 w-full h-1/3 bg-[#8a7559]/10 blur-[100px] rounded-full"></div>
-          <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-[#8a7559]/20 rounded-full"></div>
-          <div className="absolute top-20 -left-20 w-64 h-64 bg-[#8a7559]/10 rounded-full"></div>
-        </div>
-
-        {/* Right side - Auth form */}
-        <div className="w-full md:w-1/2 flex items-center justify-center p-8">
-          <div className="w-full max-w-md space-y-6">
-            <div className="space-y-2 text-center">
-              <h1 className="text-3xl font-bold text-[#8a7559]">Reset Password</h1>
-              <p className="text-muted-foreground">Enter your email to receive a password reset link</p>
-            </div>
-
-            {error && (
-              <Alert variant={error.includes("sent") ? "default" : "destructive"}>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <Button type="submit" className="w-full bg-[#c6ac8f] hover:bg-[#8a7559]" disabled={loading}>
-                {loading ? "Sending..." : "Send Reset Link"}
-              </Button>
-
-              <Button type="button" variant="outline" className="w-full" onClick={() => setForgotPassword(false)}>
-                Back to Login
-              </Button>
-            </form>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
   return (
     <main className="min-h-screen flex">
       {/* Left side - Illustration */}
@@ -254,8 +199,8 @@ export default function LoginPage() {
       <div className="w-full md:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md space-y-6">
           <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold text-[#8a7559]">Welcome Back</h1>
-            <p className="text-muted-foreground">Sign in to access your account</p>
+            <h1 className="text-3xl font-bold text-[#8a7559]">Create Account</h1>
+            <p className="text-muted-foreground">Enter your information to create an account</p>
           </div>
 
           {error && (
@@ -312,6 +257,18 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                name="fullName"
+                placeholder="John Doe"
+                value={formData.fullName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -325,12 +282,19 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Button variant="link" className="px-0 text-xs" onClick={() => setForgotPassword(true)} type="button">
-                  Forgot password?
-                </Button>
-              </div>
+              <Label htmlFor="phoneNumber">Phone Number (optional)</Label>
+              <Input
+                id="phoneNumber"
+                name="phoneNumber"
+                type="tel"
+                placeholder="1234567890"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -350,16 +314,17 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </div>
+              <p className="text-xs text-muted-foreground">Password must be at least 6 characters long</p>
             </div>
 
             <Button type="submit" className="w-full bg-[#c6ac8f] hover:bg-[#8a7559]" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Creating account..." : "Create Account"}
             </Button>
 
             <div className="text-center text-sm">
-              Don't have an account?{" "}
-              <Link href="/auth/register" className="text-[#8a7559] hover:underline">
-                Register here
+              Already have an account?{" "}
+              <Link href="/auth/login" className="text-[#8a7559] hover:underline">
+                Log in
               </Link>
             </div>
           </form>
