@@ -104,7 +104,6 @@ export default function RegisterPage() {
     e.preventDefault()
 
     if (!validateForm()) return
-
     setLoading(true)
     setError(null)
 
