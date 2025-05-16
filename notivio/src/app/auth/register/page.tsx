@@ -114,7 +114,6 @@ export default function RegisterPage() {
       await updateProfile(userCredential.user, {
         displayName: formData.fullName,
       })
-
       router.push("/dashboard")
     } catch (err: any) {
       console.error(err)
