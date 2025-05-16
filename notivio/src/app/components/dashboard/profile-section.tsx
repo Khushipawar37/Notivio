@@ -23,8 +23,8 @@ export default function ProfileSection({ darkMode }: ProfileSectionProps) {
 
   // Mock user data - in a real app, this would come from authentication
   const user = {
-    name: "Alex Johnson",
-    email: "alex@example.com",
+    name: "Khushi Pawar",
+    email: "khushi@example.com",
     avatar: "/placeholder.svg?height=100&width=100",
     premiumUser: false,
   }
