@@ -1,93 +1,106 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { Search, Plus } from "lucide-react"
+import ProfileSection from "../components/dashboard/profile-section"
+import NotesGrid from "../components/dashboard/notes-grid"
+import SideNavigation from "../components/dashboard/side-navigation"
+import RecentActivity from "../components/dashboard/recent-activity"
 import { Button } from "../components/ui/button"
-import { auth } from "../lib/firebase"
-import { onAuthStateChanged, signOut } from "firebase/auth"
+import { Input } from "../components/ui/input"
+import { NoteProvider } from "../components/dashboard/note-context"
+import CreateNoteDialog from "../components/dashboard/create-note"
+import CreateFolderDialog from "../components/dashboard/create-folder"
+import CreateTagDialog from "../components/dashboard/create-tag"
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
+  const [darkMode, setDarkMode] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [activeCategory, setActiveCategory] = useState("All Notes")
+  const [isCreateNoteOpen, setIsCreateNoteOpen] = useState(false)
 
+  // Load dark mode preference from localStorage
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setLoading(false)
-      if (currentUser) {
-        setUser(currentUser)
-      } else {
-        router.push("/dashboard")
-      }
-    })
-
-    return () => unsubscribe()
-  }, [router])
-
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth)
-      router.push("/")
-    } catch (error) {
-      console.error("Error signing out:", error)
+    const savedDarkMode = localStorage.getItem("notivio-dark-mode")
+    if (savedDarkMode) {
+      setDarkMode(savedDarkMode === "true")
     }
-  }
+  }, [])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#c6ac8f]"></div>
-      </div>
-    )
+  // Save dark mode preference to localStorage
+  useEffect(() => {
+    localStorage.setItem("notivio-dark-mode", darkMode.toString())
+  }, [darkMode])
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode)
   }
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8]/30">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-[#8a7559]">Notivio Dashboard</h1>
-          <Button
-            onClick={handleSignOut}
-            variant="outline"
-            className="border-[#c6ac8f] text-[#8a7559] hover:bg-[#c6ac8f]/10"
-          >
-            Sign Out
-          </Button>
-        </div>
-      </header>
+    <NoteProvider>
+      <div
+        className={`min-h-screen ${darkMode ? "bg-gray-900 text-gray-100" : "bg-[#f5f0e8] text-gray-800"} transition-colors duration-300`}
+      >
+        <div className="container mx-auto px-4 py-8">
+          {/* Top section with search and profile */}
+          <div className="flex flex-col md:flex-row gap-4 items-center mb-8">
+            <div className="relative w-full md:w-96">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search your notes..."
+                className={`pl-10 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-[#c6ac8f]/30"} focus:border-[#c6ac8f] transition-all duration-300`}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Welcome, {user?.displayName || "User"}!</h2>
-          <p className="text-gray-600">You have successfully logged in with: {user?.email}</p>
-
-          <div className="mt-8 border-t pt-6">
-            <h3 className="text-lg font-medium mb-4">Account Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">Email</p>
-                <p>{user?.email}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Account Created</p>
-                <p>
-                  {user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : "N/A"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Last Sign In</p>
-                <p>
-                  {user?.metadata?.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleDateString() : "N/A"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Email Verified</p>
-                <p>{user?.emailVerified ? "Yes" : "No"}</p>
-              </div>
+            <div className="flex-1 flex justify-end">
+              <Button
+                className={`${darkMode ? "bg-[#8a7559] hover:bg-[#8a7559]/90" : "bg-[#c6ac8f] hover:bg-[#c6ac8f]/90"} text-white`}
+                onClick={() => setIsCreateNoteOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Note
+              </Button>
             </div>
           </div>
+
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Sidebar */}
+            <SideNavigation
+              activeCategory={activeCategory}
+              setActiveCategory={setActiveCategory}
+              darkMode={darkMode}
+              toggleDarkMode={toggleDarkMode}
+            />
+
+            {/* Main Content */}
+            <div className="flex-1 space-y-8">
+              <ProfileSection darkMode={darkMode} />
+
+              {/* Category Tabs */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl font-bold">{activeCategory}</h2>
+                </div>
+              </div>
+
+              {/* Notes Grid */}
+              <NotesGrid darkMode={darkMode} searchQuery={searchQuery} activeCategory={activeCategory} />
+            </div>
+
+            {/* Right Sidebar - Recent Activity */}
+            <RecentActivity darkMode={darkMode} />
+          </div>
         </div>
-      </main>
-    </div>
+      </div>
+
+      {/* Dialogs */}
+      <CreateNoteDialog open={isCreateNoteOpen} onOpenChange={setIsCreateNoteOpen} darkMode={darkMode} />
+      <CreateFolderDialog darkMode={darkMode} />
+      <CreateTagDialog darkMode={darkMode} />
+    </NoteProvider>
   )
 }

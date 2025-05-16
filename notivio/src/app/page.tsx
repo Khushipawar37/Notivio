@@ -1,9 +1,9 @@
 "use client"
 
-import AboutSection from "./components/About"
-import ContactPage from "./components/Contact"
-import Footer from "./components/Footer"
-import HeroSection from "./components/Hero"
+import AboutSection from "./components/home/About"
+import ContactPage from "./components/home/Contact"
+import Footer from "./components/home/Footer"
+import HeroSection from "./components/home/Hero"
 
 export default function Home() {
   return (
