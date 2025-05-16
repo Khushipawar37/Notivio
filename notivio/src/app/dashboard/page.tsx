@@ -17,7 +17,7 @@ export default function Dashboard() {
       if (currentUser) {
         setUser(currentUser)
       } else {
-        router.push("/")
+        router.push("/dashboard")
       }
     })
 
