@@ -28,7 +28,6 @@ export function extractVideoId(url: string): string | null {
  */
 export async function generateNotesFromTranscript(transcript: string, title: string, language = "english") {
   try {
-    // Call the AI-powered API to generate structured notes
     const response = await fetch("/api/generate-notes", {
       method: "POST",
       headers: {
@@ -37,14 +36,22 @@ export async function generateNotesFromTranscript(transcript: string, title: str
       body: JSON.stringify({ transcript, title, language }),
     })
 
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || "Failed to generate notes")
-    }
+    const contentType = response.headers.get("Content-Type")
 
-    return await response.json()
+    if (contentType && contentType.includes("application/json")) {
+      const data = await response.json()
+
+      if (!response.ok) throw new Error(data.error || "AI generation failed")
+
+      return data
+    } else {
+      const text = await response.text()
+      console.error("Non-JSON response:", text)
+      throw new Error("Server did not return JSON")
+    }
   } catch (error) {
-    console.error("Error in generateNotesFromTranscript:", error)
+    console.error("Client-side error:", error)
     throw error
   }
 }
+

@@ -36,7 +36,8 @@ export async function POST(request: Request) {
       "summary": "A concise summary of the entire content"
     }
     
-    The transcript is in ${language}. Process and structure the notes in ${language}.`
+    The transcript is in ${language}. Process and structure the notes in ${language}."Respond ONLY with valid JSON in the exact structure above. Do NOT include any explanations or extra text."
+`
 
     // Generate structured notes using AI
     const { text } = await generateText({
