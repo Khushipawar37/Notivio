@@ -1,90 +1,50 @@
 /**
- * Extracts the YouTube video ID from a URL
+ * Extracts the video ID from a YouTube URL
+ * @param url YouTube URL
+ * @returns Video ID or null if invalid
  */
 export function extractVideoId(url: string): string | null {
-  const regexps = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/watch\?.*&v=)([^&\n?#]+)/,
-    /youtube.com\/shorts\/([^&\n?#]+)/,
-  ];
+  if (!url) return null
 
-  for (const regex of regexps) {
-    const match = url.match(regex);
+  // Handle different YouTube URL formats
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/watch\?.*&v=)([^&\n?#]+)/,
+    /youtube\.com\/shorts\/([^&\n?#]+)/,
+  ]
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
     if (match && match[1]) {
-      return match[1];
+      return match[1]
     }
   }
 
-  return null;
+  return null
 }
 
-type Subsection = {
-  title: string;
-  content: string[];
-};
-
-type Section = {
-  title: string;
-  content: string[];
-  subsections: Subsection[];
-};
-
 /**
- * Processes a transcript into structured notes
+ * Generates structured notes from a transcript
+ * This is a placeholder function that will be replaced by the AI-powered API
  */
-export async function generateNotesFromTranscript(
-  transcript: string,
-  title: string
-): Promise<{
-  title: string;
-  transcript: string;
-  sections: Section[];
-  summary: string;
-}> {
-  const sections: Section[] = [];
-  const paragraphs = transcript.split("\n\n");
+export async function generateNotesFromTranscript(transcript: string, title: string, language = "english") {
+  try {
+    // Call the AI-powered API to generate structured notes
+    const response = await fetch("/api/generate-notes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ transcript, title, language }),
+    })
 
-  let currentSection: Section = {
-    title: "Introduction",
-    content: ["This is an automatically generated introduction point."],
-    subsections: [],
-  };
-
-  for (let i = 0; i < paragraphs.length; i++) {
-    const paragraph = paragraphs[i].trim();
-
-    if (paragraph.length < 20) continue;
-
-    if (i % 3 === 0 && i > 0) {
-      sections.push(currentSection);
-      currentSection = {
-        title: `Section ${sections.length + 1}`,
-        content: [],
-        subsections: [],
-      };
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || "Failed to generate notes")
     }
 
-    currentSection.content.push(paragraph);
-
-    if (i % 5 === 0 && i > 0) {
-      currentSection.subsections.push({
-        title: `Subsection ${currentSection.subsections.length + 1}`,
-        content: [paragraph],
-      });
-    }
+    return await response.json()
+  } catch (error) {
+    console.error("Error in generateNotesFromTranscript:", error)
+    throw error
   }
-
-  if (currentSection.content.length > 0) {
-    sections.push(currentSection);
-  }
-
-  const summary = `This is an automatically generated summary of "${title}". The video covers ${sections.length} main topics including ${sections
-    .map((s) => s.title)
-    .join(", ")}.`;
-
-  return {
-    title,
-    transcript,
-    sections,
-    summary,
-  };
 }

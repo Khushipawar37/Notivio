@@ -1,17 +1,18 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { YoutubeTranscript } from "youtube-transcript"
 
-export async function GET(request: NextRequest) {
-  const videoId = request.nextUrl.searchParams.get("videoId")
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const videoId = searchParams.get("videoId")
 
   if (!videoId) {
     return NextResponse.json({ error: "Video ID is required" }, { status: 400 })
   }
 
   try {
-    // Get video metadata
+    // Fetch video metadata
     const videoInfoResponse = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${process.env.YOUTUBE_API_KEY || "AIzaSyARJ0FnnBPeLo950We6CZF_hMVCRL_sg_E"}`,
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${process.env.YOUTUBE_API_KEY}`,
     )
 
     if (!videoInfoResponse.ok) {
@@ -19,33 +20,24 @@ export async function GET(request: NextRequest) {
     }
 
     const videoInfo = await videoInfoResponse.json()
+    const title = videoInfo.items[0]?.snippet?.title || "Untitled Video"
 
-    if (!videoInfo.items || videoInfo.items.length === 0) {
-      throw new Error("Video not found")
-    }
-
-    const videoTitle = videoInfo.items[0].snippet.title
-
-    // Get video transcript
+    // Fetch transcript
     const transcript = await YoutubeTranscript.fetchTranscript(videoId)
 
-    if (!transcript || transcript.length === 0) {
-      throw new Error("No transcript available for this video")
-    }
-
-    // Format transcript
+    // Format transcript into a single string
     const formattedTranscript = transcript
       .map((item) => item.text)
       .join(" ")
       .replace(/\s+/g, " ")
+      .trim()
 
     return NextResponse.json({
-      title: videoTitle,
+      title,
       transcript: formattedTranscript,
     })
   } catch (error: any) {
     console.error("Error fetching transcript:", error)
-
     return NextResponse.json({ error: error.message || "Failed to fetch transcript" }, { status: 500 })
   }
 }
