@@ -9,7 +9,6 @@ export async function POST(request: Request) {
     if (!transcript) {
       return NextResponse.json({ error: "Transcript is required" }, { status: 400 })
     }
-
     // Create a system prompt for the AI
     const systemPrompt = `You are an expert note-taker and educator. Your task is to convert a raw transcript into well-structured, educational notes.
     
