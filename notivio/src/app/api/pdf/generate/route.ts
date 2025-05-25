@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import PDFDocument from "pdfkit"
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,6 +7,9 @@ export async function POST(request: NextRequest) {
     if (!notes) {
       return NextResponse.json({ error: "Notes data is required" }, { status: 400 })
     }
+
+    // Import PDFKit dynamically
+    const PDFDocument = (await import("pdfkit")).default
 
     // Create a new PDF document
     const doc = new PDFDocument({ margin: 50 })

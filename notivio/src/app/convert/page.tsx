@@ -153,35 +153,43 @@ export default function VideoNotesPage() {
         throw new Error("Invalid YouTube URL")
       }
 
-      // Fetch video transcript and metadata
-      const response = await fetch(`/api/video-transcript?videoId=${videoId}`)
+      console.log("Fetching transcript for video ID:", videoId)
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to fetch video transcript")
+      // Fetch video transcript and metadata
+      const transcriptResponse = await fetch(`/api/video-transcript?videoId=${videoId}`)
+
+      if (!transcriptResponse.ok) {
+        const errorText = await transcriptResponse.text()
+        console.error("Transcript API error:", errorText)
+        throw new Error("Failed to fetch video transcript. Please check if the video has captions enabled.")
       }
 
-      const data = await response.json()
+      const transcriptData = await transcriptResponse.json()
+      console.log("Transcript data received:", transcriptData)
 
       // Process transcript into structured notes using AI
+      console.log("Generating notes...")
       const notesResponse = await fetch("/api/generate-notes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          transcript: data.transcript,
-          title: data.title,
-          duration: data.duration,
+          transcript: transcriptData.transcript,
+          title: transcriptData.title,
+          duration: transcriptData.duration,
         }),
       })
 
       if (!notesResponse.ok) {
-        const errorData = await notesResponse.json()
-        throw new Error(errorData.error || "Failed to generate notes")
+        const errorText = await notesResponse.text()
+        console.error("Notes generation error:", errorText)
+        throw new Error("Failed to generate notes. Please try again.")
       }
 
       const generatedNotes = await notesResponse.json()
+      console.log("Notes generated successfully:", generatedNotes)
+
       setNotes(generatedNotes)
       setEditableNotes(JSON.parse(JSON.stringify(generatedNotes)))
       setShowSuccessAnimation(true)
@@ -191,6 +199,7 @@ export default function VideoNotesPage() {
         setShowSuccessAnimation(false)
       }, 3000)
     } catch (err: any) {
+      console.error("Error in handleSubmit:", err)
       setError(err.message || "An error occurred while processing the video")
     } finally {
       setLoading(false)

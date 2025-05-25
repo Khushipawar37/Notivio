@@ -1,8 +1,56 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { GoogleGenerativeAI } from "@google/generative-ai"
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "")
+// Simple text processing function as fallback
+function generateNotesFromText(transcript: string, title: string, duration: string) {
+  // Split transcript into sentences
+  const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 10)
+
+  // Create sections based on content length
+  const sectionsCount = Math.min(Math.max(Math.floor(sentences.length / 8), 3), 8)
+  const sentencesPerSection = Math.floor(sentences.length / sectionsCount)
+
+  const sections = []
+
+  for (let i = 0; i < sectionsCount; i++) {
+    const startIdx = i * sentencesPerSection
+    const endIdx = i === sectionsCount - 1 ? sentences.length : (i + 1) * sentencesPerSection
+    const sectionSentences = sentences.slice(startIdx, endIdx)
+
+    // Generate section title based on content
+    const sectionTitle = `Section ${i + 1}: Key Points`
+
+    // Create bullet points from sentences
+    const content = sectionSentences
+      .slice(0, 5) // Limit to 5 points per section
+      .map((sentence) => sentence.trim())
+      .filter((sentence) => sentence.length > 20)
+
+    if (content.length > 0) {
+      sections.push({
+        title: sectionTitle,
+        content: content,
+      })
+    }
+  }
+
+  // Generate summary (first few sentences)
+  const summary = sentences.slice(0, 3).join(". ") + "."
+
+  // Generate key points
+  const keyPoints = sentences
+    .filter((s) => s.length > 30 && s.length < 150)
+    .slice(0, 5)
+    .map((s) => s.trim())
+
+  return {
+    title,
+    transcript,
+    summary,
+    keyPoints,
+    sections,
+    duration,
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,13 +60,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Transcript is required" }, { status: 400 })
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 })
-    }
+    console.log("Generating notes for:", title)
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" })
+    // Try Gemini API first if available
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        const { GoogleGenerativeAI } = await import("@google/generative-ai")
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" })
 
-    const prompt = `
+        const prompt = `
 You are an expert note-taking assistant. Analyze the following video transcript and create comprehensive, well-structured study notes.
 
 Video Title: ${title}
@@ -54,65 +105,66 @@ Guidelines:
 Return only the JSON object, no additional text.
 `
 
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
+        const result = await model.generateContent(prompt)
+        const response = await result.response
+        const text = response.text()
 
-    try {
-      // Clean the response to extract JSON
-      const jsonMatch = text.match(/\{[\s\S]*\}/)
-      if (!jsonMatch) {
-        throw new Error("No JSON found in response")
+        // Clean and parse the response
+        const jsonMatch = text.match(/\{[\s\S]*\}/)
+        if (jsonMatch) {
+          const notes = JSON.parse(jsonMatch[0])
+
+          // Validate and return
+          if (notes.sections && Array.isArray(notes.sections)) {
+            return NextResponse.json({
+              title: notes.title || title,
+              transcript: transcript,
+              summary: notes.summary || "Summary not available",
+              keyPoints: notes.keyPoints || [],
+              sections: notes.sections || [],
+              duration: duration || "Unknown",
+            })
+          }
+        }
+
+        throw new Error("Invalid AI response format")
+      } catch (aiError) {
+        console.error("Gemini AI error:", aiError)
+        console.log("Falling back to text processing...")
       }
-
-      const notes = JSON.parse(jsonMatch[0])
-
-      // Validate the structure
-      if (!notes.sections || !Array.isArray(notes.sections)) {
-        throw new Error("Invalid notes structure")
-      }
-
-      // Ensure all required fields are present
-      const processedNotes = {
-        title: notes.title || title,
-        transcript: transcript,
-        summary: notes.summary || "Summary not available",
-        keyPoints: notes.keyPoints || [],
-        sections: notes.sections || [],
-        duration: duration || "Unknown",
-      }
-
-      return NextResponse.json(processedNotes)
-    } catch (parseError) {
-      console.error("Error parsing AI response:", parseError)
-
-      // Fallback: Create basic notes structure
-      const fallbackNotes = {
-        title: title,
-        transcript: transcript,
-        summary: "This video covers various topics. Please review the transcript for detailed information.",
-        keyPoints: [
-          "Review the full transcript for comprehensive understanding",
-          "Key concepts and insights are discussed throughout the video",
-          "Consider taking additional notes while reviewing",
-        ],
-        sections: [
-          {
-            title: "Main Content",
-            content: [
-              "This section contains the primary content from the video",
-              "Review the transcript for detailed information",
-              "Consider breaking down the content into smaller sections for better understanding",
-            ],
-          },
-        ],
-        duration: duration,
-      }
-
-      return NextResponse.json(fallbackNotes)
     }
+
+    // Fallback to simple text processing
+    console.log("Using fallback text processing method")
+    const notes = generateNotesFromText(transcript, title, duration)
+
+    return NextResponse.json(notes)
   } catch (error: any) {
     console.error("Error generating notes:", error)
-    return NextResponse.json({ error: "Failed to generate notes" }, { status: 500 })
+
+    // Ultimate fallback
+    const fallbackNotes = {
+      title: title || "YouTube Video",
+      transcript: transcript || "",
+      summary: "This video covers various important topics. Please review the transcript for detailed information.",
+      keyPoints: [
+        "Review the full transcript for comprehensive understanding",
+        "Key concepts and insights are discussed throughout the video",
+        "Consider taking additional notes while reviewing",
+      ],
+      sections: [
+        {
+          title: "Main Content",
+          content: [
+            "This section contains the primary content from the video",
+            "Review the transcript for detailed information",
+            "Consider breaking down the content into smaller sections for better understanding",
+          ],
+        },
+      ],
+      duration: duration || "Unknown",
+    }
+
+    return NextResponse.json(fallbackNotes)
   }
 }
