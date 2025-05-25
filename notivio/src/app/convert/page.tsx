@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -21,28 +20,31 @@ import {
   Brain,
   Sparkles,
   FileSearch,
-  Languages,
+  Clock,
+  BookOpen,
+  Zap,
 } from "lucide-react"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip"
-import { extractVideoId, generateNotesFromTranscript } from "../lib/videoUtils"
-import { LanguageSelector } from "../components/video/language-selector"
-import { LoadingAnimation } from "../components/video/loading-animation"
-import { FeatureCard } from "../components/video/feature-card"
+import { Badge } from "../components/ui/badge"
+import { Progress } from "../components/ui/progress"
 
 type NoteSection = {
   title: string
   content: string[]
   subsections?: { title: string; content: string[] }[]
 }
+
 type Notes = {
   title: string
   transcript: string
   sections: NoteSection[]
   summary: string
+  keyPoints: string[]
+  duration: string
 }
 
 export default function VideoNotesPage() {
@@ -54,42 +56,61 @@ export default function VideoNotesPage() {
   const [editMode, setEditMode] = useState(false)
   const [editableNotes, setEditableNotes] = useState<Notes | null>(null)
   const [processingStage, setProcessingStage] = useState(0)
+  const [processingProgress, setProcessingProgress] = useState(0)
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({})
   const [isUrlValid, setIsUrlValid] = useState(false)
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false)
-  const [language, setLanguage] = useState("english")
 
   const formRef = useRef<HTMLFormElement>(null)
   const notesContainerRef = useRef<HTMLDivElement>(null)
 
+  // Extract video ID from YouTube URL
+  const extractVideoId = (url: string): string | null => {
+    const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/
+    const match = url.match(regex)
+    return match ? match[1] : null
+  }
+
   // Validate YouTube URL
   useEffect(() => {
-    try {
-      const videoId = extractVideoId(url)
-      setIsUrlValid(!!videoId)
-    } catch (e) {
-      setIsUrlValid(false)
-    }
+    const videoId = extractVideoId(url)
+    setIsUrlValid(!!videoId)
   }, [url])
 
-  // Simulate processing stages
+  // Simulate processing stages with progress
   useEffect(() => {
     if (loading) {
-      const stages = ["Fetching video data", "Extracting transcript", "Analyzing content", "Generating notes"]
+      const stages = [
+        "Extracting video information",
+        "Fetching transcript data",
+        "Processing with AI",
+        "Structuring notes",
+      ]
       let currentStage = 0
+      let progress = 0
 
       const interval = setInterval(() => {
-        if (currentStage < stages.length - 1) {
-          currentStage++
-          setProcessingStage(currentStage)
-        } else {
-          clearInterval(interval)
+        progress += Math.random() * 15 + 5
+
+        if (progress >= 100) {
+          if (currentStage < stages.length - 1) {
+            currentStage++
+            setProcessingStage(currentStage)
+            progress = 0
+          } else {
+            clearInterval(interval)
+            setProcessingProgress(100)
+            return
+          }
         }
-      }, 1500)
+
+        setProcessingProgress(Math.min(progress, 100))
+      }, 300)
 
       return () => clearInterval(interval)
     } else {
       setProcessingStage(0)
+      setProcessingProgress(0)
     }
   }, [loading])
 
@@ -133,16 +154,34 @@ export default function VideoNotesPage() {
       }
 
       // Fetch video transcript and metadata
-      const response = await fetch(`/api/video-transcription?videoId=${videoId}`)
+      const response = await fetch(`/api/video-transcript?videoId=${videoId}`)
 
       if (!response.ok) {
-        throw new Error("Failed to fetch video transcript")
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to fetch video transcript")
       }
 
       const data = await response.json()
 
       // Process transcript into structured notes using AI
-      const generatedNotes = await generateNotesFromTranscript(data.transcript, data.title, language)
+      const notesResponse = await fetch("/api/generate-notes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          transcript: data.transcript,
+          title: data.title,
+          duration: data.duration,
+        }),
+      })
+
+      if (!notesResponse.ok) {
+        const errorData = await notesResponse.json()
+        throw new Error(errorData.error || "Failed to generate notes")
+      }
+
+      const generatedNotes = await notesResponse.json()
       setNotes(generatedNotes)
       setEditableNotes(JSON.parse(JSON.stringify(generatedNotes)))
       setShowSuccessAnimation(true)
@@ -160,7 +199,7 @@ export default function VideoNotesPage() {
 
   const handleDownloadPDF = async () => {
     try {
-      const response = await fetch("/api/pdf/generate", {
+      const response = await fetch("/api/generate-pdf", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -191,7 +230,6 @@ export default function VideoNotesPage() {
       setEditMode(false)
       setShowSuccessAnimation(true)
 
-      // Hide success animation after 3 seconds
       setTimeout(() => {
         setShowSuccessAnimation(false)
       }, 3000)
@@ -206,32 +244,12 @@ export default function VideoNotesPage() {
     setEditableNotes(updatedNotes)
   }
 
-  const handleEditSubsection = (sectionIndex: number, subsectionIndex: number, content: string[]) => {
-    if (!editableNotes) return
-
-    const updatedNotes = { ...editableNotes }
-    if (updatedNotes.sections[sectionIndex].subsections) {
-      updatedNotes.sections[sectionIndex].subsections![subsectionIndex].content = content
-      setEditableNotes(updatedNotes)
-    }
-  }
-
   const handleEditSectionTitle = (sectionIndex: number, title: string) => {
     if (!editableNotes) return
 
     const updatedNotes = { ...editableNotes }
     updatedNotes.sections[sectionIndex].title = title
     setEditableNotes(updatedNotes)
-  }
-
-  const handleEditSubsectionTitle = (sectionIndex: number, subsectionIndex: number, title: string) => {
-    if (!editableNotes) return
-
-    const updatedNotes = { ...editableNotes }
-    if (updatedNotes.sections[sectionIndex].subsections) {
-      updatedNotes.sections[sectionIndex].subsections![subsectionIndex].title = title
-      setEditableNotes(updatedNotes)
-    }
   }
 
   const handleEditSummary = (summary: string) => {
@@ -242,159 +260,222 @@ export default function VideoNotesPage() {
     setEditableNotes(updatedNotes)
   }
 
-  const processingStages = ["Fetching video data", "Extracting transcript", "Analyzing content", "Generating notes"]
+  const processingStages = [
+    "Extracting video information",
+    "Fetching transcript data",
+    "Processing with AI",
+    "Structuring notes",
+  ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f5f0e8] via-[#f5f0e8] to-[#f5f0e8] py-[12rem] px-4">
-      <div className="container mx-auto max-w-5xl">
+    <div className="min-h-screen bg-gradient-to-br from-[#f5f0e8] via-[#f8f4ed] to-[#f5f0e8] py-8 px-4">
+      <div className="container mx-auto max-w-6xl">
+        {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="text-center mb-16"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-black mb-4">
-            <span className="text-[#8a7559]">Notivio</span> Video Notes
+          <div className="inline-flex items-center justify-center p-2 bg-white rounded-full shadow-lg mb-6">
+            <div className="bg-gradient-to-r from-[#8a7559] to-[#a68b5b] p-3 rounded-full">
+              <Brain className="h-8 w-8 text-white" />
+            </div>
+          </div>
+
+          <h1 className="text-5xl md:text-6xl font-bold text-black mb-6">
+            <span className="bg-gradient-to-r from-[#8a7559] to-[#a68b5b] bg-clip-text text-transparent">Notivio</span>{" "}
+            Video Notes
           </h1>
-          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
-            Transform any YouTube video into structured, editable notes with our AI-powered tool
+
+          <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
+            Transform any YouTube video into comprehensive, structured notes with our AI-powered tool. Perfect for
+            students, researchers, and lifelong learners.
           </p>
         </motion.div>
 
-        {/* Feature cards */}
+        {/* Feature Cards */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16"
         >
-          <FeatureCard
-            icon={Brain}
-            title="AI-Powered Notes"
-            description="Our AI analyzes video content and generates structured, comprehensive notes automatically."
-          />
-          <FeatureCard
-            icon={Languages}
-            title="Multi-language Support"
-            description="Process videos in multiple languages and get notes in the same language."
-          />
-          <FeatureCard
-            icon={FileSearch}
-            title="Customizable Format"
-            description="Edit, organize, and customize your notes to fit your specific needs."
-          />
+          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-lg mb-4">
+                <Zap className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#8a7559] mb-2">Lightning Fast</h3>
+              <p className="text-gray-600 text-sm">
+                Generate comprehensive notes in seconds using advanced AI processing
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-lg mb-4">
+                <BookOpen className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#8a7559] mb-2">Study Ready</h3>
+              <p className="text-gray-600 text-sm">
+                Organized sections, key points, and summaries perfect for learning
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+            <CardContent className="p-6 text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-lg mb-4">
+                <FileSearch className="h-6 w-6 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#8a7559] mb-2">Fully Editable</h3>
+              <p className="text-gray-600 text-sm">
+                Customize, edit, and organize your notes to fit your specific needs
+              </p>
+            </CardContent>
+          </Card>
         </motion.div>
 
+        {/* Input Form */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <Card className="mb-12 border border-[#c6ac8f]/30 shadow-md overflow-hidden bg-white">
-            <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
-              <CardTitle className="text-2xl text-[#8a7559] flex items-center">
-                <Youtube className="mr-2 h-5 w-5" />
-                Enter YouTube Video URL
-              </CardTitle>
-              <CardDescription>Paste a YouTube video URL to automatically generate structured notes</CardDescription>
+          <Card className="mb-12 border-0 shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20 pb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-lg">
+                  <Youtube className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl text-[#8a7559]">Enter YouTube Video URL</CardTitle>
+                  <CardDescription className="text-base">
+                    Paste any YouTube video URL to automatically generate structured notes
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="pt-6">
-              <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+
+            <CardContent className="pt-8 pb-8">
+              <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
                 <div className="relative">
                   <Input
                     type="url"
                     placeholder="https://www.youtube.com/watch?v=..."
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    className={`flex-1 border-2 focus:ring-[#c6ac8f] focus:border-[#c6ac8f] ${
-                      url && !isUrlValid ? "border-red-300" : "border-[#c6ac8f]/30"
-                    } ${url && isUrlValid ? "border-[#c6ac8f]" : ""}`}
+                    className={`h-14 text-lg border-2 focus:ring-[#c6ac8f] focus:border-[#c6ac8f] transition-all duration-200 ${
+                      url && !isUrlValid ? "border-red-300 bg-red-50" : "border-[#c6ac8f]/30"
+                    } ${url && isUrlValid ? "border-[#c6ac8f] bg-green-50" : ""}`}
                     required
                   />
                   {url && !isUrlValid && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500">
-                      <AlertCircle className="h-5 w-5" />
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-red-500">
+                      <AlertCircle className="h-6 w-6" />
                     </div>
                   )}
                   {url && isUrlValid && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500">
-                      <CheckCircle2 className="h-5 w-5" />
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-500">
+                      <CheckCircle2 className="h-6 w-6" />
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="w-full sm:w-1/3">
-                    <LanguageSelector value={language} onChange={setLanguage} />
-                  </div>
-
-                  <div className="flex-1">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            type="submit"
-                            disabled={loading || !isUrlValid}
-                            className="w-full bg-[#8a7559] hover:bg-[#8a7559]/90 text-white"
-                          >
-                            {loading ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Processing...
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="mr-2 h-4 w-4" />
-                                Generate AI Notes
-                              </>
-                            )}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Extract and organize notes from this video</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </div>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="submit"
+                        disabled={loading || !isUrlValid}
+                        className="w-full h-14 text-lg bg-gradient-to-r from-[#8a7559] to-[#a68b5b] hover:from-[#8a7559]/90 hover:to-[#a68b5b]/90 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                            Processing Video...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="mr-3 h-5 w-5" />
+                            Generate AI Notes
+                          </>
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Extract and organize notes from this video</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </form>
 
               {loading && (
-                <LoadingAnimation
-                  stage={processingStage}
-                  totalStages={processingStages.length}
-                  stageNames={processingStages}
-                />
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-8 p-6 bg-gradient-to-r from-[#f5f0e8] to-white rounded-xl border border-[#c6ac8f]/20"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-lg">
+                        <Brain className="h-5 w-5 text-white animate-pulse" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-[#8a7559]">{processingStages[processingStage]}</h3>
+                        <p className="text-sm text-gray-600">AI is analyzing your video content...</p>
+                      </div>
+                    </div>
+                    <Badge variant="secondary" className="bg-[#8a7559]/10 text-[#8a7559]">
+                      Step {processingStage + 1} of {processingStages.length}
+                    </Badge>
+                  </div>
+
+                  <Progress value={processingProgress} className="h-2 bg-[#c6ac8f]/20" />
+
+                  <div className="mt-2 text-right">
+                    <span className="text-sm text-gray-600">{Math.round(processingProgress)}% complete</span>
+                  </div>
+                </motion.div>
               )}
 
               {error && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 bg-red-50 text-red-600 rounded-md flex items-center border border-red-200"
+                  className="mt-6 p-4 bg-red-50 text-red-700 rounded-xl flex items-center border border-red-200 shadow-sm"
                 >
-                  <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
-                  <span>{error}</span>
+                  <AlertCircle className="h-5 w-5 mr-3 flex-shrink-0" />
+                  <span className="font-medium">{error}</span>
                 </motion.div>
               )}
             </CardContent>
           </Card>
         </motion.div>
 
+        {/* Success Animation */}
         <AnimatePresence>
           {showSuccessAnimation && (
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="fixed top-4 right-4 bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-md shadow-md flex items-center z-50"
+              initial={{ opacity: 0, y: -20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.9 }}
+              className="fixed top-6 right-6 bg-white border border-green-300 text-green-700 px-6 py-4 rounded-xl shadow-xl flex items-center z-50"
             >
-              <CheckCircle2 className="h-5 w-5 mr-2" />
-              {editMode ? "Changes saved successfully!" : "Notes generated successfully!"}
+              <CheckCircle2 className="h-6 w-6 mr-3 text-green-500" />
+              <div>
+                <p className="font-semibold">
+                  {editMode ? "Changes saved successfully!" : "Notes generated successfully!"}
+                </p>
+                <p className="text-sm text-green-600">Your notes are ready for review</p>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Generated Notes */}
         {notes && (
           <motion.div
             ref={notesContainerRef}
@@ -403,16 +484,33 @@ export default function VideoNotesPage() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="mt-8"
           >
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            {/* Notes Header */}
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
               <div className="flex-1">
-                <h2 className="text-2xl font-bold text-black">
-                  <span className="text-[#8a7559]">Notes:</span> {notes.title}
-                </h2>
-                <p className="text-gray-600 text-sm mt-1">
-                  {editMode ? "Editing mode - Make changes to your notes" : "AI-generated notes from your video"}
-                </p>
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className="p-2 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-lg">
+                    <FileText className="h-5 w-5 text-white" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-black">Generated Notes</h2>
+                </div>
+                <h3 className="text-xl text-[#8a7559] font-semibold mb-2">{notes.title}</h3>
+                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                  <div className="flex items-center space-x-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{notes.duration}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <FileText className="h-4 w-4" />
+                    <span>{notes.sections.length} sections</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Brain className="h-4 w-4" />
+                    <span>AI Generated</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-2">
+
+              <div className="flex gap-3">
                 {editMode ? (
                   <>
                     <Button
@@ -425,7 +523,10 @@ export default function VideoNotesPage() {
                     >
                       Cancel
                     </Button>
-                    <Button onClick={handleSaveEdits} className="bg-[#8a7559] hover:bg-[#8a7559]/90 text-white">
+                    <Button
+                      onClick={handleSaveEdits}
+                      className="bg-gradient-to-r from-[#8a7559] to-[#a68b5b] hover:from-[#8a7559]/90 hover:to-[#a68b5b]/90 text-white shadow-lg"
+                    >
                       <Save className="h-4 w-4 mr-2" />
                       Save Changes
                     </Button>
@@ -453,7 +554,10 @@ export default function VideoNotesPage() {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button onClick={handleDownloadPDF} className="bg-[#8a7559] hover:bg-[#8a7559]/90 text-white">
+                          <Button
+                            onClick={handleDownloadPDF}
+                            className="bg-gradient-to-r from-[#8a7559] to-[#a68b5b] hover:from-[#8a7559]/90 hover:to-[#a68b5b]/90 text-white shadow-lg"
+                          >
                             <FileDown className="h-4 w-4 mr-2" />
                             Download PDF
                           </Button>
@@ -468,44 +572,45 @@ export default function VideoNotesPage() {
               </div>
             </div>
 
+            {/* Notes Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-              <TabsList className="mb-6 bg-[#f5f0e8] p-1 border border-[#c6ac8f]/30">
+              <TabsList className="mb-8 bg-white p-1 border border-[#c6ac8f]/30 shadow-lg rounded-xl">
                 <TabsTrigger
                   value="structured"
-                  className="data-[state=active]:bg-white data-[state=active]:text-[#8a7559] data-[state=active]:shadow-sm"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   Structured Notes
                 </TabsTrigger>
                 <TabsTrigger
+                  value="summary"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Summary & Key Points
+                </TabsTrigger>
+                <TabsTrigger
                   value="raw"
-                  className="data-[state=active]:bg-white data-[state=active]:text-[#8a7559] data-[state=active]:shadow-sm"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
                 >
                   <Youtube className="h-4 w-4 mr-2" />
                   Raw Transcript
                 </TabsTrigger>
-                <TabsTrigger
-                  value="summary"
-                  className="data-[state=active]:bg-white data-[state=active]:text-[#8a7559] data-[state=active]:shadow-sm"
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Summary
-                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="structured">
-                <Card className="border border-[#c6ac8f]/30 shadow-md bg-white">
-                  <CardContent className="pt-6">
+                <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                  <CardContent className="pt-8">
                     {(editMode ? editableNotes : notes)?.sections.map((section, sIndex) => (
                       <motion.div
                         key={sIndex}
-                        className="mb-8 border border-[#c6ac8f]/20 rounded-lg overflow-hidden"
+                        className="mb-8 border border-[#c6ac8f]/20 rounded-xl overflow-hidden shadow-lg bg-white"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: sIndex * 0.1 }}
                       >
                         <div
-                          className="flex justify-between items-center p-3 bg-[#f5f0e8] cursor-pointer"
+                          className="flex justify-between items-center p-6 bg-gradient-to-r from-[#f5f0e8] to-white cursor-pointer hover:from-[#f0e9d8] hover:to-[#f8f4ed] transition-all duration-200"
                           onClick={() => toggleSection(sIndex)}
                         >
                           {editMode ? (
@@ -514,28 +619,33 @@ export default function VideoNotesPage() {
                               value={section.title}
                               onChange={(e) => handleEditSectionTitle(sIndex, e.target.value)}
                               onClick={(e) => e.stopPropagation()}
-                              className="text-xl font-bold w-full p-2 bg-white border border-[#c6ac8f]/30 rounded-md focus:ring-[#c6ac8f] focus:border-[#c6ac8f]"
+                              className="text-xl font-bold w-full p-3 bg-white border border-[#c6ac8f]/30 rounded-lg focus:ring-[#c6ac8f] focus:border-[#c6ac8f] shadow-sm"
                             />
                           ) : (
-                            <h3 className="text-xl font-bold text-[#8a7559]">{section.title}</h3>
+                            <h3 className="text-xl font-bold text-[#8a7559] flex items-center">
+                              <span className="w-8 h-8 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
+                                {sIndex + 1}
+                              </span>
+                              {section.title}
+                            </h3>
                           )}
-                          <div className="text-[#8a7559]">
+                          <div className="text-[#8a7559] ml-4">
                             {expandedSections[sIndex] ? (
-                              <ChevronUp className="h-5 w-5" />
+                              <ChevronUp className="h-6 w-6" />
                             ) : (
-                              <ChevronDown className="h-5 w-5" />
+                              <ChevronDown className="h-6 w-6" />
                             )}
                           </div>
                         </div>
 
                         {expandedSections[sIndex] && (
-                          <div className="p-4">
+                          <div className="p-6">
                             {editMode ? (
-                              <div className="pl-4 mb-4 space-y-3">
+                              <div className="space-y-4">
                                 {section.content.map((point, pIndex) => (
                                   <motion.div
                                     key={pIndex}
-                                    className="flex items-start"
+                                    className="flex items-start space-x-3"
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ duration: 0.3, delay: pIndex * 0.05 }}
@@ -547,7 +657,7 @@ export default function VideoNotesPage() {
                                         newContent[pIndex] = e.target.value
                                         handleEditSection(sIndex, newContent)
                                       }}
-                                      className="w-full p-3 border border-[#c6ac8f]/30 rounded-md min-h-[80px] focus:ring-[#c6ac8f] focus:border-[#c6ac8f]"
+                                      className="flex-1 p-4 border border-[#c6ac8f]/30 rounded-lg min-h-[100px] focus:ring-[#c6ac8f] focus:border-[#c6ac8f] shadow-sm resize-none"
                                     />
                                     <Button
                                       variant="ghost"
@@ -556,7 +666,7 @@ export default function VideoNotesPage() {
                                         const newContent = section.content.filter((_, i) => i !== pIndex)
                                         handleEditSection(sIndex, newContent)
                                       }}
-                                      className="ml-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                      className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
                                     >
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
@@ -569,163 +679,115 @@ export default function VideoNotesPage() {
                                     const newContent = [...section.content, "New point"]
                                     handleEditSection(sIndex, newContent)
                                   }}
-                                  className="mt-2 border-[#c6ac8f]/30 text-[#8a7559] hover:bg-[#f5f0e8]"
+                                  className="mt-4 border-[#c6ac8f]/30 text-[#8a7559] hover:bg-[#f5f0e8] rounded-lg"
                                 >
                                   <Plus className="h-4 w-4 mr-2" />
                                   Add Point
                                 </Button>
                               </div>
                             ) : (
-                              <ul className="list-disc pl-8 mb-4 space-y-3">
+                              <ul className="space-y-4">
                                 {section.content.map((point, pIndex) => (
                                   <motion.li
                                     key={pIndex}
-                                    className="text-gray-700"
+                                    className="flex items-start space-x-3 text-gray-700 leading-relaxed"
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ duration: 0.3, delay: pIndex * 0.05 }}
                                   >
-                                    {point}
+                                    <div className="w-2 h-2 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full mt-2 flex-shrink-0"></div>
+                                    <span>{point}</span>
                                   </motion.li>
                                 ))}
                               </ul>
                             )}
-
-                            {section.subsections &&
-                              section.subsections.map((subsection, ssIndex) => (
-                                <motion.div
-                                  key={ssIndex}
-                                  className="ml-6 mb-4 p-3 border-l-2 border-[#c6ac8f]/30"
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ duration: 0.4, delay: 0.2 + ssIndex * 0.1 }}
-                                >
-                                  {editMode ? (
-                                    <input
-                                      type="text"
-                                      value={subsection.title}
-                                      onChange={(e) => handleEditSubsectionTitle(sIndex, ssIndex, e.target.value)}
-                                      className="text-lg font-semibold mb-3 w-full p-2 border border-[#c6ac8f]/30 rounded-md focus:ring-[#c6ac8f] focus:border-[#c6ac8f]"
-                                    />
-                                  ) : (
-                                    <h4 className="text-lg font-semibold mb-3 text-[#8a7559]">{subsection.title}</h4>
-                                  )}
-
-                                  {editMode ? (
-                                    <div className="pl-4 space-y-3">
-                                      {subsection.content.map((point, pIndex) => (
-                                        <motion.div
-                                          key={pIndex}
-                                          className="flex items-start"
-                                          initial={{ opacity: 0, x: -10 }}
-                                          animate={{ opacity: 1, x: 0 }}
-                                          transition={{ duration: 0.3, delay: pIndex * 0.05 }}
-                                        >
-                                          <textarea
-                                            value={point}
-                                            onChange={(e) => {
-                                              const newContent = [...subsection.content]
-                                              newContent[pIndex] = e.target.value
-                                              handleEditSubsection(sIndex, ssIndex, newContent)
-                                            }}
-                                            className="w-full p-3 border border-[#c6ac8f]/30 rounded-md min-h-[80px] focus:ring-[#c6ac8f] focus:border-[#c6ac8f]"
-                                          />
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => {
-                                              const newContent = subsection.content.filter((_, i) => i !== pIndex)
-                                              handleEditSubsection(sIndex, ssIndex, newContent)
-                                            }}
-                                            className="ml-2 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </Button>
-                                        </motion.div>
-                                      ))}
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                          const newContent = [...subsection.content, "New point"]
-                                          handleEditSubsection(sIndex, ssIndex, newContent)
-                                        }}
-                                        className="mt-2 border-[#c6ac8f]/30 text-[#8a7559] hover:bg-[#f5f0e8]"
-                                      >
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Add Point
-                                      </Button>
-                                    </div>
-                                  ) : (
-                                    <ul className="list-disc pl-8 space-y-3">
-                                      {subsection.content.map((point, pIndex) => (
-                                        <motion.li
-                                          key={pIndex}
-                                          className="text-gray-700"
-                                          initial={{ opacity: 0, x: -10 }}
-                                          animate={{ opacity: 1, x: 0 }}
-                                          transition={{ duration: 0.3, delay: pIndex * 0.05 }}
-                                        >
-                                          {point}
-                                        </motion.li>
-                                      ))}
-                                    </ul>
-                                  )}
-                                </motion.div>
-                              ))}
                           </div>
                         )}
                       </motion.div>
                     ))}
                   </CardContent>
-                  <CardFooter className="flex justify-between border-t border-[#c6ac8f]/20 bg-[#f5f0e8]/50 py-4">
-                    <div className="text-sm text-[#8a7559]">
-                      <span className="font-medium">Notivio</span> - AI-powered notes from video content
+                  <CardFooter className="flex justify-between border-t border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white py-6">
+                    <div className="text-sm text-[#8a7559] flex items-center space-x-2">
+                      <div className="w-6 h-6 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center">
+                        <Brain className="h-3 w-3 text-white" />
+                      </div>
+                      <span className="font-medium">Notivio</span>
+                      <span>- AI-powered notes from video content</span>
                     </div>
                   </CardFooter>
                 </Card>
               </TabsContent>
 
-              <TabsContent value="raw">
-                <Card className="border border-[#c6ac8f]/30 shadow-md bg-white">
-                  <CardContent className="pt-6">
-                    <motion.div
-                      className="bg-[#f5f0e8] p-6 rounded-md max-h-[600px] overflow-y-auto border border-[#c6ac8f]/30 shadow-inner"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <h3 className="text-xl font-bold mb-4 text-[#8a7559]">Raw Transcript</h3>
-                      <div className="whitespace-pre-wrap text-gray-700 font-mono text-sm">{notes.transcript}</div>
-                    </motion.div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
               <TabsContent value="summary">
-                <Card className="border border-[#c6ac8f]/30 shadow-md bg-white">
-                  <CardContent className="pt-6">
-                    <motion.div
-                      className="bg-[#f5f0e8] p-6 rounded-md border border-[#c6ac8f]/30"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <h3 className="text-xl font-bold mb-4 text-[#8a7559]">Summary</h3>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Summary */}
+                  <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                        <MessageSquare className="h-5 w-5 mr-2" />
+                        Video Summary
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6">
                       {editMode ? (
-                        <div className="p-4 bg-white rounded-md border border-[#c6ac8f]/20 shadow-inner">
-                          <textarea
-                            value={editableNotes?.summary || ""}
-                            onChange={(e) => handleEditSummary(e.target.value)}
-                            className="w-full p-3 border border-[#c6ac8f]/30 rounded-md min-h-[200px] focus:ring-[#c6ac8f] focus:border-[#c6ac8f]"
-                          />
-                        </div>
+                        <textarea
+                          value={editableNotes?.summary || ""}
+                          onChange={(e) => handleEditSummary(e.target.value)}
+                          className="w-full p-4 border border-[#c6ac8f]/30 rounded-lg min-h-[300px] focus:ring-[#c6ac8f] focus:border-[#c6ac8f] shadow-sm resize-none"
+                        />
                       ) : (
-                        <div className="p-4 bg-white rounded-md border border-[#c6ac8f]/20 shadow-inner">
-                          <p className="whitespace-pre-wrap text-gray-700 leading-relaxed">{notes.summary}</p>
+                        <div className="prose prose-gray max-w-none">
+                          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{notes.summary}</p>
                         </div>
                       )}
-                    </motion.div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Key Points */}
+                  <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                        <Sparkles className="h-5 w-5 mr-2" />
+                        Key Takeaways
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <ul className="space-y-4">
+                        {notes.keyPoints.map((point, index) => (
+                          <motion.li
+                            key={index}
+                            className="flex items-start space-x-3"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                          >
+                            <div className="w-6 h-6 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5">
+                              {index + 1}
+                            </div>
+                            <span className="text-gray-700 leading-relaxed">{point}</span>
+                          </motion.li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="raw">
+                <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                  <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                    <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                      <Youtube className="h-5 w-5 mr-2" />
+                      Raw Transcript
+                    </CardTitle>
+                    <CardDescription>Original transcript extracted from the video</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="bg-gradient-to-r from-[#f5f0e8] to-white p-6 rounded-xl max-h-[600px] overflow-y-auto border border-[#c6ac8f]/30 shadow-inner">
+                      <div className="whitespace-pre-wrap text-gray-700 font-mono text-sm leading-relaxed">
+                        {notes.transcript}
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
