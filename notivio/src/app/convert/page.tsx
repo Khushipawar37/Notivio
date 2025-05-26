@@ -277,7 +277,7 @@ export default function VideoNotesPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f5f0e8] via-[#f8f4ed] to-[#f5f0e8] py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#f5f0e8] via-[#f8f4ed] to-[#f5f0e8] py-8 px-4 pt-[12rem]">
       <div className="container mx-auto max-w-6xl">
         {/* Hero Section */}
         <motion.div
@@ -286,12 +286,6 @@ export default function VideoNotesPage() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center justify-center p-2 bg-white rounded-full shadow-lg mb-6">
-            <div className="bg-gradient-to-r from-[#8a7559] to-[#a68b5b] p-3 rounded-full">
-              <Brain className="h-8 w-8 text-white" />
-            </div>
-          </div>
-
           <h1 className="text-5xl md:text-6xl font-bold text-black mb-6">
             <span className="bg-gradient-to-r from-[#8a7559] to-[#a68b5b] bg-clip-text text-transparent">Notivio</span>{" "}
             Video Notes
