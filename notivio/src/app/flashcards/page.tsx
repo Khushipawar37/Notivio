@@ -7,5 +7,4 @@ const Flashcards = () => {
     </div>
   )
 }
-
 export default Flashcards
