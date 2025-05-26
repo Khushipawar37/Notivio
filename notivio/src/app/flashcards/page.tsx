@@ -3,7 +3,7 @@ import React from 'react'
 const Flashcards = () => {
   return (
     <div>
-      Flashcards
+      Flashcards will be displayed here.
     </div>
   )
 }
