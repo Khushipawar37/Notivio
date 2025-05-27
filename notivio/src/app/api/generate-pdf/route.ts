@@ -86,7 +86,6 @@ export async function POST(request: NextRequest) {
       }
       doc.end()
     })
-
     return new NextResponse(pdfBuffer, {
       headers: {
         "Content-Type": "application/pdf",
