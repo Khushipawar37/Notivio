@@ -59,14 +59,12 @@ export async function POST(request: NextRequest) {
         if (doc.y > 700) {
           doc.addPage()
         }
-
         // Section title
         doc
           .fontSize(14)
           .fillColor("#8a7559")
           .text(`${sectionIndex + 1}. ${section.title}`, { underline: true })
           .moveDown(0.5)
-
         // Section content
         section.content.forEach((point: string) => {
           doc.fontSize(11).fillColor("#000000").text(`• ${point}`, { indent: 20, align: "justify" }).moveDown(0.3)
@@ -74,7 +72,6 @@ export async function POST(request: NextRequest) {
 
         doc.moveDown(1)
       })
-
       // Add footer
       const pageCount = doc.bufferedPageRange().count
       for (let i = 0; i < pageCount; i++) {
@@ -86,6 +83,7 @@ export async function POST(request: NextRequest) {
       }
       doc.end()
     })
+
     return new NextResponse(pdfBuffer, {
       headers: {
         "Content-Type": "application/pdf",
