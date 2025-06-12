@@ -147,7 +147,7 @@ export default function Navbar() {
             {/* Login button */}
             <div className="h-8 w-px bg-gray-700 mx-2"></div>
             <Link
-              href="/login"
+              href="/auth/login"
               className="flex flex-col items-center justify-center w-[5.5rem] h-16 text-[black] hover:text-white transition-colors duration-200 z-10"
             >
               <User size={24} />

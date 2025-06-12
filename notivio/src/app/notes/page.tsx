@@ -490,13 +490,13 @@ export default function NotesPage() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-14 gap-4">
           {/* Sidebar */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="lg:col-span-4 xl:col-span-3"
+            className="lg:col-span-4 xl:col-span-4"
           >
             <Card className="border border-[#c6ac8f]/30 shadow-md overflow-hidden bg-white sticky top-24">
               <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20 pb-4">
