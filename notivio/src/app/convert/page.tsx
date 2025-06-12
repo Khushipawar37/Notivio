@@ -31,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip"
 import { Badge } from "../components/ui/badge"
 import { Progress } from "../components/ui/progress"
+import Footer from "../components/home/Footer"
 
 type NoteSection = {
   title: string
@@ -277,8 +278,8 @@ export default function VideoNotesPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f5f0e8] via-[#f8f4ed] to-[#f5f0e8] py-8 px-4 pt-[12rem]">
-      <div className="container mx-auto max-w-6xl">
+    <div className="min-h-screen bg-gradient-to-br from-[#f5f0e8] via-[#f8f4ed] to-[#f5f0e8] pt-[12rem]">
+      <div className="container mx-auto max-w-6xl mb-[12rem]">
         {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -798,6 +799,7 @@ export default function VideoNotesPage() {
           </motion.div>
         )}
       </div>
+      <Footer/>
     </div>
   )
 }

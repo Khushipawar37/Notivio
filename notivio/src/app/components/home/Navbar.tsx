@@ -82,7 +82,7 @@ export default function Navbar() {
     { href: "/", icon: <Home size={24} />, label: "Home" },
     { href: "/notes", icon: <FileText size={24} />, label: "Notes" },
     { href: "/convert", icon: <Video size={24} />, label: "Convert" },
-    { href: "/flashcards", icon: <FlashCard size={24} />, label: "Flashcards" },
+    { href: "/dashboard", icon: <FlashCard size={24} />, label: "Dashboard" },
   ]
 
   // Set active tab based on current path
@@ -148,7 +148,7 @@ export default function Navbar() {
             <div className="h-8 w-px bg-gray-700 mx-2"></div>
             <Link
               href="/auth/login"
-              className="flex flex-col items-center justify-center w-[5.5rem] h-16 text-[black] hover:text-white transition-colors duration-200 z-10"
+              className="flex flex-col items-center justify-center w-[5.5rem] h-16 text-[black] hover:text-gray-300 transition-colors duration-200 z-10"
             >
               <User size={24} />
               <span className="text-xs mt-1 font-medium">Login</span>

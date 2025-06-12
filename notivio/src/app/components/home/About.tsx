@@ -308,7 +308,7 @@ const InteractiveWorkflow = () => {
       ref={containerRef}
       initial={{ opacity: 0 }}
       animate={isInView ? { opacity: 1 } : { opacity: 0 }}
-      transition={{ duration: 0.6 }}
+      transition={{ duration: 2.6 }}
       className="relative w-full h-[400px]" // Fixed height to prevent content shifting
     >
       <div className="relative z-10">

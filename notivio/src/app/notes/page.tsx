@@ -54,6 +54,7 @@ import { Badge } from "../components/ui/badge"
 import { Label } from "../components/ui/label"
 import { ScrollArea } from "../components/ui/scroll-area"
 import { Progress } from "../components/ui/progress"
+import Footer from "../components/home/Footer"
 
 type Note = {
   id: string
@@ -474,7 +475,7 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f5f0e8] via-[#f5f0e8] to-[#f5f0e8] py-[6rem] px-4">
+    <div className="min-h-screen bg-gradient-to-b from-[#f5f0e8] via-[#f5f0e8] to-[#f5f0e8] py-[10rem] px-4">
       <div className="container mx-auto max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
