@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FileDown,
   Edit,
@@ -27,12 +27,28 @@ import {
   BookmarkCheck,
   Scan,
   Wand2,
-} from "lucide-react"
-import { Button } from "../components/ui/button"
-import { Input } from "../components/ui/input"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip"
+} from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,7 +56,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "../components/ui/dropdown-menu"
+} from "../components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -49,28 +65,28 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../components/ui/dialog"
-import { Badge } from "../components/ui/badge"
-import { Label } from "../components/ui/label"
-import { ScrollArea } from "../components/ui/scroll-area"
-import { Progress } from "../components/ui/progress"
-import Footer from "../components/home/Footer"
+} from "../components/ui/dialog";
+import { Badge } from "../components/ui/badge";
+import { Label } from "../components/ui/label";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { Progress } from "../components/ui/progress";
+import Footer from "../components/home/Footer";
 
 type Note = {
-  id: string
-  title: string
-  content: string
-  summary: string
-  tags: string[]
-  source: string
-  sourceType: "video" | "document" | "manual" | "image"
-  lastUpdated: string
-  isFavorite: boolean
+  id: string;
+  title: string;
+  content: string;
+  summary: string;
+  tags: string[];
+  source: string;
+  sourceType: "video" | "document" | "manual" | "image";
+  lastUpdated: string;
+  isFavorite: boolean;
   sections?: {
-    title: string
-    content: string[]
-  }[]
-}
+    title: string;
+    content: string[];
+  }[];
+};
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([
@@ -105,7 +121,8 @@ export default function NotesPage() {
     {
       id: "2",
       title: "Modern Web Development Frameworks",
-      content: "Comparing React, Vue, and Angular for modern web applications...",
+      content:
+        "Comparing React, Vue, and Angular for modern web applications...",
       summary: "Analysis of popular frontend frameworks and their use cases",
       tags: ["Web Development", "Programming", "JavaScript"],
       source: "Manual Notes",
@@ -134,8 +151,10 @@ export default function NotesPage() {
     {
       id: "3",
       title: "Climate Change: Global Impact",
-      content: "Examining the effects of climate change on ecosystems worldwide...",
-      summary: "Overview of climate change causes, effects, and potential solutions",
+      content:
+        "Examining the effects of climate change on ecosystems worldwide...",
+      summary:
+        "Overview of climate change causes, effects, and potential solutions",
       tags: ["Environment", "Science", "Global Issues"],
       source: "Document: IPCC Report Summary",
       sourceType: "document",
@@ -160,26 +179,28 @@ export default function NotesPage() {
         },
       ],
     },
-  ])
+  ]);
 
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null)
-  const [editMode, setEditMode] = useState(false)
-  const [editableNote, setEditableNote] = useState<Note | null>(null)
-  const [activeTab, setActiveTab] = useState("all")
-  const [sortBy, setSortBy] = useState<"date" | "title">("date")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
-  const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({})
-  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false)
-  const [successMessage, setSuccessMessage] = useState("")
-  const [isImageScanModalOpen, setIsImageScanModalOpen] = useState(false)
-  const [isEnhanceModalOpen, setIsEnhanceModalOpen] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [processingProgress, setProcessingProgress] = useState(0)
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editableNote, setEditableNote] = useState<Note | null>(null);
+  const [activeTab, setActiveTab] = useState("all");
+  const [sortBy, setSortBy] = useState<"date" | "title">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [expandedSections, setExpandedSections] = useState<
+    Record<number, boolean>
+  >({});
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isImageScanModalOpen, setIsImageScanModalOpen] = useState(false);
+  const [isEnhanceModalOpen, setIsEnhanceModalOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const notesContainerRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const notesContainerRef = useRef<HTMLDivElement>(null);
 
   // Filter notes based on search term, tags, and active tab
   const filteredNotes = notes
@@ -187,48 +208,61 @@ export default function NotesPage() {
       (note) =>
         note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())),
+        note.tags.some((tag) =>
+          tag.toLowerCase().includes(searchTerm.toLowerCase())
+        )
     )
-    .filter((note) => selectedTags.length === 0 || selectedTags.some((tag) => note.tags.includes(tag)))
+    .filter(
+      (note) =>
+        selectedTags.length === 0 ||
+        selectedTags.some((tag) => note.tags.includes(tag))
+    )
     .filter((note) => {
-      if (activeTab === "all") return true
-      if (activeTab === "favorites") return note.isFavorite
-      if (activeTab === "video") return note.sourceType === "video"
-      if (activeTab === "document") return note.sourceType === "document"
-      if (activeTab === "manual") return note.sourceType === "manual"
-      if (activeTab === "image") return note.sourceType === "image"
-      return true
+      if (activeTab === "all") return true;
+      if (activeTab === "favorites") return note.isFavorite;
+      if (activeTab === "video") return note.sourceType === "video";
+      if (activeTab === "document") return note.sourceType === "document";
+      if (activeTab === "manual") return note.sourceType === "manual";
+      if (activeTab === "image") return note.sourceType === "image";
+      return true;
     })
     .sort((a, b) => {
       if (sortBy === "date") {
         return sortOrder === "asc"
-          ? new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime()
-          : new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+          ? new Date(a.lastUpdated).getTime() -
+              new Date(b.lastUpdated).getTime()
+          : new Date(b.lastUpdated).getTime() -
+              new Date(a.lastUpdated).getTime();
       } else {
-        return sortOrder === "asc" ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)
+        return sortOrder === "asc"
+          ? a.title.localeCompare(b.title)
+          : b.title.localeCompare(a.title);
       }
-    })
+    });
 
   // Get all unique tags from notes
-  const allTags = Array.from(new Set(notes.flatMap((note) => note.tags)))
+  const allTags = Array.from(new Set(notes.flatMap((note) => note.tags)));
 
   // Initialize expanded sections when a note is selected
   useEffect(() => {
     if (selectedNote && selectedNote.sections) {
-      const initialExpandedState: Record<number, boolean> = {}
+      const initialExpandedState: Record<number, boolean> = {};
       selectedNote.sections.forEach((_, index) => {
-        initialExpandedState[index] = true
-      })
-      setExpandedSections(initialExpandedState)
+        initialExpandedState[index] = true;
+      });
+      setExpandedSections(initialExpandedState);
     }
-  }, [selectedNote])
+  }, [selectedNote]);
 
   // Scroll to notes when selected
   useEffect(() => {
     if (selectedNote && notesContainerRef.current) {
-      notesContainerRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+      notesContainerRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }
-  }, [selectedNote])
+  }, [selectedNote]);
 
   // Simulate image scanning process
   useEffect(() => {
@@ -236,8 +270,8 @@ export default function NotesPage() {
       const interval = setInterval(() => {
         setProcessingProgress((prev) => {
           if (prev >= 100) {
-            clearInterval(interval)
-            setIsProcessing(false)
+            clearInterval(interval);
+            setIsProcessing(false);
 
             // Add a new note from the scanned image
             if (isImageScanModalOpen) {
@@ -246,7 +280,8 @@ export default function NotesPage() {
                 title: "Scanned Notes: Physics Lecture",
                 content:
                   "Quantum mechanics is a fundamental theory in physics that provides a description of the physical properties of nature at the scale of atoms and subatomic particles...",
-                summary: "Notes on quantum mechanics principles and applications",
+                summary:
+                  "Notes on quantum mechanics principles and applications",
                 tags: ["Physics", "Science", "Quantum"],
                 source: "Image Scan",
                 sourceType: "image",
@@ -270,209 +305,236 @@ export default function NotesPage() {
                     ],
                   },
                 ],
-              }
+              };
 
-              setNotes((prev) => [...prev, newNote])
-              setSelectedNote(newNote)
-              setIsImageScanModalOpen(false)
-              showSuccess("Image successfully scanned and converted to notes!")
+              setNotes((prev) => [...prev, newNote]);
+              setSelectedNote(newNote);
+              setIsImageScanModalOpen(false);
+              showSuccess("Image successfully scanned and converted to notes!");
             }
 
             // Enhance the selected note
             if (isEnhanceModalOpen) {
               if (selectedNote) {
                 // Create enhanced flashcards from the note
-                const enhancedNote = { ...selectedNote }
-                enhancedNote.title = `${enhancedNote.title} (Enhanced)`
-                enhancedNote.lastUpdated = new Date().toISOString()
+                const enhancedNote = { ...selectedNote };
+                enhancedNote.title = `${enhancedNote.title} (Enhanced)`;
+                enhancedNote.lastUpdated = new Date().toISOString();
 
-                setIsEnhanceModalOpen(false)
-                showSuccess("Note successfully enhanced and flashcards created!")
+                setIsEnhanceModalOpen(false);
+                showSuccess(
+                  "Note successfully enhanced and flashcards created!"
+                );
               }
             }
 
-            return 100
+            return 100;
           }
-          return prev + 5
-        })
-      }, 150)
+          return prev + 5;
+        });
+      }, 150);
 
-      return () => clearInterval(interval)
+      return () => clearInterval(interval);
     }
-  }, [isProcessing, isImageScanModalOpen, isEnhanceModalOpen, selectedNote, notes.length])
+  }, [
+    isProcessing,
+    isImageScanModalOpen,
+    isEnhanceModalOpen,
+    selectedNote,
+    notes.length,
+  ]);
 
   const toggleSection = (sectionIndex: number) => {
     setExpandedSections((prev) => ({
       ...prev,
       [sectionIndex]: !prev[sectionIndex],
-    }))
-  }
+    }));
+  };
 
   const selectNote = (note: Note) => {
-    setSelectedNote(note)
-    setEditMode(false)
-    setEditableNote(null)
-  }
+    setSelectedNote(note);
+    setEditMode(false);
+    setEditableNote(null);
+  };
 
   const startEditMode = () => {
     if (selectedNote) {
-      setEditMode(true)
-      setEditableNote(JSON.parse(JSON.stringify(selectedNote)))
+      setEditMode(true);
+      setEditableNote(JSON.parse(JSON.stringify(selectedNote)));
     }
-  }
+  };
 
   const cancelEdit = () => {
-    setEditMode(false)
-    setEditableNote(null)
-  }
+    setEditMode(false);
+    setEditableNote(null);
+  };
 
   const saveEdit = () => {
     if (editableNote) {
       // Update the note in the notes array
       setNotes((prev) =>
         prev.map((note) =>
-          note.id === editableNote.id ? { ...editableNote, lastUpdated: new Date().toISOString() } : note,
-        ),
-      )
+          note.id === editableNote.id
+            ? { ...editableNote, lastUpdated: new Date().toISOString() }
+            : note
+        )
+      );
 
       // Update the selected note
-      setSelectedNote({ ...editableNote, lastUpdated: new Date().toISOString() })
-      setEditMode(false)
-      showSuccess("Note updated successfully!")
+      setSelectedNote({
+        ...editableNote,
+        lastUpdated: new Date().toISOString(),
+      });
+      setEditMode(false);
+      showSuccess("Note updated successfully!");
     }
-  }
+  };
 
   const deleteNote = (noteId: string) => {
-    setNotes((prev) => prev.filter((note) => note.id !== noteId))
+    setNotes((prev) => prev.filter((note) => note.id !== noteId));
     if (selectedNote && selectedNote.id === noteId) {
-      setSelectedNote(null)
-      setEditMode(false)
-      setEditableNote(null)
+      setSelectedNote(null);
+      setEditMode(false);
+      setEditableNote(null);
     }
-    showSuccess("Note deleted successfully!")
-  }
+    showSuccess("Note deleted successfully!");
+  };
 
   const toggleFavorite = (noteId: string) => {
-    setNotes((prev) => prev.map((note) => (note.id === noteId ? { ...note, isFavorite: !note.isFavorite } : note)))
+    setNotes((prev) =>
+      prev.map((note) =>
+        note.id === noteId ? { ...note, isFavorite: !note.isFavorite } : note
+      )
+    );
 
     if (selectedNote && selectedNote.id === noteId) {
-      setSelectedNote((prev) => (prev ? { ...prev, isFavorite: !prev.isFavorite } : null))
+      setSelectedNote((prev) =>
+        prev ? { ...prev, isFavorite: !prev.isFavorite } : null
+      );
     }
-  }
+  };
 
   const handleEditSectionTitle = (sectionIndex: number, title: string) => {
-    if (!editableNote || !editableNote.sections) return
+    if (!editableNote || !editableNote.sections) return;
 
-    const updatedNote = { ...editableNote }
-    updatedNote.sections[sectionIndex].title = title
-    setEditableNote(updatedNote)
-  }
+    const updatedNote = { ...editableNote };
+    updatedNote.sections[sectionIndex].title = title;
+    setEditableNote(updatedNote);
+  };
 
-  const handleEditSectionContent = (sectionIndex: number, contentIndex: number, content: string) => {
-    if (!editableNote || !editableNote.sections) return
+  const handleEditSectionContent = (
+    sectionIndex: number,
+    contentIndex: number,
+    content: string
+  ) => {
+    if (!editableNote || !editableNote.sections) return;
 
-    const updatedNote = { ...editableNote }
-    updatedNote.sections[sectionIndex].content[contentIndex] = content
-    setEditableNote(updatedNote)
-  }
+    const updatedNote = { ...editableNote };
+    updatedNote.sections[sectionIndex].content[contentIndex] = content;
+    setEditableNote(updatedNote);
+  };
 
   const addSectionPoint = (sectionIndex: number) => {
-    if (!editableNote || !editableNote.sections) return
+    if (!editableNote || !editableNote.sections) return;
 
-    const updatedNote = { ...editableNote }
-    updatedNote.sections[sectionIndex].content.push("New point")
-    setEditableNote(updatedNote)
-  }
+    const updatedNote = { ...editableNote };
+    updatedNote.sections[sectionIndex].content.push("New point");
+    setEditableNote(updatedNote);
+  };
 
   const removeSectionPoint = (sectionIndex: number, contentIndex: number) => {
-    if (!editableNote || !editableNote.sections) return
+    if (!editableNote || !editableNote.sections) return;
 
-    const updatedNote = { ...editableNote }
-    updatedNote.sections[sectionIndex].content = updatedNote.sections[sectionIndex].content.filter(
-      (_, i) => i !== contentIndex,
-    )
-    setEditableNote(updatedNote)
-  }
+    const updatedNote = { ...editableNote };
+    updatedNote.sections[sectionIndex].content = updatedNote.sections[
+      sectionIndex
+    ].content.filter((_, i) => i !== contentIndex);
+    setEditableNote(updatedNote);
+  };
 
   const addNewSection = () => {
-    if (!editableNote) return
+    if (!editableNote) return;
 
-    const updatedNote = { ...editableNote }
+    const updatedNote = { ...editableNote };
     if (!updatedNote.sections) {
-      updatedNote.sections = []
+      updatedNote.sections = [];
     }
 
     updatedNote.sections.push({
       title: "New Section",
       content: ["Add your content here"],
-    })
+    });
 
-    setEditableNote(updatedNote)
+    setEditableNote(updatedNote);
 
     // Expand the newly added section
-    const newSectionIndex = updatedNote.sections.length - 1
+    const newSectionIndex = updatedNote.sections.length - 1;
     setExpandedSections((prev) => ({
       ...prev,
       [newSectionIndex]: true,
-    }))
-  }
+    }));
+  };
 
   const removeSection = (sectionIndex: number) => {
-    if (!editableNote || !editableNote.sections) return
+    if (!editableNote || !editableNote.sections) return;
 
-    const updatedNote = { ...editableNote }
-    updatedNote.sections = updatedNote.sections.filter((_, i) => i !== sectionIndex)
-    setEditableNote(updatedNote)
-  }
+    const updatedNote = { ...editableNote };
+    updatedNote.sections = updatedNote.sections.filter(
+      (_, i) => i !== sectionIndex
+    );
+    setEditableNote(updatedNote);
+  };
 
   const handleTagChange = (tag: string) => {
-    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
-  }
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
 
   const triggerImageScan = () => {
-    setIsImageScanModalOpen(true)
-    setIsProcessing(true)
-    setProcessingProgress(0)
-  }
+    setIsImageScanModalOpen(true);
+    setIsProcessing(true);
+    setProcessingProgress(0);
+  };
 
   const triggerEnhance = () => {
-    if (!selectedNote) return
-    setIsEnhanceModalOpen(true)
-    setIsProcessing(true)
-    setProcessingProgress(0)
-  }
+    if (!selectedNote) return;
+    setIsEnhanceModalOpen(true);
+    setIsProcessing(true);
+    setProcessingProgress(0);
+  };
 
   const showSuccess = (message: string) => {
-    setSuccessMessage(message)
-    setShowSuccessAnimation(true)
+    setSuccessMessage(message);
+    setShowSuccessAnimation(true);
     setTimeout(() => {
-      setShowSuccessAnimation(false)
-    }, 3000)
-  }
+      setShowSuccessAnimation(false);
+    }, 3000);
+  };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
-    })
-  }
+    });
+  };
 
   const getSourceIcon = (sourceType: string) => {
     switch (sourceType) {
       case "video":
-        return <BookOpen className="h-4 w-4" />
+        return <BookOpen className="h-4 w-4" />;
       case "document":
-        return <FileText className="h-4 w-4" />
+        return <FileText className="h-4 w-4" />;
       case "manual":
-        return <Edit className="h-4 w-4" />
+        return <Edit className="h-4 w-4" />;
       case "image":
-        return <ImageIcon className="h-4 w-4" />
+        return <ImageIcon className="h-4 w-4" />;
       default:
-        return <FileText className="h-4 w-4" />
+        return <FileText className="h-4 w-4" />;
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f5f0e8] via-[#f5f0e8] to-[#f5f0e8] py-[10rem] px-4">
@@ -502,12 +564,18 @@ export default function NotesPage() {
             <Card className="border border-[#c6ac8f]/30 shadow-md overflow-hidden bg-white sticky top-24">
               <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20 pb-4">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-xl text-[#8a7559]">My Notes</CardTitle>
+                  <CardTitle className="text-xl text-[#8a7559]">
+                    My Notes
+                  </CardTitle>
 
                   <div className="flex gap-2">
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-[#8a7559]">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-[#8a7559]"
+                        >
                           <Scan className="h-4 w-4" />
                           <span className="sr-only">Scan Image</span>
                         </Button>
@@ -516,7 +584,8 @@ export default function NotesPage() {
                         <DialogHeader>
                           <DialogTitle>Scan Image to Notes</DialogTitle>
                           <DialogDescription>
-                            Upload an image of handwritten or printed notes to convert to digital format
+                            Upload an image of handwritten or printed notes to
+                            convert to digital format
                           </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
@@ -532,15 +601,25 @@ export default function NotesPage() {
                               onChange={() => triggerImageScan()}
                             />
                             <ImageIcon className="h-12 w-12 mx-auto mb-4 text-[#8a7559]" />
-                            <p className="text-sm text-gray-600 mb-2">Drag and drop an image here or click to browse</p>
-                            <p className="text-xs text-gray-500">Supports JPG, PNG, and PDF files</p>
+                            <p className="text-sm text-gray-600 mb-2">
+                              Drag and drop an image here or click to browse
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Supports JPG, PNG, and PDF files
+                            </p>
                           </div>
                         </div>
                         <DialogFooter>
-                          <Button variant="outline" onClick={() => setIsImageScanModalOpen(false)}>
+                          <Button
+                            variant="outline"
+                            onClick={() => setIsImageScanModalOpen(false)}
+                          >
                             Cancel
                           </Button>
-                          <Button onClick={triggerImageScan} className="bg-[#8a7559] hover:bg-[#8a7559]/90 text-white">
+                          <Button
+                            onClick={triggerImageScan}
+                            className="bg-[#8a7559] hover:bg-[#8a7559]/90 text-white"
+                          >
                             Scan Image
                           </Button>
                         </DialogFooter>
@@ -606,7 +685,12 @@ export default function NotesPage() {
               </CardHeader>
 
               <CardContent className="p-0">
-                <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <Tabs
+                  defaultValue="all"
+                  value={activeTab}
+                  onValueChange={setActiveTab}
+                  className="w-full"
+                >
                   <TabsList className="w-full justify-start rounded-none border-b border-[#c6ac8f]/20 bg-[#f5f0e8]/50 p-0">
                     <TabsTrigger
                       value="all"
@@ -628,7 +712,9 @@ export default function NotesPage() {
                         {allTags.map((tag) => (
                           <Badge
                             key={tag}
-                            variant={selectedTags.includes(tag) ? "default" : "outline"}
+                            variant={
+                              selectedTags.includes(tag) ? "default" : "outline"
+                            }
                             className={`cursor-pointer ${
                               selectedTags.includes(tag)
                                 ? "bg-[#8a7559] hover:bg-[#8a7559]/80"
@@ -648,7 +734,9 @@ export default function NotesPage() {
                       <div className="p-8 text-center text-gray-500">
                         <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
                         <p>No notes found</p>
-                        <p className="text-sm">Try adjusting your search or filters</p>
+                        <p className="text-sm">
+                          Try adjusting your search or filters
+                        </p>
                       </div>
                     ) : (
                       <div>
@@ -661,20 +749,24 @@ export default function NotesPage() {
                           >
                             <div
                               className={`p-4 border-b border-[#c6ac8f]/20 cursor-pointer transition-colors ${
-                                selectedNote?.id === note.id ? "bg-[#f5f0e8]" : "hover:bg-[#f5f0e8]/50"
+                                selectedNote?.id === note.id
+                                  ? "bg-[#f5f0e8]"
+                                  : "hover:bg-[#f5f0e8]/50"
                               }`}
                               onClick={() => selectNote(note)}
                             >
                               <div className="flex justify-between items-start mb-1">
-                                <h3 className="font-medium text-[#8a7559] line-clamp-1">{note.title}</h3>
+                                <h3 className="font-medium text-[#8a7559] line-clamp-1">
+                                  {note.title}
+                                </h3>
                                 <div className="flex items-center">
                                   <Button
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7"
                                     onClick={(e) => {
-                                      e.stopPropagation()
-                                      toggleFavorite(note.id)
+                                      e.stopPropagation();
+                                      toggleFavorite(note.id);
                                     }}
                                   >
                                     {note.isFavorite ? (
@@ -683,25 +775,38 @@ export default function NotesPage() {
                                       <Bookmark className="h-4 w-4 text-gray-400" />
                                     )}
                                     <span className="sr-only">
-                                      {note.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                                      {note.isFavorite
+                                        ? "Remove from favorites"
+                                        : "Add to favorites"}
                                     </span>
                                   </Button>
                                 </div>
                               </div>
-                              <p className="text-sm text-gray-600 line-clamp-2 mb-2">{note.summary}</p>
+                              <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                                {note.summary}
+                              </p>
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center text-xs text-gray-500">
                                   {getSourceIcon(note.sourceType)}
-                                  <span className="ml-1">{formatDate(note.lastUpdated)}</span>
+                                  <span className="ml-1">
+                                    {formatDate(note.lastUpdated)}
+                                  </span>
                                 </div>
                                 <div className="flex gap-1">
                                   {note.tags.slice(0, 2).map((tag) => (
-                                    <Badge key={tag} variant="outline" className="text-xs py-0 h-5 border-[#c6ac8f]/30">
+                                    <Badge
+                                      key={tag}
+                                      variant="outline"
+                                      className="text-xs py-0 h-5 border-[#c6ac8f]/30"
+                                    >
                                       {tag}
                                     </Badge>
                                   ))}
                                   {note.tags.length > 2 && (
-                                    <Badge variant="outline" className="text-xs py-0 h-5 border-[#c6ac8f]/30">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs py-0 h-5 border-[#c6ac8f]/30"
+                                    >
                                       +{note.tags.length - 2}
                                     </Badge>
                                   )}
@@ -735,12 +840,16 @@ export default function NotesPage() {
                         <Input
                           value={editableNote?.title || ""}
                           onChange={(e) =>
-                            setEditableNote((prev) => (prev ? { ...prev, title: e.target.value } : null))
+                            setEditableNote((prev) =>
+                              prev ? { ...prev, title: e.target.value } : null
+                            )
                           }
                           className="text-xl font-bold border-2 focus:ring-[#c6ac8f] focus:border-[#c6ac8f] border-[#c6ac8f]/30"
                         />
                       ) : (
-                        <CardTitle className="text-2xl text-[#8a7559]">{selectedNote.title}</CardTitle>
+                        <CardTitle className="text-2xl text-[#8a7559]">
+                          {selectedNote.title}
+                        </CardTitle>
                       )}
 
                       <div className="flex items-center mt-2 text-sm text-gray-600">
@@ -766,7 +875,10 @@ export default function NotesPage() {
                           >
                             Cancel
                           </Button>
-                          <Button onClick={saveEdit} className="bg-[#8a7559] hover:bg-[#8a7559]/90 text-white">
+                          <Button
+                            onClick={saveEdit}
+                            className="bg-[#8a7559] hover:bg-[#8a7559]/90 text-white"
+                          >
                             <Save className="h-4 w-4 mr-2" />
                             Save Changes
                           </Button>
@@ -801,57 +913,75 @@ export default function NotesPage() {
                             <DialogContent>
                               <DialogHeader>
                                 <DialogTitle>Enhance Your Notes</DialogTitle>
-                                <DialogDescription>Choose how you want to enhance your notes</DialogDescription>
+                                <DialogDescription>
+                                  Choose how you want to enhance your notes
+                                </DialogDescription>
                               </DialogHeader>
 
                               <div className="grid gap-4 py-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <Card className="border border-[#c6ac8f]/30 cursor-pointer hover:bg-[#f5f0e8]/50 transition-colors">
                                     <CardHeader className="pb-2">
-                                      <CardTitle className="text-lg">Flashcards</CardTitle>
+                                      <CardTitle className="text-lg">
+                                        Flashcards
+                                      </CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                       <p className="text-sm text-gray-600">
-                                        Convert your notes into interactive flashcards for better memorization
+                                        Convert your notes into interactive
+                                        flashcards for better memorization
                                       </p>
                                     </CardContent>
                                   </Card>
 
                                   <Card className="border border-[#c6ac8f]/30 cursor-pointer hover:bg-[#f5f0e8]/50 transition-colors">
                                     <CardHeader className="pb-2">
-                                      <CardTitle className="text-lg">Mind Map</CardTitle>
+                                      <CardTitle className="text-lg">
+                                        Mind Map
+                                      </CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                       <p className="text-sm text-gray-600">
-                                        Visualize connections between concepts in your notes
+                                        Visualize connections between concepts
+                                        in your notes
                                       </p>
                                     </CardContent>
                                   </Card>
 
                                   <Card className="border border-[#c6ac8f]/30 cursor-pointer hover:bg-[#f5f0e8]/50 transition-colors">
                                     <CardHeader className="pb-2">
-                                      <CardTitle className="text-lg">Quiz</CardTitle>
+                                      <CardTitle className="text-lg">
+                                        Quiz
+                                      </CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                       <p className="text-sm text-gray-600">
-                                        Generate practice questions based on your notes
+                                        Generate practice questions based on
+                                        your notes
                                       </p>
                                     </CardContent>
                                   </Card>
 
                                   <Card className="border border-[#c6ac8f]/30 cursor-pointer hover:bg-[#f5f0e8]/50 transition-colors">
                                     <CardHeader className="pb-2">
-                                      <CardTitle className="text-lg">Summary</CardTitle>
+                                      <CardTitle className="text-lg">
+                                        Summary
+                                      </CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                      <p className="text-sm text-gray-600">Create a concise summary of your notes</p>
+                                      <p className="text-sm text-gray-600">
+                                        Create a concise summary of your notes
+                                      </p>
                                     </CardContent>
                                   </Card>
                                 </div>
                               </div>
 
                               <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsEnhanceModalOpen(false)}>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => setIsEnhanceModalOpen(false)}
+                                >
                                   Cancel
                                 </Button>
                                 <Button
@@ -872,7 +1002,9 @@ export default function NotesPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => toggleFavorite(selectedNote.id)}>
+                              <DropdownMenuItem
+                                onClick={() => toggleFavorite(selectedNote.id)}
+                              >
                                 {selectedNote.isFavorite ? (
                                   <>
                                     <Bookmark className="mr-2 h-4 w-4" />
@@ -911,7 +1043,10 @@ export default function NotesPage() {
                       </Label>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {editableNote?.tags.map((tag, index) => (
-                          <Badge key={index} className="bg-[#8a7559] hover:bg-[#8a7559]/80 flex items-center gap-1">
+                          <Badge
+                            key={index}
+                            className="bg-[#8a7559] hover:bg-[#8a7559]/80 flex items-center gap-1"
+                          >
                             {tag}
                             <Button
                               variant="ghost"
@@ -919,8 +1054,13 @@ export default function NotesPage() {
                               className="h-4 w-4 p-0 text-white hover:text-white hover:bg-transparent"
                               onClick={() => {
                                 if (editableNote) {
-                                  const updatedTags = editableNote.tags.filter((_, i) => i !== index)
-                                  setEditableNote({ ...editableNote, tags: updatedTags })
+                                  const updatedTags = editableNote.tags.filter(
+                                    (_, i) => i !== index
+                                  );
+                                  setEditableNote({
+                                    ...editableNote,
+                                    tags: updatedTags,
+                                  });
                                 }
                               }}
                             >
@@ -934,16 +1074,19 @@ export default function NotesPage() {
                           placeholder="Add tag..."
                           className="w-24 h-6 text-xs"
                           onKeyDown={(e) => {
-                            if (e.key === "Enter" && e.currentTarget.value.trim() !== "") {
+                            if (
+                              e.key === "Enter" &&
+                              e.currentTarget.value.trim() !== ""
+                            ) {
                               if (editableNote) {
-                                const newTag = e.currentTarget.value.trim()
+                                const newTag = e.currentTarget.value.trim();
                                 if (!editableNote.tags.includes(newTag)) {
                                   setEditableNote({
                                     ...editableNote,
                                     tags: [...editableNote.tags, newTag],
-                                  })
+                                  });
                                 }
-                                e.currentTarget.value = ""
+                                e.currentTarget.value = "";
                               }
                             }
                           }}
@@ -953,7 +1096,10 @@ export default function NotesPage() {
                   ) : (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {selectedNote.tags.map((tag) => (
-                        <Badge key={tag} className="bg-[#8a7559] hover:bg-[#8a7559]/80">
+                        <Badge
+                          key={tag}
+                          className="bg-[#8a7559] hover:bg-[#8a7559]/80"
+                        >
                           {tag}
                         </Badge>
                       ))}
@@ -983,140 +1129,180 @@ export default function NotesPage() {
                     <TabsContent value="structured">
                       {editMode && (
                         <div className="mb-6 flex justify-end">
-                          <Button onClick={addNewSection} className="bg-[#8a7559] hover:bg-[#8a7559]/90 text-white">
+                          <Button
+                            onClick={addNewSection}
+                            className="bg-[#8a7559] hover:bg-[#8a7559]/90 text-white"
+                          >
                             <Plus className="h-4 w-4 mr-2" />
                             Add Section
                           </Button>
                         </div>
                       )}
 
-                      {(editMode ? editableNote : selectedNote)?.sections?.map((section, sIndex) => (
-                        <motion.div
-                          key={sIndex}
-                          className="mb-8 border border-[#c6ac8f]/20 rounded-lg overflow-hidden"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.4, delay: sIndex * 0.1 }}
-                        >
-                          <div
-                            className="flex justify-between items-center p-3 bg-[#f5f0e8] cursor-pointer"
-                            onClick={() => toggleSection(sIndex)}
+                      {(editMode ? editableNote : selectedNote)?.sections?.map(
+                        (section, sIndex) => (
+                          <motion.div
+                            key={sIndex}
+                            className="mb-8 border border-[#c6ac8f]/20 rounded-lg overflow-hidden"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, delay: sIndex * 0.1 }}
                           >
-                            {editMode ? (
-                              <div className="flex-1 flex items-center">
-                                <input
-                                  type="text"
-                                  value={section.title}
-                                  onChange={(e) => handleEditSectionTitle(sIndex, e.target.value)}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="text-xl font-bold w-full p-2 bg-white border border-[#c6ac8f]/30 rounded-md focus:ring-[#c6ac8f] focus:border-[#c6ac8f]"
-                                />
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    removeSection(sIndex)
-                                  }}
-                                  className="ml-2 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <h3 className="text-xl font-bold text-[#8a7559]">{section.title}</h3>
-                            )}
-                            <div className="text-[#8a7559]">
-                              {expandedSections[sIndex] ? (
-                                <ChevronUp className="h-5 w-5" />
-                              ) : (
-                                <ChevronDown className="h-5 w-5" />
-                              )}
-                            </div>
-                          </div>
-
-                          {expandedSections[sIndex] && (
-                            <div className="p-4">
+                            <div
+                              className="flex justify-between items-center p-3 bg-[#f5f0e8] cursor-pointer"
+                              onClick={() => toggleSection(sIndex)}
+                            >
                               {editMode ? (
-                                <div className="pl-4 mb-4 space-y-3">
-                                  {section.content.map((point, pIndex) => (
-                                    <motion.div
-                                      key={pIndex}
-                                      className="flex items-start"
-                                      initial={{ opacity: 0, x: -10 }}
-                                      animate={{ opacity: 1, x: 0 }}
-                                      transition={{ duration: 0.3, delay: pIndex * 0.05 }}
-                                    >
-                                      <textarea
-                                        value={point}
-                                        onChange={(e) => handleEditSectionContent(sIndex, pIndex, e.target.value)}
-                                        className="w-full p-3 border border-[#c6ac8f]/30 rounded-md min-h-[80px] focus:ring-[#c6ac8f] focus:border-[#c6ac8f]"
-                                      />
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => removeSectionPoint(sIndex, pIndex)}
-                                        className="ml-2 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </motion.div>
-                                  ))}
+                                <div className="flex-1 flex items-center">
+                                  <input
+                                    type="text"
+                                    value={section.title}
+                                    onChange={(e) =>
+                                      handleEditSectionTitle(
+                                        sIndex,
+                                        e.target.value
+                                      )
+                                    }
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-xl font-bold w-full p-2 bg-white border border-[#c6ac8f]/30 rounded-md focus:ring-[#c6ac8f] focus:border-[#c6ac8f]"
+                                  />
                                   <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => addSectionPoint(sIndex)}
-                                    className="mt-2 border-[#c6ac8f]/30 text-[#8a7559] hover:bg-[#f5f0e8]"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeSection(sIndex);
+                                    }}
+                                    className="ml-2 text-red-500 hover:text-red-700 hover:bg-red-50"
                                   >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Add Point
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>
                               ) : (
-                                <ul className="list-disc pl-8 mb-4 space-y-3">
-                                  {section.content.map((point, pIndex) => (
-                                    <motion.li
-                                      key={pIndex}
-                                      className="text-gray-700"
-                                      initial={{ opacity: 0, x: -10 }}
-                                      animate={{ opacity: 1, x: 0 }}
-                                      transition={{ duration: 0.3, delay: pIndex * 0.05 }}
-                                    >
-                                      {point}
-                                    </motion.li>
-                                  ))}
-                                </ul>
+                                <h3 className="text-xl font-bold text-[#8a7559]">
+                                  {section.title}
+                                </h3>
                               )}
+                              <div className="text-[#8a7559]">
+                                {expandedSections[sIndex] ? (
+                                  <ChevronUp className="h-5 w-5" />
+                                ) : (
+                                  <ChevronDown className="h-5 w-5" />
+                                )}
+                              </div>
                             </div>
-                          )}
-                        </motion.div>
-                      ))}
 
-                      {(!selectedNote.sections || selectedNote.sections.length === 0) && !editMode && (
-                        <div className="text-center p-8 text-gray-500">
-                          <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                          <p className="mb-2">No structured content available</p>
-                          <p className="text-sm">Click the Edit button to add sections to this note</p>
-                        </div>
+                            {expandedSections[sIndex] && (
+                              <div className="p-4">
+                                {editMode ? (
+                                  <div className="pl-4 mb-4 space-y-3">
+                                    {section.content.map((point, pIndex) => (
+                                      <motion.div
+                                        key={pIndex}
+                                        className="flex items-start"
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{
+                                          duration: 0.3,
+                                          delay: pIndex * 0.05,
+                                        }}
+                                      >
+                                        <textarea
+                                          value={point}
+                                          onChange={(e) =>
+                                            handleEditSectionContent(
+                                              sIndex,
+                                              pIndex,
+                                              e.target.value
+                                            )
+                                          }
+                                          className="w-full p-3 border border-[#c6ac8f]/30 rounded-md min-h-[80px] focus:ring-[#c6ac8f] focus:border-[#c6ac8f]"
+                                        />
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() =>
+                                            removeSectionPoint(sIndex, pIndex)
+                                          }
+                                          className="ml-2 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </motion.div>
+                                    ))}
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => addSectionPoint(sIndex)}
+                                      className="mt-2 border-[#c6ac8f]/30 text-[#8a7559] hover:bg-[#f5f0e8]"
+                                    >
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      Add Point
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <ul className="list-disc pl-8 mb-4 space-y-3">
+                                    {section.content.map((point, pIndex) => (
+                                      <motion.li
+                                        key={pIndex}
+                                        className="text-gray-700"
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{
+                                          duration: 0.3,
+                                          delay: pIndex * 0.05,
+                                        }}
+                                      >
+                                        {point}
+                                      </motion.li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            )}
+                          </motion.div>
+                        )
                       )}
+
+                      {(!selectedNote.sections ||
+                        selectedNote.sections.length === 0) &&
+                        !editMode && (
+                          <div className="text-center p-8 text-gray-500">
+                            <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                            <p className="mb-2">
+                              No structured content available
+                            </p>
+                            <p className="text-sm">
+                              Click the Edit button to add sections to this note
+                            </p>
+                          </div>
+                        )}
                     </TabsContent>
 
                     <TabsContent value="summary">
                       <div className="bg-[#f5f0e8] p-6 rounded-md border border-[#c6ac8f]/30">
-                        <h3 className="text-xl font-bold mb-4 text-[#8a7559]">Summary</h3>
+                        <h3 className="text-xl font-bold mb-4 text-[#8a7559]">
+                          Summary
+                        </h3>
                         {editMode ? (
                           <div className="p-4 bg-white rounded-md border border-[#c6ac8f]/20 shadow-inner">
                             <textarea
                               value={editableNote?.summary || ""}
                               onChange={(e) =>
-                                setEditableNote((prev) => (prev ? { ...prev, summary: e.target.value } : null))
+                                setEditableNote((prev) =>
+                                  prev
+                                    ? { ...prev, summary: e.target.value }
+                                    : null
+                                )
                               }
                               className="w-full p-3 border border-[#c6ac8f]/30 rounded-md min-h-[200px] focus:ring-[#c6ac8f] focus:border-[#c6ac8f]"
                             />
                           </div>
                         ) : (
                           <div className="p-4 bg-white rounded-md border border-[#c6ac8f]/20 shadow-inner">
-                            <p className="whitespace-pre-wrap text-gray-700 leading-relaxed">{selectedNote.summary}</p>
+                            <p className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                              {selectedNote.summary}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -1126,7 +1312,8 @@ export default function NotesPage() {
 
                 <CardFooter className="flex justify-between border-t border-[#c6ac8f]/20 bg-[#f5f0e8]/50 py-4">
                   <div className="text-sm text-[#8a7559]">
-                    <span className="font-medium">Notivio</span> - Smart note-taking and organization
+                    <span className="font-medium">Notivio</span> - Smart
+                    note-taking and organization
                   </div>
                 </CardFooter>
               </Card>
@@ -1134,11 +1321,16 @@ export default function NotesPage() {
               <Card className="border border-[#c6ac8f]/30 shadow-md overflow-hidden bg-white h-[calc(100vh-16rem)]">
                 <div className="flex flex-col items-center justify-center h-full p-8 text-center">
                   <FileText className="h-16 w-16 text-[#c6ac8f]/50 mb-6" />
-                  <h3 className="text-2xl font-bold text-[#8a7559] mb-2">Select a Note</h3>
+                  <h3 className="text-2xl font-bold text-[#8a7559] mb-2">
+                    Select a Note
+                  </h3>
                   <p className="text-gray-600 max-w-md mb-6">
-                    Choose a note from the sidebar to view, edit, or enhance it with our AI-powered tools
+                    Choose a note from the sidebar to view, edit, or enhance it
+                    with our AI-powered tools
                   </p>
-                  <p className="text-sm text-gray-500">You can also scan an image to create a new note</p>
+                  <p className="text-sm text-gray-500">
+                    You can also scan an image to create a new note
+                  </p>
                 </div>
               </Card>
             )}
@@ -1147,10 +1339,15 @@ export default function NotesPage() {
       </div>
 
       {/* Processing Dialog */}
-      <Dialog open={isProcessing} onOpenChange={(open) => !open && setIsProcessing(false)}>
+      <Dialog
+        open={isProcessing}
+        onOpenChange={(open) => !open && setIsProcessing(false)}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{isImageScanModalOpen ? "Processing Image" : "Enhancing Note"}</DialogTitle>
+            <DialogTitle>
+              {isImageScanModalOpen ? "Processing Image" : "Enhancing Note"}
+            </DialogTitle>
             <DialogDescription>
               {isImageScanModalOpen
                 ? "Converting your image to structured notes..."
@@ -1164,10 +1361,10 @@ export default function NotesPage() {
                 {processingProgress < 30
                   ? "Analyzing content..."
                   : processingProgress < 60
-                    ? "Extracting key information..."
-                    : processingProgress < 90
-                      ? "Organizing data..."
-                      : "Finalizing..."}
+                  ? "Extracting key information..."
+                  : processingProgress < 90
+                  ? "Organizing data..."
+                  : "Finalizing..."}
               </p>
             </div>
           </div>
@@ -1189,7 +1386,7 @@ export default function NotesPage() {
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }
 
 // Helper component for X icon
@@ -1210,5 +1407,5 @@ function XIcon(props: React.SVGProps<SVGSVGElement>) {
       <path d="M18 6 6 18" />
       <path d="m6 6 12 12" />
     </svg>
-  )
+  );
 }

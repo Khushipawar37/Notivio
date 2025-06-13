@@ -478,7 +478,6 @@ export default function VideoNotesPage() {
             </motion.div>
           )}
         </AnimatePresence>
-
         {/* Generated Notes */}
         {notes && (
           <motion.div
