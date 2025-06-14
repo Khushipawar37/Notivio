@@ -29,7 +29,6 @@ const questions = [
         Question:"Still having a doubt ?",
         Answer:"Reach out through the contact form given below "
     },
-
 ]
 const [activeIndex] = useState(0)
 const Faq = () => {
