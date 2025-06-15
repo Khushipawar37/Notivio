@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../../components/ui/dialog"
-import { useFirebaseNotes } from "../hooks/use-firebase-notes"
+import { useFirebaseNotes } from "../../hooks/use-firebase-notes"
 
 interface CreateFolderDialogProps {
   darkMode: boolean

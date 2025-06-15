@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { supabase } from "../../lib/supabase"
-import { useAuth } from "../../components/auth/auth-provider"
-import type { Note, Folder, Tag } from "../../lib/supabase"
+import { supabase } from "../lib/supabase"
+import { useAuth } from "../components/auth/auth-provider"
+import type { Note, Folder, Tag } from "../lib/supabase"
 
 export function useNotes() {
   const { user } = useAuth()

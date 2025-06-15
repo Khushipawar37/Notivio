@@ -18,7 +18,7 @@ import {
   DialogTrigger,
 } from "../../components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
-import { useFirebaseNotes } from "../hooks/use-firebase-notes"
+import { useFirebaseNotes } from "../../hooks/use-firebase-notes"
 
 interface CreateNoteDialogProps {
   darkMode: boolean
