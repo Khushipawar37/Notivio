@@ -6,7 +6,6 @@ import Faq from "./components/home/Faq"
 import Footer from "./components/home/Footer"
 import HeroSection from "./components/home/Hero"
 
-
 export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-white to-gray-50">
