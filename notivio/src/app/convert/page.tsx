@@ -601,6 +601,7 @@ export default function VideoNotesPage() {
                 </TabsTrigger>
               </TabsList>
 
+
               <TabsContent value="structured">
                 <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
                   <CardContent className="pt-8">
