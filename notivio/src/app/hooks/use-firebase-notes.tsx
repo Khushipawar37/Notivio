@@ -120,6 +120,7 @@ export function useFirebaseNotes() {
     }
   }
 
+  
   // Update note
   const updateNote = async (noteId: string, updates: Partial<Note>) => {
     if (!user) throw new Error("User not authenticated")
