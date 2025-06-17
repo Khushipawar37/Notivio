@@ -1,89 +1,101 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Search, LogOut, Heart, Folder, Tag } from "lucide-react"
-import { Button } from "../components/ui/button"
-import { Input } from "../components/ui/input"
-import { Card, CardContent } from "../components/ui/card"
-import { signOut } from "firebase/auth"
-import { auth } from "../lib/firebase"
-import { useRouter } from "next/navigation"
-import { useFirebaseNotes } from "../hooks/use-firebase-notes"
-import AuthGuard from "../components/dashboard/auth-guard"
-import CreateNoteDialog from "../components/dashboard/create-note"
-import CreateFolderDialog from "../components/dashboard/create-folder"
+import { useState, useEffect } from "react";
+import { Search, LogOut, Heart, Folder, Tag } from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Card, CardContent } from "../components/ui/card";
+import { signOut } from "firebase/auth";
+import { auth } from "../lib/firebase";
+import { useRouter } from "next/navigation";
+import { useFirebaseNotes } from "../hooks/use-firebase-notes";
+import AuthGuard from "../components/dashboard/auth-guard";
+import CreateNoteDialog from "../components/dashboard/create-note";
+import CreateFolderDialog from "../components/dashboard/create-folder";
 
 export default function Dashboard() {
-  const [darkMode, setDarkMode] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [activeCategory, setActiveCategory] = useState("All Notes")
-  const router = useRouter()
+  const [darkMode, setDarkMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("All Notes");
+  const router = useRouter();
 
-  const { user, notes, folders, tags, loading, updateNote, deleteNote, toggleFavorite } = useFirebaseNotes()
+  const {
+    user,
+    notes,
+    folders,
+    tags,
+    loading,
+    updateNote,
+    deleteNote,
+    toggleFavorite,
+  } = useFirebaseNotes();
 
   // Load dark mode preference from localStorage
   useEffect(() => {
-    const savedDarkMode = localStorage.getItem("notivio-dark-mode")
+    const savedDarkMode = localStorage.getItem("notivio-dark-mode");
     if (savedDarkMode) {
-      setDarkMode(savedDarkMode === "true")
+      setDarkMode(savedDarkMode === "true");
     }
-  }, [])
+  }, []);
 
   // Save dark mode preference to localStorage
   useEffect(() => {
-    localStorage.setItem("notivio-dark-mode", darkMode.toString())
-  }, [darkMode])
+    localStorage.setItem("notivio-dark-mode", darkMode.toString());
+  }, [darkMode]);
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode)
-  }
+    setDarkMode(!darkMode);
+  };
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth)
-      router.push("/auth/login")
+      await signOut(auth);
+      router.push("/auth/login");
     } catch (error) {
-      console.error("Error signing out:", error)
+      console.error("Error signing out:", error);
     }
-  }
+  };
 
   // Filter notes based on search and category
   const filteredNotes = notes.filter((note) => {
     const matchesSearch =
       note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      note.content.toLowerCase().includes(searchQuery.toLowerCase())
+      note.content.toLowerCase().includes(searchQuery.toLowerCase());
 
-    if (activeCategory === "All Notes") return matchesSearch
-    if (activeCategory === "Favorites") return matchesSearch && note.isFavorite
+    if (activeCategory === "All Notes") return matchesSearch;
+    if (activeCategory === "Favorites") return matchesSearch && note.isFavorite;
 
     // Check if it's a folder category
-    const folder = folders.find((f) => f.name === activeCategory)
-    if (folder) return matchesSearch && note.folderId === folder.id
+    const folder = folders.find((f) => f.name === activeCategory);
+    if (folder) return matchesSearch && note.folderId === folder.id;
 
     // Check if it's a tag category
-    const tag = tags.find((t) => t.name === activeCategory)
-    if (tag) return matchesSearch && note.tags?.includes(tag.id)
+    const tag = tags.find((t) => t.name === activeCategory);
+    if (tag) return matchesSearch && note.tags?.includes(tag.id);
 
-    return matchesSearch
-  })
+    return matchesSearch;
+  });
 
-  const handleToggleFavorite = async (noteId: string, currentFavorite: boolean) => {
+  const handleToggleFavorite = async (
+    noteId: string,
+    currentFavorite: boolean
+  ) => {
     try {
-      await toggleFavorite(noteId, !currentFavorite)
+      await toggleFavorite(noteId, !currentFavorite);
     } catch (error) {
-      console.error("Error toggling favorite:", error)
+      console.error("Error toggling favorite:", error);
     }
-  }
+  };
 
   const handleDeleteNote = async (noteId: string) => {
     if (confirm("Are you sure you want to delete this note?")) {
       try {
-        await deleteNote(noteId)
+        await deleteNote(noteId);
       } catch (error) {
-        console.error("Error deleting note:", error)
+        console.error("Error deleting note:", error);
       }
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -93,18 +105,22 @@ export default function Dashboard() {
           <p className="mt-2 text-gray-600">Loading your notes...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <AuthGuard>
       <div
-        className={`min-h-screen ${darkMode ? "bg-gray-900 text-gray-100" : "bg-[#f5f0e8] text-gray-800"} transition-colors duration-300`}
+        className={`min-h-screen ${
+          darkMode ? "bg-gray-900 text-gray-100" : "bg-[#f5f0e8] text-gray-800"
+        } transition-colors duration-300`}
       >
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">Welcome back, {user?.displayName || user?.email}</h1>
+            <h1 className="text-3xl font-bold">
+              Welcome back, {user?.displayName || user?.email}
+            </h1>
             <div className="flex items-center gap-4">
               <Button
                 variant="outline"
@@ -131,7 +147,11 @@ export default function Dashboard() {
               <Input
                 type="text"
                 placeholder="Search your notes..."
-                className={`pl-10 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-[#c6ac8f]/30"} focus:border-[#c6ac8f] transition-all duration-300`}
+                className={`pl-10 ${
+                  darkMode
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-white border-[#c6ac8f]/30"
+                } focus:border-[#c6ac8f] transition-all duration-300`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -145,7 +165,11 @@ export default function Dashboard() {
 
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar */}
-            <div className={`w-full lg:w-64 ${darkMode ? "bg-gray-800" : "bg-white"} rounded-lg p-6 h-fit`}>
+            <div
+              className={`w-full lg:w-64 ${
+                darkMode ? "bg-gray-800" : "bg-white"
+              } rounded-lg p-6 h-fit`}
+            >
               <div className="space-y-4">
                 <div>
                   <h3 className="font-semibold mb-2">Categories</h3>
@@ -160,11 +184,13 @@ export default function Dashboard() {
                               ? "bg-gray-700"
                               : "bg-[#c6ac8f]/20"
                             : darkMode
-                              ? "hover:bg-gray-700"
-                              : "hover:bg-gray-100"
+                            ? "hover:bg-gray-700"
+                            : "hover:bg-gray-100"
                         }`}
                       >
-                        {category === "Favorites" && <Heart className="h-4 w-4" />}
+                        {category === "Favorites" && (
+                          <Heart className="h-4 w-4" />
+                        )}
                         {category}
                       </button>
                     ))}
@@ -185,11 +211,14 @@ export default function Dashboard() {
                                 ? "bg-gray-700"
                                 : "bg-[#c6ac8f]/20"
                               : darkMode
-                                ? "hover:bg-gray-700"
-                                : "hover:bg-gray-100"
+                              ? "hover:bg-gray-700"
+                              : "hover:bg-gray-100"
                           }`}
                         >
-                          <Folder className="h-4 w-4" style={{ color: folder.color }} />
+                          <Folder
+                            className="h-4 w-4"
+                            style={{ color: folder.color }}
+                          />
                           {folder.name}
                         </button>
                       ))}
@@ -211,11 +240,14 @@ export default function Dashboard() {
                                 ? "bg-gray-700"
                                 : "bg-[#c6ac8f]/20"
                               : darkMode
-                                ? "hover:bg-gray-700"
-                                : "hover:bg-gray-100"
+                              ? "hover:bg-gray-700"
+                              : "hover:bg-gray-100"
                           }`}
                         >
-                          <Tag className="h-4 w-4" style={{ color: tag.color }} />
+                          <Tag
+                            className="h-4 w-4"
+                            style={{ color: tag.color }}
+                          />
                           {tag.name}
                         </button>
                       ))}
@@ -237,29 +269,47 @@ export default function Dashboard() {
                 {filteredNotes.map((note) => (
                   <Card
                     key={note.id}
-                    className={`${darkMode ? "bg-gray-800 border-gray-700" : "bg-white"} hover:shadow-md transition-shadow cursor-pointer`}
+                    className={`${
+                      darkMode ? "bg-gray-800 border-gray-700" : "bg-white"
+                    } hover:shadow-md transition-shadow cursor-pointer`}
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold truncate flex-1">{note.title}</h3>
+                        <h3 className="font-semibold truncate flex-1">
+                          {note.title}
+                        </h3>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleToggleFavorite(note.id, note.isFavorite)}
+                          onClick={() =>
+                            handleToggleFavorite(note.id, note.isFavorite)
+                          }
                           className="p-1 h-auto"
                         >
                           <Heart
-                            className={`h-4 w-4 ${note.isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"}`}
+                            className={`h-4 w-4 ${
+                              note.isFavorite
+                                ? "fill-red-500 text-red-500"
+                                : "text-gray-400"
+                            }`}
                           />
                         </Button>
                       </div>
 
-                      <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"} mb-4 line-clamp-3`}>
+                      <p
+                        className={`text-sm ${
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        } mb-4 line-clamp-3`}
+                      >
                         {note.content || "No content"}
                       </p>
 
                       <div className="flex items-center justify-between text-xs">
-                        <span className={darkMode ? "text-gray-500" : "text-gray-400"}>
+                        <span
+                          className={
+                            darkMode ? "text-gray-500" : "text-gray-400"
+                          }
+                        >
                           {note.createdAt.toLocaleDateString()}
                         </span>
                         <Button
@@ -275,16 +325,19 @@ export default function Dashboard() {
                       {note.tags && note.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {note.tags.map((tagId) => {
-                            const tag = tags.find((t) => t.id === tagId)
+                            const tag = tags.find((t) => t.id === tagId);
                             return tag ? (
                               <span
                                 key={tag.id}
                                 className="px-2 py-1 text-xs rounded-full"
-                                style={{ backgroundColor: tag.color + "20", color: tag.color }}
+                                style={{
+                                  backgroundColor: tag.color + "20",
+                                  color: tag.color,
+                                }}
                               >
                                 {tag.name}
                               </span>
-                            ) : null
+                            ) : null;
                           })}
                         </div>
                       )}
@@ -295,7 +348,11 @@ export default function Dashboard() {
 
               {filteredNotes.length === 0 && (
                 <div className="text-center py-12">
-                  <p className={`text-lg ${darkMode ? "text-gray-400" : "text-gray-600"}`}>
+                  <p
+                    className={`text-lg ${
+                      darkMode ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
                     {searchQuery
                       ? "No notes found matching your search."
                       : "No notes found. Create your first note to get started!"}
@@ -307,5 +364,5 @@ export default function Dashboard() {
         </div>
       </div>
     </AuthGuard>
-  )
+  );
 }
