@@ -1,30 +1,43 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef } from "react"
-import { motion } from "framer-motion"
-import { MapPin, Mail, Phone, Send, Twitter, Instagram, Linkedin, CheckCircle } from "lucide-react"
-import Image from "next/image"
+import { useState, useRef } from "react";
+import { motion } from "framer-motion";
+import {
+  MapPin,
+  Mail,
+  Phone,
+  Send,
+  Twitter,
+  Instagram,
+  Linkedin,
+  CheckCircle,
+} from "lucide-react";
+import Image from "next/image";
 
 export default function ContactPage() {
-  const [formStatus, setFormStatus] = useState<"idle" | "submitting" | "success" | "error">("idle")
+  const [formStatus, setFormStatus] = useState<
+    "idle" | "submitting" | "success" | "error"
+  >("idle");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     subject: "",
     message: "",
-  })
-  const formRef = useRef<HTMLFormElement>(null)
+  });
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setFormStatus("submitting")
+    e.preventDefault();
+    setFormStatus("submitting");
 
     try {
       const response = await fetch("/api/contact", {
@@ -33,44 +46,46 @@ export default function ContactPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
-      })
+      });
 
       if (response.ok) {
-        setFormStatus("success")
+        setFormStatus("success");
         setFormData({
           name: "",
           email: "",
           subject: "",
           message: "",
-        })
+        });
         // Reset form after 3 seconds
         setTimeout(() => {
-          setFormStatus("idle")
-        }, 3000)
+          setFormStatus("idle");
+        }, 3000);
       } else {
-        setFormStatus("error")
+        setFormStatus("error");
         setTimeout(() => {
-          setFormStatus("idle")
-        }, 3000)
+          setFormStatus("idle");
+        }, 3000);
       }
     } catch (error) {
-      console.error("Error submitting form:", error)
-      setFormStatus("error")
+      console.error("Error submitting form:", error);
+      setFormStatus("error");
       setTimeout(() => {
-        setFormStatus("idle")
-      }, 3000)
+        setFormStatus("idle");
+      }, 3000);
     }
-  }
+  };
 
   const socialLinks = [
     { icon: Twitter, href: "#", label: "Twitter" },
     { icon: Instagram, href: "#", label: "Instagram" },
     { icon: Linkedin, href: "#", label: "LinkedIn" },
-  ]
+  ];
 
   return (
     <section className="py-24 bg-[#f5f0e8]">
-      <div className ="text-6xl text-center mb-18 font-bold">We’re Just One <span className="text-[#8a7559]">Message</span> Away</div>
+      <div className="text-6xl text-center mb-18 font-bold">
+        We’re Just One <span className="text-[#8a7559]">Message</span> Away
+      </div>
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -82,7 +97,9 @@ export default function ContactPage() {
             {/* Left side - Contact Info */}
             <div className="w-full md:w-2/5 bg-[#c6ac8f] p-8 md:p-12 relative overflow-hidden">
               <div className="relative z-10">
-                <h2 className="text-3xl font-bold text-black mb-8">Contact Us</h2>
+                <h2 className="text-3xl font-bold text-black mb-8">
+                  Contact Us
+                </h2>
 
                 <div className="mb-12">
                   <div className="flex items-start mb-6">
@@ -101,7 +118,9 @@ export default function ContactPage() {
                     </div>
                     <div>
                       <h4 className="font-medium text-black">Email Address</h4>
-                      <p className="text-black/70 mt-1">khushipawar987@gmail.com</p>
+                      <p className="text-black/70 mt-1">
+                        khushipawar987@gmail.com
+                      </p>
                     </div>
                   </div>
 
@@ -120,7 +139,7 @@ export default function ContactPage() {
                   <h4 className="font-medium text-black mb-4">Follow Us</h4>
                   <div className="flex space-x-3">
                     {socialLinks.map((social, index) => {
-                      const Icon = social.icon
+                      const Icon = social.icon;
                       return (
                         <motion.a
                           key={index}
@@ -131,7 +150,7 @@ export default function ContactPage() {
                         >
                           <Icon className="w-5 h-5" />
                         </motion.a>
-                      )
+                      );
                     })}
                   </div>
                 </div>
@@ -147,7 +166,10 @@ export default function ContactPage() {
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="name"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Your Name
                     </label>
                     <input
@@ -163,7 +185,10 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
                       Email Address
                     </label>
                     <input
@@ -180,7 +205,10 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="subject"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Subject
                   </label>
                   <input
@@ -196,7 +224,10 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="message"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Message
                   </label>
                   <textarea
@@ -215,7 +246,11 @@ export default function ContactPage() {
                   <motion.button
                     type="submit"
                     disabled={formStatus === "submitting"}
-                    className={`w-full md:w-auto px-8 py-3 rounded-lg font-medium text-white flex items-center justify-center ${formStatus === "submitting" ? "bg-gray-400" : "bg-[#c6ac8f] hover:bg-[#b39a7d]"} transition-colors`}
+                    className={`w-full md:w-auto px-8 py-3 rounded-lg font-medium text-white flex items-center justify-center ${
+                      formStatus === "submitting"
+                        ? "bg-gray-400"
+                        : "bg-[#c6ac8f] hover:bg-[#b39a7d]"
+                    } transition-colors`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
@@ -268,5 +303,5 @@ export default function ContactPage() {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }
