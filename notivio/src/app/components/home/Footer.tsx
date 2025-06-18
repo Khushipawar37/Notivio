@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion, useScroll, useTransform } from "framer-motion"
+import { useState, useEffect } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import {
   ArrowUp,
   Github,
@@ -14,34 +14,34 @@ import {
   BookOpen,
   Brain,
   Youtube,
-} from "lucide-react"
-import Link from "next/link"
+} from "lucide-react";
+import Link from "next/link";
 
 export default function Footer() {
-  const [isVisible, setIsVisible] = useState(false)
-  const { scrollYProgress } = useScroll()
-  const opacity = useTransform(scrollYProgress, [0.7, 0.8], [0, 1])
+  const [isVisible, setIsVisible] = useState(false);
+  const { scrollYProgress } = useScroll();
+  const opacity = useTransform(scrollYProgress, [0.7, 0.8], [0, 1]);
 
   // Check if we've scrolled down enough to show the back-to-top button
   useEffect(() => {
     const toggleVisibility = () => {
       if (window.pageYOffset > 500) {
-        setIsVisible(true)
+        setIsVisible(true);
       } else {
-        setIsVisible(false)
+        setIsVisible(false);
       }
-    }
+    };
 
-    window.addEventListener("scroll", toggleVisibility)
-    return () => window.removeEventListener("scroll", toggleVisibility)
-  }, [])
+    window.addEventListener("scroll", toggleVisibility);
+    return () => window.removeEventListener("scroll", toggleVisibility);
+  }, []);
 
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
       behavior: "smooth",
-    })
-  }
+    });
+  };
 
   // Interactive elements for the footer
   const footerLinks = [
@@ -51,7 +51,7 @@ export default function Footer() {
     { name: "About", href: "#about" },
     { name: "Blog", href: "#blog" },
     { name: "Contact", href: "#contact" },
-  ]
+  ];
 
   const socialLinks = [
     { name: "Twitter", icon: Twitter, href: "#" },
@@ -59,7 +59,7 @@ export default function Footer() {
     { name: "LinkedIn", icon: Linkedin, href: "#" },
     { name: "GitHub", icon: Github, href: "#" },
     { name: "Email", icon: Mail, href: "mailto:info@notivio.com" },
-  ]
+  ];
 
   return (
     <footer className="relative bg-black overflow-hidden pt-20 pb-10">
@@ -94,7 +94,10 @@ export default function Footer() {
             <div className="mb-6 relative">
               <motion.div
                 className="inline-block relative"
-                whileHover={{ rotate: [0, -5, 5, -5, 0], transition: { duration: 0.5 } }}
+                whileHover={{
+                  rotate: [0, -5, 5, -5, 0],
+                  transition: { duration: 0.5 },
+                }}
               >
                 <h2 className="text-4xl font-bold">
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#c6ac8f] to-[#e2d1bc]">
@@ -119,11 +122,12 @@ export default function Footer() {
               </motion.div>
             </div>
             <p className="text-gray-400 mb-6">
-              Transform your learning experience with AI-powered note-taking and study tools.
+              Transform your learning experience with AI-powered note-taking and
+              study tools.
             </p>
             <div className="flex space-x-4">
               {socialLinks.map((link) => {
-                const Icon = link.icon
+                const Icon = link.icon;
                 return (
                   <motion.a
                     key={link.name}
@@ -135,18 +139,23 @@ export default function Footer() {
                   >
                     <Icon className="w-5 h-5" />
                   </motion.a>
-                )
+                );
               })}
             </div>
           </div>
 
           {/* Quick links */}
           <div className="col-span-1">
-            <h3 className="text-white font-semibold text-lg mb-6">Quick Links</h3>
+            <h3 className="text-white font-semibold text-lg mb-6">
+              Quick Links
+            </h3>
             <ul className="space-y-3">
               {footerLinks.map((link) => (
                 <motion.li key={link.name} whileHover={{ x: 5 }}>
-                  <Link href={link.href} className="text-gray-400 hover:text-[#c6ac8f] transition-colors">
+                  <Link
+                    href={link.href}
+                    className="text-gray-400 hover:text-[#c6ac8f] transition-colors"
+                  >
                     {link.name}
                   </Link>
                 </motion.li>
@@ -156,8 +165,12 @@ export default function Footer() {
 
           {/* Newsletter signup */}
           <div className="col-span-1">
-            <h3 className="text-white font-semibold text-lg mb-6">Stay Updated</h3>
-            <p className="text-gray-400 mb-4">Subscribe to our newsletter for the latest updates and features.</p>
+            <h3 className="text-white font-semibold text-lg mb-6">
+              Stay Updated
+            </h3>
+            <p className="text-gray-400 mb-4">
+              Subscribe to our newsletter for the latest updates and features.
+            </p>
             <form className="space-y-3">
               <div className="relative">
                 <input
@@ -186,8 +199,12 @@ export default function Footer() {
           </p>
 
           <div className="flex items-center text-gray-500 text-sm">
-            <motion.div className="flex items-center" whileHover={{ scale: 1.05 }}>
-              Made with <Heart className="w-4 h-4 mx-1 text-[#c6ac8f]" /> for learners worldwide
+            <motion.div
+              className="flex items-center"
+              whileHover={{ scale: 1.05 }}
+            >
+              Made with <Heart className="w-4 h-4 mx-1 text-[#c6ac8f]" /> for
+              learners worldwide
             </motion.div>
           </div>
         </div>
@@ -218,5 +235,5 @@ export default function Footer() {
         </svg>
       </div>
     </footer>
-  )
+  );
 }
