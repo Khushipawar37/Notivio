@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
-import { motion, AnimatePresence, useInView } from "framer-motion"
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   Youtube,
   Brain,
@@ -13,14 +13,14 @@ import {
   ArrowLeft,
   ArrowRight,
   Pencil,
-} from "lucide-react"
+} from "lucide-react";
 
 // 3D rotating feature carousel
 const FeatureCarousel = () => {
-  const [activeIndex, setActiveIndex] = useState(0)
-  const [autoRotate, setAutoRotate] = useState(true)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const isInView = useInView(containerRef, { once: false, amount: 0.3 })
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [autoRotate, setAutoRotate] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(containerRef, { once: false, amount: 0.3 });
 
   const features = [
     {
@@ -71,68 +71,77 @@ const FeatureCarousel = () => {
       color: "#c6ac8f",
       bgGradient: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
-  ]
+  ];
 
   // Auto-rotate carousel
   useEffect(() => {
-    if (!isInView || !autoRotate) return
+    if (!isInView || !autoRotate) return;
 
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % features.length)
-    }, 4000)
+      setActiveIndex((prev) => (prev + 1) % features.length);
+    }, 4000);
 
-    return () => clearInterval(interval)
-  }, [isInView, autoRotate, features.length])
+    return () => clearInterval(interval);
+  }, [isInView, autoRotate, features.length]);
 
   const nextSlide = () => {
-    setAutoRotate(false)
-    setActiveIndex((prev) => (prev + 1) % features.length)
-  }
+    setAutoRotate(false);
+    setActiveIndex((prev) => (prev + 1) % features.length);
+  };
 
   const prevSlide = () => {
-    setAutoRotate(false)
-    setActiveIndex((prev) => (prev - 1 + features.length) % features.length)
-  }
+    setAutoRotate(false);
+    setActiveIndex((prev) => (prev - 1 + features.length) % features.length);
+  };
 
   const goToSlide = (index: number) => {
-    setAutoRotate(false)
-    setActiveIndex(index)
-  }
+    setAutoRotate(false);
+    setActiveIndex(index);
+  };
 
   // Calculate positions for the 3D carousel
   const getCardStyle = (index: number) => {
-    const totalCards = features.length
-    const circle = 2 * Math.PI
-    const angleStep = circle / totalCards
-    const currentAngle = angleStep * ((index - activeIndex) % totalCards)
+    const totalCards = features.length;
+    const circle = 2 * Math.PI;
+    const angleStep = circle / totalCards;
+    const currentAngle = angleStep * ((index - activeIndex) % totalCards);
 
     // Radius of the circle
-    const radius = 300
+    const radius = 300;
 
     // Calculate position on the circle
-    const x = Math.sin(currentAngle) * radius
-    const z = Math.cos(currentAngle) * radius - radius
+    const x = Math.sin(currentAngle) * radius;
+    const z = Math.cos(currentAngle) * radius - radius;
 
     // Scale and opacity based on z position
-    const scale = ((z + radius) / radius) * 0.4 + 0.6
-    const opacity = ((z + radius) / radius) * 0.7 + 0.3
+    const scale = ((z + radius) / radius) * 0.4 + 0.6;
+    const opacity = ((z + radius) / radius) * 0.7 + 0.3;
 
     return {
       transform: `translateX(${x}px) translateZ(${z}px) scale(${scale})`,
       opacity,
       zIndex: Math.round(opacity * 10),
-    }
-  }
+    };
+  };
 
   return (
-    <div ref={containerRef} className="relative w-full h-[600px] overflow-hidden">
+    <div
+      ref={containerRef}
+      className="relative w-full h-[600px] overflow-hidden"
+    >
       {/* 3D Perspective Container */}
-      <div className="absolute inset-0 flex items-center justify-center" style={{ perspective: "1200px" }}>
-        <div className="relative w-full h-full" style={{ transformStyle: "preserve-3d", transform: "rotateX(5deg)" }}>
+      <div
+        className="absolute inset-0 flex items-center justify-center"
+        style={{ perspective: "1200px" }}
+      >
+        <div
+          className="relative w-full h-full"
+          style={{ transformStyle: "preserve-3d", transform: "rotateX(5deg)" }}
+        >
           {/* Feature Cards */}
           {features.map((feature, index) => {
-            const Icon = feature.icon
-            const style = getCardStyle(index)
+            const Icon = feature.icon;
+            const style = getCardStyle(index);
 
             return (
               <motion.div
@@ -156,10 +165,14 @@ const FeatureCarousel = () => {
                       <div className="p-3 rounded-lg bg-[#c6ac8f] border border-[#c6ac8f]/30 text-[#8a7559]">
                         <Icon className="w-8 h-8" />
                       </div>
-                      <h3 className="text-white font-semibold text-2xl">{feature.title}</h3>
+                      <h3 className="text-white font-semibold text-2xl">
+                        {feature.title}
+                      </h3>
                     </div>
 
-                    <p className="text-gray-200 text-lg">{feature.description}</p>
+                    <p className="text-gray-200 text-lg">
+                      {feature.description}
+                    </p>
 
                     {index === activeIndex && (
                       <motion.div
@@ -177,7 +190,7 @@ const FeatureCarousel = () => {
                   </div>
                 </div>
               </motion.div>
-            )
+            );
           })}
         </div>
       </div>
@@ -217,49 +230,55 @@ const FeatureCarousel = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // Animated typing effect component
-const TypingEffect = ({ text, className }: { text: string; className?: string }) => {
-  const [displayText, setDisplayText] = useState("")
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isDeleting, setIsDeleting] = useState(false)
+const TypingEffect = ({
+  text,
+  className,
+}: {
+  text: string;
+  className?: string;
+}) => {
+  const [displayText, setDisplayText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const timeout = setTimeout(
       () => {
         if (!isDeleting && currentIndex < text.length) {
-          setDisplayText(text.substring(0, currentIndex + 1))
-          setCurrentIndex((prev) => prev + 1)
+          setDisplayText(text.substring(0, currentIndex + 1));
+          setCurrentIndex((prev) => prev + 1);
         } else if (isDeleting && currentIndex > 0) {
-          setDisplayText(text.substring(0, currentIndex - 1))
-          setCurrentIndex((prev) => prev - 1)
+          setDisplayText(text.substring(0, currentIndex - 1));
+          setCurrentIndex((prev) => prev - 1);
         } else if (currentIndex === text.length) {
-          setTimeout(() => setIsDeleting(true), 2000)
+          setTimeout(() => setIsDeleting(true), 2000);
         } else if (currentIndex === 0) {
-          setIsDeleting(false)
+          setIsDeleting(false);
         }
       },
-      isDeleting ? 50 : 100,
-    )
+      isDeleting ? 50 : 100
+    );
 
-    return () => clearTimeout(timeout)
-  }, [currentIndex, isDeleting, text])
+    return () => clearTimeout(timeout);
+  }, [currentIndex, isDeleting, text]);
 
   return (
     <span className={`relative ${className}`}>
       {displayText}
       <span className="absolute right-[-4px] top-0 h-full w-[2px] bg-[#c6ac8f] animate-blink"></span>
     </span>
-  )
-}
+  );
+};
 
 // Interactive workflow component
 const InteractiveWorkflow = () => {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const isInView = useInView(containerRef, { once: true, amount: 0.3 })
-  const [activeStep, setActiveStep] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(containerRef, { once: true, amount: 0.3 });
+  const [activeStep, setActiveStep] = useState(0);
 
   const steps = [
     {
@@ -270,13 +289,15 @@ const InteractiveWorkflow = () => {
     },
     {
       title: "Process",
-      description: "AI analyzes content, extracts key information, and organizes it",
+      description:
+        "AI analyzes content, extracts key information, and organizes it",
       icon: Brain,
       color: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
     {
       title: "Structure",
-      description: "Content is organized into topics, subtopics, and key points",
+      description:
+        "Content is organized into topics, subtopics, and key points",
       icon: Layers,
       color: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
@@ -292,16 +313,16 @@ const InteractiveWorkflow = () => {
       icon: BookOpen,
       color: "from-[#c6ac8f]/20 to-[#c6ac8f]/5",
     },
-  ]
+  ];
 
   useEffect(() => {
     if (isInView) {
       const interval = setInterval(() => {
-        setActiveStep((prev) => (prev + 1) % steps.length)
-      }, 2000)
-      return () => clearInterval(interval)
+        setActiveStep((prev) => (prev + 1) % steps.length);
+      }, 2000);
+      return () => clearInterval(interval);
     }
-  }, [isInView, steps.length])
+  }, [isInView, steps.length]);
 
   return (
     <motion.div
@@ -313,7 +334,9 @@ const InteractiveWorkflow = () => {
     >
       <div className="relative z-10">
         <div className="flex flex-col items-center mb-10">
-          <h3 className="text-2xl font-bold text-black mb-2">How Notivio Works</h3>
+          <h3 className="text-2xl font-bold text-black mb-2">
+            How Notivio Works
+          </h3>
           <div className="h-1 w-20 bg-[#c6ac8f]"></div>
         </div>
 
@@ -331,22 +354,36 @@ const InteractiveWorkflow = () => {
           {/* Steps */}
           <div className="relative z-10 grid grid-cols-1 md:grid-cols-5 gap-4">
             {steps.map((step, index) => {
-              const Icon = step.icon
+              const Icon = step.icon;
               return (
                 <div key={index} className="flex flex-col items-center">
                   <motion.button
                     onClick={() => setActiveStep(index)}
-                    className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 ${index <= activeStep ? "bg-black" : "bg-gray-100"} border-2 ${index === activeStep ? "border-[#c6ac8f]" : index < activeStep ? "border-[#c6ac8f]/50" : "border-gray-200"}`}
+                    className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      index <= activeStep ? "bg-black" : "bg-gray-100"
+                    } border-2 ${
+                      index === activeStep
+                        ? "border-[#c6ac8f]"
+                        : index < activeStep
+                        ? "border-[#c6ac8f]/50"
+                        : "border-gray-200"
+                    }`}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     {/* Background glow */}
                     <div
-                      className={`absolute inset-0 rounded-full bg-gradient-to-br ${step.color} opacity-0 ${index === activeStep ? "opacity-100" : ""} transition-opacity duration-300`}
+                      className={`absolute inset-0 rounded-full bg-gradient-to-br ${
+                        step.color
+                      } opacity-0 ${
+                        index === activeStep ? "opacity-100" : ""
+                      } transition-opacity duration-300`}
                     ></div>
 
                     <Icon
-                      className={`relative z-10 w-8 h-8 ${index <= activeStep ? "text-white" : "text-gray-400"}`}
+                      className={`relative z-10 w-8 h-8 ${
+                        index <= activeStep ? "text-white" : "text-gray-400"
+                      }`}
                     />
 
                     {/* Step number */}
@@ -356,7 +393,11 @@ const InteractiveWorkflow = () => {
                   </motion.button>
 
                   <div className="mt-4 text-center">
-                    <h4 className={`font-medium ${index <= activeStep ? "text-black" : "text-gray-400"}`}>
+                    <h4
+                      className={`font-medium ${
+                        index <= activeStep ? "text-black" : "text-gray-400"
+                      }`}
+                    >
                       {step.title}
                     </h4>
                     <AnimatePresence>
@@ -374,19 +415,19 @@ const InteractiveWorkflow = () => {
                     </AnimatePresence>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         </div>
       </div>
     </motion.div>
-  )
-}
+  );
+};
 
 // Main About Section component
 export default function AboutSection() {
-  const headerRef = useRef<HTMLDivElement>(null)
-  const isHeaderInView = useInView(headerRef, { once: true, amount: 0.3 })
+  const headerRef = useRef<HTMLDivElement>(null);
+  const isHeaderInView = useInView(headerRef, { once: true, amount: 0.3 });
 
   return (
     <section className="relative w-full overflow-hidden bg-[#f5f0e8] py-24">
@@ -399,7 +440,9 @@ export default function AboutSection() {
         <motion.div
           ref={headerRef}
           initial={{ opacity: 0, y: 30 }}
-          animate={isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          animate={
+            isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }
+          }
           transition={{ duration: 0.8 }}
           className="text-center mb-20"
         >
@@ -408,13 +451,15 @@ export default function AboutSection() {
           </h2>
           <div className="max-w-4xl mx-auto mb-32">
             <p className="text-xl text-gray-700 mb-4">
-              Notivio is an AI-powered note-taking platform that transforms video content into structured, editable
-              notes and study materials, helping you learn more effectively.
+              Notivio is an AI-powered note-taking platform that transforms
+              video content into structured, editable notes and study materials,
+              helping you learn more effectively.
             </p>
             <p className="text-lg text-gray-600 mb-4">
-              Whether you're a student trying to keep up with lectures, a professional developing new skills, or an
-              educator creating learning materials, Notivio streamlines your workflow and enhances your learning
-              experience.
+              Whether you're a student trying to keep up with lectures, a
+              professional developing new skills, or an educator creating
+              learning materials, Notivio streamlines your workflow and enhances
+              your learning experience.
             </p>
             <div className="flex justify-center mt-8">
               <div className="h-0.5 w-16 bg-[#c6ac8f] mx-2 rounded-full"></div>
@@ -453,10 +498,12 @@ export default function AboutSection() {
           className="relative bg-[#c6ac8f] border border-[#c6ac8f]/20 rounded-2xl p-10 overflow-hidden"
         >
           <div className="relative z-10 text-center">
-            <h3 className="text-5xl font-bold text-black mb-4">Ready to Transform Your Learning?</h3>
+            <h3 className="text-5xl font-bold text-black mb-4">
+              Ready to Transform Your Learning?
+            </h3>
             <p className="text-gray-700 max-w-2xl mx-auto text-xl mb-8">
-              Join thousands of students and educators who are already using Notivio to enhance their learning
-              experience.
+              Join thousands of students and educators who are already using
+              Notivio to enhance their learning experience.
             </p>
 
             <motion.button
@@ -470,5 +517,5 @@ export default function AboutSection() {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }
