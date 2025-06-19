@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { motion } from "framer-motion"
-import { Home, FileText, Video, User, MessageSquare } from "lucide-react"
-import { Lobster } from 'next/font/google'
+import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
+import { Home, FileText, Video, User, MessageSquare } from "lucide-react";
+import { Lobster } from "next/font/google";
 
 const lobster = Lobster({
-  subsets: ['latin'],
-  weight: ['400'],  // You can adjust the weight if needed
-  display: 'swap',
-})
+  subsets: ["latin"],
+  weight: ["400"], // You can adjust the weight if needed
+  display: "swap",
+});
 // Custom icons to match your app's functionality
 const FlashCard = (props: any) => (
   <svg
@@ -32,19 +32,27 @@ const FlashCard = (props: any) => (
     <path d="M12 8v8" />
     <path d="M8 12h8" />
   </svg>
-)
+);
 
 interface NavItemProps {
-  href: string
-  icon: React.ReactNode
-  label: string
-  isActive: boolean
-  onClick: () => void
-  index: number
-  activeTab: number
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+  index: number;
+  activeTab: number;
 }
 
-const NavItem = ({ href, icon, label, isActive, onClick, index, activeTab }: NavItemProps) => {
+const NavItem = ({
+  href,
+  icon,
+  label,
+  isActive,
+  onClick,
+  index,
+  activeTab,
+}: NavItemProps) => {
   return (
     <Link
       href={href}
@@ -60,7 +68,9 @@ const NavItem = ({ href, icon, label, isActive, onClick, index, activeTab }: Nav
           transition={{ duration: 0.2 }}
         >
           <div className="text-[#cfcfcd]">{icon}</div>
-          <span className="text-xs mt-1 font-medium text-[#cfcfcd]">{label}</span>
+          <span className="text-xs mt-1 font-medium text-[#cfcfcd]">
+            {label}
+          </span>
         </motion.div>
       ) : (
         <>
@@ -69,56 +79,62 @@ const NavItem = ({ href, icon, label, isActive, onClick, index, activeTab }: Nav
         </>
       )}
     </Link>
-  )
-}
+  );
+};
 
 export default function Navbar() {
-  const pathname = usePathname()
-  const [activeTab, setActiveTab] = useState(0)
-  const [indicatorPosition, setIndicatorPosition] = useState(0)
-  const navRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname();
+  const [activeTab, setActiveTab] = useState(0);
+  const [indicatorPosition, setIndicatorPosition] = useState(0);
+  const navRef = useRef<HTMLDivElement>(null);
 
   const navItems = [
     { href: "/", icon: <Home size={24} />, label: "Home" },
     { href: "/notes", icon: <FileText size={24} />, label: "Notes" },
     { href: "/convert", icon: <Video size={24} />, label: "Convert" },
     { href: "/dashboard", icon: <FlashCard size={24} />, label: "Dashboard" },
-  ]
+  ];
 
   // Set active tab based on current path
   useEffect(() => {
-    const index = navItems.findIndex((item) => item.href === pathname)
+    const index = navItems.findIndex((item) => item.href === pathname);
     if (index !== -1) {
-      setActiveTab(index)
-      updateIndicatorPosition(index)
+      setActiveTab(index);
+      updateIndicatorPosition(index);
     }
-  }, [pathname])
+  }, [pathname]);
 
   const updateIndicatorPosition = (index: number) => {
-    if (!navRef.current) return
+    if (!navRef.current) return;
 
     // Calculate the position based on the index
     // Each nav item is 5.5rem (w-[5.5rem]) wide
-    const position = index * 96 + 48 - 32 // center of the item minus half the indicator width
-    setIndicatorPosition(position)
-  }
+    const position = index * 96 + 48 - 32; // center of the item minus half the indicator width
+    setIndicatorPosition(position);
+  };
 
   const handleTabClick = (index: number) => {
-    setActiveTab(index)
-    updateIndicatorPosition(index)
-  }
+    setActiveTab(index);
+    updateIndicatorPosition(index);
+  };
 
   return (
     <div className="fixed sm:top-8 w-full px-6 z-50 bottom-8 sm:bottom-auto">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Website Name on the left */}
-        <Link href="/" className={`text-5xl font-bold ${lobster.className} text-[#c6ac8f] hidden sm:block`}>
+        <Link
+          href="/"
+          className={`text-5xl font-bold ${lobster.className} text-[#c6ac8f] hidden sm:block`}
+        >
           Notivio
         </Link>
 
         {/* Center Navigation */}
         <div className="mx-auto">
-          <div ref={navRef} className="relative flex items-center bg-[#c6ac8f] rounded-full h-16 px-4 shadow-lg">
+          <div
+            ref={navRef}
+            className="relative flex items-center bg-[#c6ac8f] rounded-full h-16 px-4 shadow-lg"
+          >
             {/* Animated indicator - positioned to create the bulging effect */}
             <motion.div
               className="absolute w-16 h-16 bg-black rounded-full z-0"
@@ -165,5 +181,5 @@ export default function Navbar() {
         </Link>
       </div>
     </div>
-  )
+  );
 }
