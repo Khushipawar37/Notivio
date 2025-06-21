@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import * as RadixTooltip from "@radix-ui/react-tooltip"
-import { cn } from "../../lib/utils"
+import * as React from "react";
+import * as RadixTooltip from "@radix-ui/react-tooltip";
+import { cn } from "../../lib/utils";
 
-export const TooltipProvider = RadixTooltip.Provider
+export const TooltipProvider = RadixTooltip.Provider;
 
-export const Tooltip = RadixTooltip.Root
+export const Tooltip = RadixTooltip.Root;
 
-export const TooltipTrigger = RadixTooltip.Trigger
+export const TooltipTrigger = RadixTooltip.Trigger;
 
 export const TooltipContent = React.forwardRef<
   React.ElementRef<typeof RadixTooltip.Content>,
@@ -23,6 +23,6 @@ export const TooltipContent = React.forwardRef<
     )}
     {...props}
   />
-))
+));
 
-TooltipContent.displayName = RadixTooltip.Content.displayName
+TooltipContent.displayName = RadixTooltip.Content.displayName;
