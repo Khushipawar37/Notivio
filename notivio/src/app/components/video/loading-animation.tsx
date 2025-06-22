@@ -1,15 +1,19 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { Loader2 } from "lucide-react"
+import { motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
 interface LoadingAnimationProps {
-  stage: number
-  totalStages: number
-  stageNames: string[]
+  stage: number;
+  totalStages: number;
+  stageNames: string[];
 }
 
-export function LoadingAnimation({ stage, totalStages, stageNames }: LoadingAnimationProps) {
+export function LoadingAnimation({
+  stage,
+  totalStages,
+  stageNames,
+}: LoadingAnimationProps) {
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -39,5 +43,5 @@ export function LoadingAnimation({ stage, totalStages, stageNames }: LoadingAnim
         <div className="text-sm text-gray-700">{stageNames[stage]}...</div>
       </div>
     </motion.div>
-  )
+  );
 }
