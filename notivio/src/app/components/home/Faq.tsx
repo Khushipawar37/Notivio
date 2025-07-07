@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronDown,
   Brain,
@@ -13,15 +13,15 @@ import {
   FileText,
   Lightbulb,
   HelpCircle,
-} from "lucide-react"
+} from "lucide-react";
 
 type FAQItem = {
-  id: string
-  question: string
-  answer: string
-  icon: any
-  category: string
-}
+  id: string;
+  question: string;
+  answer: string;
+  icon: any;
+  category: string;
+};
 
 const faqData: FAQItem[] = [
   {
@@ -88,7 +88,7 @@ const faqData: FAQItem[] = [
     icon: Lightbulb,
     category: "Customization",
   },
-]
+];
 
 const categories = [
   "All",
@@ -99,16 +99,16 @@ const categories = [
   "Pricing",
   "Collaboration",
   "Customization",
-]
+];
 
 const CategoryFilter = ({
   categories,
   activeCategory,
   onCategoryChange,
 }: {
-  categories: string[]
-  activeCategory: string
-  onCategoryChange: (category: string) => void
+  categories: string[];
+  activeCategory: string;
+  onCategoryChange: (category: string) => void;
 }) => {
   return (
     <div className="flex flex-wrap gap-2 justify-center mb-8">
@@ -128,11 +128,19 @@ const CategoryFilter = ({
         </motion.button>
       ))}
     </div>
-  )
-}
+  );
+};
 
-const FAQCard = ({ faq, isOpen, onToggle }: { faq: FAQItem; isOpen: boolean; onToggle: () => void }) => {
-  const Icon = faq.icon
+const FAQCard = ({
+  faq,
+  isOpen,
+  onToggle,
+}: {
+  faq: FAQItem;
+  isOpen: boolean;
+  onToggle: () => void;
+}) => {
+  const Icon = faq.icon;
 
   return (
     <motion.div
@@ -151,10 +159,18 @@ const FAQCard = ({ faq, isOpen, onToggle }: { faq: FAQItem; isOpen: boolean; onT
           <Icon className="w-5 h-5" />
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-black mb-1">{faq.question}</h3>
-          <span className="text-xs text-[#8a7559] bg-[#c6ac8f]/20 px-2 py-1 rounded-full">{faq.category}</span>
+          <h3 className="text-lg font-semibold text-black mb-1">
+            {faq.question}
+          </h3>
+          <span className="text-xs text-[#8a7559] bg-[#c6ac8f]/20 px-2 py-1 rounded-full">
+            {faq.category}
+          </span>
         </div>
-        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }} className="text-[#8a7559]">
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
+          className="text-[#8a7559]"
+        >
           <ChevronDown className="w-5 h-5" />
         </motion.div>
       </motion.button>
@@ -175,8 +191,8 @@ const FAQCard = ({ faq, isOpen, onToggle }: { faq: FAQItem; isOpen: boolean; onT
         )}
       </AnimatePresence>
     </motion.div>
-  )
-}
+  );
+};
 
 const FloatingQuestionMark = () => {
   return (
@@ -194,29 +210,32 @@ const FloatingQuestionMark = () => {
     >
       <HelpCircle className="w-16 h-16" />
     </motion.div>
-  )
-}
+  );
+};
 
 export default function FAQSection() {
-  const [openItems, setOpenItems] = useState<Set<string>>(new Set())
-  const [activeCategory, setActiveCategory] = useState("All")
+  const [openItems, setOpenItems] = useState<Set<string>>(new Set());
+  const [activeCategory, setActiveCategory] = useState("All");
 
   const toggleItem = (id: string) => {
-    const newOpenItems = new Set(openItems)
+    const newOpenItems = new Set(openItems);
     if (newOpenItems.has(id)) {
-      newOpenItems.delete(id)
+      newOpenItems.delete(id);
     } else {
-      newOpenItems.add(id)
+      newOpenItems.add(id);
     }
-    setOpenItems(newOpenItems)
-  }
+    setOpenItems(newOpenItems);
+  };
 
-  const filteredFAQs = activeCategory === "All" ? faqData : faqData.filter((faq) => faq.category === activeCategory)
+  const filteredFAQs =
+    activeCategory === "All"
+      ? faqData
+      : faqData.filter((faq) => faq.category === activeCategory);
 
   return (
     <section className="relative py-20 px-4 bg-[#f5f0e8] overflow-hidden">
       {/* Background decorations */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#f5f0e8] via-[#f5f0e8] to-transparent opacity-50"></div> 
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#f5f0e8] via-[#f5f0e8] to-transparent opacity-50"></div>
       <div className="container mx-auto max-w-6xl relative z-10">
         {/* Header */}
         <motion.div
@@ -230,14 +249,17 @@ export default function FAQSection() {
             whileHover={{ scale: 1.05 }}
           >
             <HelpCircle className="w-4 h-4 text-[#8a7559]" />
-            <span className="text-[#8a7559] font-medium text-sm">Frequently Asked Questions</span>
+            <span className="text-[#8a7559] font-medium text-sm">
+              Frequently Asked Questions
+            </span>
           </motion.div>
 
           <h2 className="text-4xl md:text-5xl font-bold text-black mb-4">
             Got Questions About <span className="text-[#8a7559]">Notivio</span>?
           </h2>
           <p className="text-xl text-gray-700 max-w-2xl mx-auto">
-            Find answers to common questions about our AI-powered note-taking platform
+            Find answers to common questions about our AI-powered note-taking
+            platform
           </p>
         </motion.div>
 
@@ -264,12 +286,16 @@ export default function FAQSection() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
               >
-                <FAQCard faq={faq} isOpen={openItems.has(faq.id)} onToggle={() => toggleItem(faq.id)} />
+                <FAQCard
+                  faq={faq}
+                  isOpen={openItems.has(faq.id)}
+                  onToggle={() => toggleItem(faq.id)}
+                />
               </motion.div>
             ))}
           </AnimatePresence>
         </motion.div>
       </div>
     </section>
-  )
+  );
 }
