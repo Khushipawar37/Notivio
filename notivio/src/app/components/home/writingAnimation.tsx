@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import React, { useEffect } from 'react';
-import './NotivioLogo.css'; // We'll define animations here
+import React, { useEffect } from "react";
+import "./NotivioLogo.css"; // We'll define animations here
 
 const NotivioLogo = () => {
   return (
