@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -11,24 +10,23 @@ import { Lobster } from "next/font/google";
 
 const lobster = Lobster({
   subsets: ["latin"],
-  weight: ["400"], // You can adjust the weight if needed
+  weight: ["400"], 
   display: "swap",
 });
-// Custom icons to match your app's functionality
 const FlashCard = (props: any) => (
   <svg
-    xmlns="http://www.w3.org/2000/svg"
+    xmlns="http://www.w3.org/2000/svg"                                          
     width="24"
     height="24"
     viewBox="0 0 24 24"
     fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
+    stroke="currentColor"                                     
+    strokeWidth="2"                         
+    strokeLinecap="round"                    
+    strokeLinejoin="round"                   
     {...props}
   >
-    <rect x="2" y="4" width="20" height="16" rx="2" />
+    <rect x="2" y="4" width="20" height="16" rx="2" />                   
     <path d="M12 8v8" />
     <path d="M8 12h8" />
   </svg>
@@ -40,7 +38,7 @@ interface NavItemProps {
   label: string;
   isActive: boolean;
   onClick: () => void;
-  index: number;
+  index: number;                    
   activeTab: number;
 }
 
@@ -58,7 +56,7 @@ const NavItem = ({
       href={href}
       className={`relative flex flex-col items-center justify-center w-[6rem] h-16 transition-colors duration-200 z-10`}
       onClick={onClick}
-    >
+    >                
       {/* Only render the icon and label on the active indicator if this is the active tab */}
       {isActive ? (
         <motion.div
@@ -67,7 +65,7 @@ const NavItem = ({
           animate={{ y: -14 }} // Move up slightly to sit on the bulge
           transition={{ duration: 0.2 }}
         >
-          <div className="text-[#cfcfcd]">{icon}</div>
+          <div className="text-[#cfcfcd]">{icon}</div>                   
           <span className="text-xs mt-1 font-medium text-[#cfcfcd]">
             {label}
           </span>
@@ -77,7 +75,7 @@ const NavItem = ({
           <div className="text-black">{icon}</div>
           <span className="text-xs mt-1 font-medium text-black">{label}</span>
         </>
-      )}
+      )}                
     </Link>
   );
 };
