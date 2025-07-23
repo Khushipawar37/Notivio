@@ -8,12 +8,9 @@ import {
   Twitter,
   Instagram,
   Linkedin,
-  Mail,
+  Mail,                
   Heart,
   Sparkles,
-  BookOpen,
-  Brain,
-  Youtube,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -28,7 +25,7 @@ export default function Footer() {
       if (window.pageYOffset > 500) {
         setIsVisible(true);
       } else {
-        setIsVisible(false);
+        setIsVisible(false);                      
       }
     };
 
@@ -45,7 +42,7 @@ export default function Footer() {
 
   // Interactive elements for the footer
   const footerLinks = [
-    { name: "Home", href: "/" },
+    { name: "Home", href: "/" },                  
     { name: "Features", href: "#features" },
     { name: "Pricing", href: "#pricing" },
     { name: "About", href: "#about" },
@@ -55,7 +52,7 @@ export default function Footer() {
 
   const socialLinks = [
     { name: "Twitter", icon: Twitter, href: "#" },
-    { name: "Instagram", icon: Instagram, href: "#" },
+    { name: "Instagram", icon: Instagram, href: "#" },                     
     { name: "LinkedIn", icon: Linkedin, href: "#" },
     { name: "GitHub", icon: Github, href: "#" },
     { name: "Email", icon: Mail, href: "mailto:info@notivio.com" },
@@ -81,7 +78,7 @@ export default function Footer() {
         }}
         transition={{ duration: 0.3 }}
         aria-label="Back to top"
-      >
+      >                             
         <ArrowUp className="w-5 h-5" />
       </motion.button>
 
@@ -95,7 +92,7 @@ export default function Footer() {
               <motion.div
                 className="inline-block relative"
                 whileHover={{
-                  rotate: [0, -5, 5, -5, 0],
+                  rotate: [0, -5, 5, -5, 0],                           
                   transition: { duration: 0.5 },
                 }}
               >
@@ -117,7 +114,7 @@ export default function Footer() {
                     repeatType: "reverse",
                   }}
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4" />                  
                 </motion.div>
               </motion.div>
             </div>
@@ -139,7 +136,7 @@ export default function Footer() {
                   >
                     <Icon className="w-5 h-5" />
                   </motion.a>
-                );
+                );                  
               })}
             </div>
           </div>
@@ -160,7 +157,7 @@ export default function Footer() {
                   </Link>
                 </motion.li>
               ))}
-            </ul>
+            </ul>                 
           </div>
 
           {/* Newsletter signup */}
@@ -173,7 +170,7 @@ export default function Footer() {
             </p>
             <form className="space-y-3">
               <div className="relative">
-                <input
+                <input                   
                   type="email"
                   placeholder="Your email address"
                   className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#c6ac8f] text-white"
@@ -189,7 +186,7 @@ export default function Footer() {
                 Subscribe
               </motion.button>
             </form>
-          </div>
+          </div>                     
         </div>
 
         {/* Bottom section with copyright */}
@@ -198,12 +195,12 @@ export default function Footer() {
             © {new Date().getFullYear()} Notivio. All rights reserved.
           </p>
 
-          <div className="flex items-center text-gray-500 text-sm">
+          <div className="flex items-center text-gray-500 text-sm">                  
             <motion.div
               className="flex items-center"
               whileHover={{ scale: 1.05 }}
             >
-              Made with <Heart className="w-4 h-4 mx-1 text-[#c6ac8f]" /> for
+              Made with <Heart className="w-4 h-4 mx-1 text-[#c6ac8f]" /> for             
               learners worldwide
             </motion.div>
           </div>
