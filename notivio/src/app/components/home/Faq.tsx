@@ -116,10 +116,11 @@ const CategoryFilter = ({
         <motion.button
           key={category}
           onClick={() => onCategoryChange(category)}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${activeCategory === category
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+            activeCategory === category
               ? "bg-[#8a7559] text-white shadow-lg"
               : "bg-white text-[#8a7559] border border-[#c6ac8f]/30 hover:border-[#c6ac8f] hover:bg-[#c6ac8f]/10"
-            }`}
+          }`}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
