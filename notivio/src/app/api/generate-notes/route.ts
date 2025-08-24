@@ -1,12 +1,39 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-// Simple text processing function as fallback
-function generateNotesFromText(transcript: string, title: string, duration: string) {
-  // Split transcript into sentences
-  const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 10)
+export async function POST(request: NextRequest) {
+  try {
+    const { transcript, title, duration } = await request.json()
 
-  // Create sections based on content length
-  const sectionsCount = Math.min(Math.max(Math.floor(sentences.length / 8), 3), 8)
+    if (!transcript) {
+      return NextResponse.json({ error: "Transcript is required" }, { status: 400 })
+    }
+
+    // Simple AI-like processing to structure the notes
+    // In a real implementation, you'd use an AI service like OpenAI
+    const sections = generateStructuredSections(transcript)
+    const summary = generateSummary(transcript)
+    const keyPoints = generateKeyPoints(transcript)
+
+    const notes = {
+      title: title || "Video Notes",
+      transcript,
+      sections,
+      summary,
+      keyPoints,
+      duration: duration || "Unknown",
+    }
+
+    return NextResponse.json(notes)
+  } catch (error: any) {
+    console.error("Error generating notes:", error)
+    return NextResponse.json({ error: "Failed to generate notes" }, { status: 500 })
+  }
+}
+
+function generateStructuredSections(transcript: string) {
+  // Simple text processing to create sections
+  const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 10)
+  const sectionsCount = Math.min(Math.max(Math.floor(sentences.length / 10), 3), 8)
   const sentencesPerSection = Math.floor(sentences.length / sectionsCount)
 
   const sections = []
@@ -16,155 +43,45 @@ function generateNotesFromText(transcript: string, title: string, duration: stri
     const endIdx = i === sectionsCount - 1 ? sentences.length : (i + 1) * sentencesPerSection
     const sectionSentences = sentences.slice(startIdx, endIdx)
 
-    // Generate section title based on content
-    const sectionTitle = `Section ${i + 1}: Key Points`
+    // Generate section title from first sentence
+    const firstSentence = sectionSentences[0]?.trim() || `Section ${i + 1}`
+    const title = firstSentence.length > 50 ? firstSentence.substring(0, 47) + "..." : firstSentence
 
-    // Create bullet points from sentences
+    // Create content points
     const content = sectionSentences
-      .slice(0, 5) // Limit to 5 points per section
-      .map((sentence) => sentence.trim())
-      .filter((sentence) => sentence.length > 20)
+      .filter((s) => s.trim().length > 20)
+      .slice(0, 5)
+      .map((s) => s.trim())
 
-    if (content.length > 0) {
-      sections.push({
-        title: sectionTitle,
-        content: content,
-      })
-    }
+    sections.push({
+      title: title.replace(/^[^a-zA-Z]*/, "").trim() || `Section ${i + 1}`,
+      content: content.length > 0 ? content : [`Content for section ${i + 1}`],
+    })
   }
 
-  // Generate summary (first few sentences)
-  const summary = sentences.slice(0, 3).join(". ") + "."
+  return sections
+}
 
-  // Generate key points
-  const keyPoints = sentences
-    .filter((s) => s.length > 30 && s.length < 150)
-    .slice(0, 5)
+function generateSummary(transcript: string) {
+  // Simple summary generation
+  const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 20)
+  const importantSentences = sentences
+    .slice(0, Math.min(sentences.length, 5))
     .map((s) => s.trim())
+    .join(". ")
 
-  return {
-    title,
-    transcript,
-    summary,
-    keyPoints,
-    sections,
-    duration,
-  }
+  return importantSentences || "This video covers various topics and provides valuable insights."
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const { transcript, title, duration } = await request.json()
+function generateKeyPoints(transcript: string) {
+  // Extract key points
+  const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 15)
+  const keyPoints = sentences
+    .slice(0, Math.min(sentences.length, 6))
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
 
-    if (!transcript) {
-      return NextResponse.json({ error: "Transcript is required" }, { status: 400 })
-    }
-
-    console.log("Generating notes for:", title)
-
-    // Try Gemini API first if available
-    if (process.env.GEMINI_API_KEY) {
-      try {
-        const { GoogleGenerativeAI } = await import("@google/generative-ai")
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" })
-
-        const prompt = `
-You are an expert note-taking assistant. Analyze the following video transcript and create comprehensive, well-structured study notes.
-
-Video Title: ${title}
-Duration: ${duration}
-
-Transcript:
-${transcript}
-
-Please create detailed notes in the following JSON format:
-{
-  "title": "Video title",
-  "transcript": "Original transcript",
-  "summary": "A comprehensive 2-3 paragraph summary of the main content",
-  "keyPoints": ["5-7 most important takeaways as bullet points"],
-  "sections": [
-    {
-      "title": "Section title",
-      "content": ["Detailed bullet points for this section"]
-    }
-  ],
-  "duration": "Video duration"
-}
-
-Guidelines:
-1. Create 4-8 logical sections based on the content
-2. Each section should have 3-6 detailed bullet points
-3. Use clear, educational language suitable for studying
-4. Focus on key concepts, important facts, and actionable insights
-5. Make the summary comprehensive but concise
-6. Ensure key points are the most valuable takeaways
-7. Structure content logically for easy learning and review
-
-Return only the JSON object, no additional text.
-`
-
-        const result = await model.generateContent(prompt)
-        const response = await result.response
-        const text = response.text()
-
-        // Clean and parse the response
-        const jsonMatch = text.match(/\{[\s\S]*\}/)
-        if (jsonMatch) {
-          const notes = JSON.parse(jsonMatch[0])
-
-          // Validate and return
-          if (notes.sections && Array.isArray(notes.sections)) {
-            return NextResponse.json({
-              title: notes.title || title,
-              transcript: transcript,
-              summary: notes.summary || "Summary not available",
-              keyPoints: notes.keyPoints || [],
-              sections: notes.sections || [],
-              duration: duration || "Unknown",
-            })
-          }
-        }
-
-        throw new Error("Invalid AI response format")
-      } catch (aiError) {
-        console.error("Gemini AI error:", aiError)
-        console.log("Falling back to text processing...")
-      }
-    }
-
-    // Fallback to simple text processing
-    console.log("Using fallback text processing method")
-    const notes = generateNotesFromText(transcript, title, duration)
-
-    return NextResponse.json(notes)
-  } catch (error: any) {
-    console.error("Error generating notes:", error)
-
-    // Ultimate fallback
-    const fallbackNotes = {
-      title: title || "YouTube Video",
-      transcript: transcript || "",
-      summary: "This video covers various important topics. Please review the transcript for detailed information.",
-      keyPoints: [
-        "Review the full transcript for comprehensive understanding",
-        "Key concepts and insights are discussed throughout the video",
-        "Consider taking additional notes while reviewing",
-      ],
-      sections: [
-        {
-          title: "Main Content",
-          content: [
-            "This section contains the primary content from the video",
-            "Review the transcript for detailed information",
-            "Consider breaking down the content into smaller sections for better understanding",
-          ],
-        },
-      ],
-      duration: duration || "Unknown",
-    }
-
-    return NextResponse.json(fallbackNotes)
-  }
+  return keyPoints.length > 0
+    ? keyPoints
+    : ["Key insights from the video content", "Important concepts and ideas discussed", "Main takeaways for viewers"]
 }
