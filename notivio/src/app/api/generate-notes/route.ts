@@ -40,19 +40,25 @@ async function generateStructuredSections(transcript: string) {
   try {
     const { text } = await generateText({
       model: groq("llama-3.1-70b-versatile") as any,
-      prompt: `As an expert educator, analyze this video transcript and create 4-6 comprehensive learning sections. Each section should be designed to help students understand and retain the material effectively.
+      prompt: `As an expert educator, analyze the following video transcript and create exactly 9-10 well-structured learning sections that capture the flow of the video content. 
+Your goal is to transform the raw transcript into a high-quality study resource for students. 
 
-Format your response as a JSON array where each section has:
-- title: A clear, descriptive section title that indicates what students will learn
-- content: An array of 4-6 detailed points that explain concepts, provide examples, and highlight important information
-- learningObjectives: 2-3 specific things students should understand after this section
+Each section must include:
+- **title**: A clear, descriptive heading that summarizes what students will learn in this section (not just copied from the transcript).
+- **content**: An array of 4-6 detailed, student-friendly points. Each point should:
+  - Explain the concept in simple terms
+  - Provide context, examples, or real-world applications if mentioned or implied
+  - Highlight cause-and-effect relationships and key takeaways
+  - Avoid vague summaries or transcript fragments
+- **learningObjectives**: 2-3 specific, measurable learning outcomes that describe what a student should understand or be able to explain after studying this section.
 
-Focus on:
-- Breaking down complex concepts into digestible parts
-- Providing context and explanations, not just facts
-- Including examples and applications where mentioned
-- Highlighting cause-and-effect relationships
-- Making connections between different ideas
+Additional guidelines:
+1. Organize ideas logically in the order they are introduced in the transcript. Avoid mixing unrelated topics.
+2. Break down complex concepts into digestible parts and ensure clarity, as if teaching beginners.
+3. Rephrase and expand transcript content into meaningful, well-explained educational notes — do not copy text verbatim.
+4. Ensure consistency: every section should feel complete and useful on its own.
+5. Final output format: strictly return a valid JSON array of sections (no extra commentary or explanation outside the JSON).
+
 
 Transcript: ${transcript}
 
@@ -72,15 +78,33 @@ async function generateDetailedSummary(transcript: string) {
   try {
     const { text } = await generateText({
       model: groq("llama-3.1-70b-versatile") as any,
-      prompt: `Create a comprehensive, student-friendly summary of this video transcript. This summary should serve as a complete overview that students can use for studying and review.
+      prompt: `Create a comprehensive, student-friendly summary of the following video transcript. 
+This summary should be detailed, well-structured, and written in clear paragraphs (not bullet points). 
+It must read like a proper study guide that students can use for review and deep understanding.
 
-Structure your summary with:
-1. **Main Topic & Context** (2-3 sentences explaining what this video is about and why it matters)
-2. **Core Content** (4-5 paragraphs covering the main points, explanations, and examples)
-3. **Key Insights** (2-3 sentences highlighting the most important takeaways)
-4. **Practical Applications** (if applicable, how this knowledge can be used)
+Structure the summary with these sections:
 
-Write in a clear, educational tone that helps students understand not just WHAT was discussed, but WHY it's important and HOW concepts connect to each other.
+1. **Main Topic & Context**  
+   - Write 2-3 sentences introducing what the video is about, why the topic is important, and the context in which it is being discussed.  
+
+2. **Core Content**  
+   - Write 4-5 well-developed paragraphs that cover the main ideas, explanations, and examples presented in the video.  
+   - Break content into logical headings and subheadings for readability.  
+   - Expand on the transcript by explaining concepts clearly, connecting ideas, and showing cause-and-effect relationships.  
+   - Ensure each paragraph flows naturally into the next, giving students a coherent understanding of the material.  
+
+3. **Key Insights**  
+   - Write 2-3 sentences summarizing the most important lessons, principles, or takeaways from the video.  
+
+4. **Practical Applications** (if applicable)  
+   - Explain in 1-2 paragraphs how the concepts or knowledge from the video can be applied in real-world scenarios, studies, or problem-solving.  
+
+Guidelines:  
+- Use a clear, educational tone.  
+- Do not copy transcript lines verbatim; instead, rephrase and elaborate for clarity.  
+- Avoid scattered or incomplete points — ensure the summary feels cohesive and complete.  
+- Write only in paragraphs (no lists, no bullet points).  
+
 
 Transcript: ${transcript}
 
@@ -99,15 +123,19 @@ async function generateKeyPoints(transcript: string) {
   try {
     const { text } = await generateText({
       model: groq("llama-3.1-70b-versatile") as any,
-      prompt: `Extract 6-8 key learning points from this video transcript. Focus on the most important concepts, facts, and insights that students should remember and understand.
+      prompt: `Extract exactly 6-8 key learning points from the following video transcript. 
+Your goal is to create a concise yet complete set of insights that captures the entire video, so that even someone without time to watch the video can understand its essentials.
 
-Each key point should be:
-- A complete, standalone insight (not just a topic)
-- Specific and actionable when possible
-- Important for understanding the overall subject
-- Written in clear, student-friendly language
+Requirements for each key point:
+- It must be a complete, standalone insight (not just a heading or phrase).
+- Length: around 100-150 characters each (one to two clear sentences).
+- Cover all major topics mentioned in the transcript — do not leave out important ideas.
+- Use clear, student-friendly language.
+- Be specific and actionable when possible, not generic.
 
-Format as a JSON array of strings, where each string is a comprehensive key point (100-150 characters each).
+Output format: strictly a valid JSON array of strings. 
+Each string should be one key point.
+
 
 Transcript: ${transcript}
 
@@ -132,15 +160,42 @@ async function generateStudyGuide(transcript: string) {
   try {
     const { text } = await generateText({
       model: groq("llama-3.1-70b-versatile") as any,
-      prompt: `Create a study guide from this video transcript to help students review and test their understanding.
+      prompt: `You are an expert educator and assessment designer. Using the following video transcript, create a study guide that promotes active learning and critical thinking.
 
-Format as a JSON object with:
-- "reviewQuestions": Array of 5-7 thought-provoking questions that test comprehension
-- "practiceExercises": Array of 3-4 practical exercises or applications (if applicable)
-- "memoryAids": Array of 3-4 mnemonics, analogies, or memory techniques mentioned or that could help
-- "connections": Array of 2-3 ways this topic connects to other subjects or real-world applications
+Return ONLY a valid JSON object with exactly these keys:
+- "reviewQuestions": array of 5-7 questions
+- "practiceExercises": array of 3-4 exercises
+- "memoryAids": array of 3-4 items
+- "connections": array of 2-3 items
 
-Focus on active learning and critical thinking rather than simple recall.
+Content requirements:
+1) reviewQuestions (5-7)
+   - Each is a single, thought-provoking question ending with “?” (no answers).
+   - Mix Bloom levels: include at least
+     • 2 analysis/evaluation questions (compare, critique, justify, trade-offs)
+     • 2 application questions (apply concepts to a scenario or dataset)
+     • 1 concept-check that targets a common misconception from the transcript
+   - Be specific to the transcript; avoid vague “Explain X.” Prefer “Why does X lead to Y in the context of Z?”
+
+2) practiceExercises (3-4)
+   - Each is a practical, real-world task or mini-case that a student can actually perform.
+   - Include clear directions, inputs/constraints, and a success criterion (what a good answer demonstrates).
+   - If the transcript includes quantitative steps, include at least one exercise requiring calculation or stepwise procedure.
+
+3) memoryAids (3-4)
+   - Short mnemonics, analogies, or chunking strategies that map directly to ideas in the transcript.
+   - Each must be one sentence max and memorable (e.g., acronyms, vivid analogies).
+
+4) connections (2-3)
+   - One-sentence links to other subjects or real-world applications, showing transfer of learning.
+
+Quality guardrails:
+- Cover all major topics from the transcript across the four sections—do not omit key ideas.
+- No duplication across items; each entry should add distinct value.
+- Use student-friendly language; define jargon in context.
+- Do NOT copy transcript lines verbatim; rephrase and clarify.
+- Output MUST be valid JSON with only the four specified keys and string arrays. No extra text before or after the JSON.
+
 
 Transcript: ${transcript}
 
