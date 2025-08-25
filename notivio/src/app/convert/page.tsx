@@ -391,23 +391,6 @@ export default function VideoNotesPage() {
 
             <CardContent className="pt-8 pb-8">
               {/* Helpful Tips */}
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-start space-x-3">
-                  <div className="p-1 bg-blue-100 rounded">
-                    <MessageSquare className="h-4 w-4 text-blue-600" />
-                  </div>
-                  <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-1">💡 Tips for best results:</p>
-                    <ul className="space-y-1 text-blue-700">
-                      <li>• Make sure the video has captions/CC enabled</li>
-                      <li>• English captions work best, but other languages are supported</li>
-                      <li>• Longer videos (5+ minutes) provide richer content for notes</li>
-                      <li>• Educational content, lectures, and tutorials work great</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
                 <div className="relative">
                   <Input
