@@ -46,6 +46,18 @@ type Notes = {
   summary: string
   keyPoints: string[]
   duration: string
+  studyGuide: {
+    reviewQuestions: string[]
+    practiceExercises: string[]
+    memoryAids: string[]
+    connections: string[]
+  }
+  concepts: Array<{
+    term: string
+    definition: string
+    context: string
+    importance: string
+  }>
 }
 
 export default function VideoNotesPage() {
@@ -634,6 +646,20 @@ export default function VideoNotesPage() {
                   Summary & Key Points
                 </TabsTrigger>
                 <TabsTrigger
+                  value="study"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
+                >
+                  <Brain className="h-4 w-4 mr-2" />
+                  Study Guide
+                </TabsTrigger>
+                <TabsTrigger
+                  value="concepts"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
+                >
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Key Concepts
+                </TabsTrigger>
+                <TabsTrigger
                   value="raw"
                   className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
                 >
@@ -823,6 +849,181 @@ export default function VideoNotesPage() {
                 </div>
               </TabsContent>
 
+              <TabsContent value="study">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                  {/* Review Questions */}
+                  <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                        <MessageSquare className="h-5 w-5 mr-2" />
+                        Review Questions
+                      </CardTitle>
+                      <CardDescription>Test your understanding with these thought-provoking questions</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="space-y-4">
+                        {notes.studyGuide?.reviewQuestions?.map((question, index) => (
+                          <motion.div
+                            key={index}
+                            className="p-4 bg-gradient-to-r from-[#f5f0e8] to-white rounded-lg border border-[#c6ac8f]/20"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className="w-6 h-6 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                Q{index + 1}
+                              </div>
+                              <p className="text-gray-700 leading-relaxed">{question}</p>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Practice Exercises */}
+                  <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                        <Zap className="h-5 w-5 mr-2" />
+                        Practice Exercises
+                      </CardTitle>
+                      <CardDescription>Apply your knowledge with these hands-on activities</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="space-y-4">
+                        {notes.studyGuide?.practiceExercises?.map((exercise, index) => (
+                          <motion.div
+                            key={index}
+                            className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                {index + 1}
+                              </div>
+                              <p className="text-gray-700 leading-relaxed">{exercise}</p>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Memory Aids */}
+                  <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                        <Brain className="h-5 w-5 mr-2" />
+                        Memory Aids
+                      </CardTitle>
+                      <CardDescription>Mnemonics and strategies to help you remember key concepts</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="space-y-3">
+                        {notes.studyGuide?.memoryAids?.map((aid, index) => (
+                          <motion.div
+                            key={index}
+                            className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200 flex items-center space-x-3"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                          >
+                            <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                              <Sparkles className="h-4 w-4 text-white" />
+                            </div>
+                            <p className="text-gray-700 font-medium">{aid}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Connections */}
+                  <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                        <FileSearch className="h-5 w-5 mr-2" />
+                        Real-World Connections
+                      </CardTitle>
+                      <CardDescription>How this knowledge connects to other subjects and applications</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="space-y-3">
+                        {notes.studyGuide?.connections?.map((connection, index) => (
+                          <motion.div
+                            key={index}
+                            className="p-3 bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg border border-purple-200 flex items-center space-x-3"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                          >
+                            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full flex items-center justify-center">
+                              <Plus className="h-4 w-4 text-white" />
+                            </div>
+                            <p className="text-gray-700">{connection}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="concepts">
+                <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                  <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                    <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                      <BookOpen className="h-5 w-5 mr-2" />
+                      Key Concepts Glossary
+                    </CardTitle>
+                    <CardDescription>Essential terms and definitions from this video</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {notes.concepts?.map((concept, index) => (
+                        <motion.div
+                          key={index}
+                          className="p-6 bg-gradient-to-br from-white to-[#f5f0e8] rounded-xl border border-[#c6ac8f]/20 shadow-lg hover:shadow-xl transition-all duration-300"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: index * 0.1 }}
+                        >
+                          <div className="mb-4">
+                            <h3 className="text-lg font-bold text-[#8a7559] mb-2 flex items-center">
+                              <div className="w-8 h-8 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
+                                {index + 1}
+                              </div>
+                              {concept.term}
+                            </h3>
+                            <p className="text-gray-700 leading-relaxed mb-3">{concept.definition}</p>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex items-start space-x-2">
+                              <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                                Context
+                              </Badge>
+                              <p className="text-sm text-gray-600 leading-relaxed">{concept.context}</p>
+                            </div>
+
+                            <div className="flex items-start space-x-2">
+                              <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                                Why Important
+                              </Badge>
+                              <p className="text-sm text-gray-600 leading-relaxed">{concept.importance}</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
               <TabsContent value="raw">
                 <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
                   <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
@@ -833,7 +1034,7 @@ export default function VideoNotesPage() {
                     <CardDescription>Original transcript extracted from the video</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-6">
-                    <div className="bg-gradient-to-r from-[#f5f0e8] to-white p-6 rounded-xl max-h-[600px] overflow-y-auto border border-[#c6ac8f]/30 shadow-inner">
+                    <div className="bg-gradient-to-r from-[#f5f0e8] to-white p-6 rounded-xl max-h-[600px] overflow-y-auto border border-[#c6ac8f]/20 shadow-inner">
                       <div className="whitespace-pre-wrap text-gray-700 font-mono text-sm leading-relaxed">
                         {notes.transcript}
                       </div>
