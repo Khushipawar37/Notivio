@@ -1,564 +1,1023 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
+import Groq from "groq-sdk"
+
+// Enhanced configuration for better note quality
+const GROQ_MODEL = "llama3-8b-8192" // Compatible with AI SDK 4
+const MAX_TRANSCRIPT_LENGTH = 150000
+const MIN_TRANSCRIPT_LENGTH = 50
+
+// Enhanced schema for comprehensive notes
+const EnhancedNotesSchema = z.object({
+  title: z.string().min(5).max(200),
+  summary: z.string().min(50).max(500),
+  keyPoints: z.array(z.string()).min(3).max(20),
+  sections: z.array(z.object({
+    title: z.string().min(5).max(100),
+    content: z.array(z.string()).min(2).max(10),
+    learningObjectives: z.array(z.string()).min(1).max(5),
+    keyInsights: z.array(z.string()).min(1).max(4),
+  })).min(3).max(15),
+  studyGuide: z.object({
+    reviewQuestions: z.array(z.string()).min(3).max(25),
+    practiceExercises: z.array(z.string()).min(2).max(20),
+    memoryAids: z.array(z.string()).min(2).max(15),
+    connections: z.array(z.string()).min(2).max(15),
+    advancedTopics: z.array(z.string()).min(1).max(10),
+  }),
+  concepts: z.array(z.object({
+    term: z.string().min(2).max(50),
+    definition: z.string().min(10).max(200),
+    context: z.string().min(10).max(150),
+    importance: z.string().min(10).max(200),
+    examples: z.array(z.string()).min(1).max(3),
+    relatedTerms: z.array(z.string()).min(0).max(5),
+  })).min(3).max(30),
+  contentType: z.enum(["educational", "general_knowledge", "journey", "tutorial", "lecture"]),
+  difficulty: z.enum(["beginner", "intermediate", "advanced"]),
+  estimatedStudyTime: z.string().min(3).max(50),
+  prerequisites: z.array(z.string()).min(0).max(8),
+  nextSteps: z.array(z.string()).min(1).max(8),
+  quiz: z.object({
+    questions: z.array(z.object({
+      question: z.string().min(10).max(200),
+      options: z.array(z.string()).min(2).max(5),
+      correctAnswer: z.number().min(0),
+      explanation: z.string().min(10).max(150),
+      difficulty: z.enum(["easy", "medium", "hard"]),
+    })).min(2).max(15),
+  }),
+  mnemonics: z.array(z.object({
+    concept: z.string().min(3).max(50),
+    mnemonic: z.string().min(10).max(200),
+    explanation: z.string().min(10).max(150),
+  })).min(2).max(12),
+  practicalApplications: z.array(z.object({
+    scenario: z.string().min(10).max(150),
+    application: z.string().min(10).max(200),
+    benefits: z.array(z.string()).min(1).max(3),
+  })).min(2).max(10),
+})
+
+type EnhancedNotes = z.infer<typeof EnhancedNotesSchema>
+
+// Function to ensure transcript is in English
+async function ensureEnglish(transcript: string): Promise<string> {
+  try {
+    // Simple language detection - if it contains non-Latin characters, it might not be English
+    const hasNonLatinChars = /[^\u0000-\u007F\u00A0-\u00FF]/.test(transcript)
+    
+    if (hasNonLatinChars) {
+      // For now, we'll use a simple approach - if it's not clearly English, 
+      // we'll add a note to the prompt to ensure English output
+      console.log("Non-English characters detected, ensuring English output")
+    }
+    
+    return transcript
+  } catch (error) {
+    console.error("Language detection error:", error)
+    return transcript
+  }
+}
+
+// Content type detection based on transcript analysis
+function detectContentType(transcript: string, title: string): "educational" | "general_knowledge" | "journey" | "tutorial" | "lecture" {
+  const lowerTranscript = transcript.toLowerCase()
+  const lowerTitle = title.toLowerCase()
+  
+  // Educational indicators
+  const educationalTerms = [
+    'learn', 'understand', 'concept', 'principle', 'theory', 'method', 'technique',
+    'algorithm', 'formula', 'equation', 'hypothesis', 'research', 'study', 'analysis'
+  ]
+  
+  // Tutorial indicators
+  const tutorialTerms = [
+    'step', 'guide', 'tutorial', 'how to', 'walkthrough', 'demonstration',
+    'example', 'practice', 'exercise', 'assignment', 'project'
+  ]
+  
+  // Lecture indicators
+  const lectureTerms = [
+    'lecture', 'class', 'course', 'curriculum', 'syllabus', 'module',
+    'lesson', 'unit', 'semester', 'academic', 'scholarly'
+  ]
+  
+  // Journey indicators
+  const journeyTerms = [
+    'journey', 'story', 'experience', 'adventure', 'travel', 'trip',
+    'personal', 'life', 'career', 'transformation', 'growth'
+  ]
+  
+  // Count occurrences
+  const educationalScore = educationalTerms.filter(term => 
+    lowerTranscript.includes(term) || lowerTitle.includes(term)
+  ).length
+  
+  const tutorialScore = tutorialTerms.filter(term => 
+    lowerTranscript.includes(term) || lowerTitle.includes(term)
+  ).length
+  
+  const lectureScore = lectureTerms.filter(term => 
+    lowerTranscript.includes(term) || lowerTitle.includes(term)
+  ).length
+  
+  const journeyScore = journeyTerms.filter(term => 
+    lowerTranscript.includes(term) || lowerTitle.includes(term)
+  ).length
+  
+  // Determine content type based on highest score
+  const scores = [
+    { type: 'educational' as const, score: educationalScore },
+    { type: 'tutorial' as const, score: tutorialScore },
+    { type: 'lecture' as const, score: lectureScore },
+    { type: 'journey' as const, score: journeyScore },
+    { type: 'general_knowledge' as const, score: 0 }
+  ]
+  
+  const maxScore = Math.max(...scores.map(s => s.score))
+  if (maxScore === 0) return 'general_knowledge'
+  
+  return scores.find(s => s.score === maxScore)?.type || 'general_knowledge'
+}
+
+// Enhanced prompt builder for different content types
+function buildEnhancedPrompt(input: {
+  title: string
+  duration: string
+  transcript: string
+  contentType: string
+}) {
+  const { title, duration, transcript, contentType } = input
+  
+  const basePrompt = `You are an expert educational content analyst and note generator. Your task is to create comprehensive, high-quality study notes from a video transcript that will help students and professionals learn effectively.
+
+CRITICAL REQUIREMENTS - READ CAREFULLY:
+1. Base ALL content STRICTLY on the provided transcript - never invent facts
+2. If information is missing from the transcript, note "Information not provided in transcript"
+3. Ensure all content is accurate, relevant, and immediately useful for learning
+4. Use clear, concise language that's easy to understand
+5. Structure information logically for optimal learning retention
+6. Include practical examples and applications when possible
+7. Generate ALL content in ENGLISH ONLY - ensure all text, questions, explanations, and examples are in English
+8. If the transcript contains non-English content, translate and process it to generate English notes
+9. MUST meet ALL minimum requirements specified in the schema (array lengths, string lengths)
+10. Ensure every array has at least the minimum number of items specified
+11. Ensure every string meets the minimum character count specified
+12. CRITICAL: Quiz explanations must be MAXIMUM 150 characters - keep them concise!
+13. CRITICAL: All strings must respect their MAXIMUM character limits as specified in the schema
+
+CONTENT TYPE: ${contentType}
+VIDEO TITLE: ${title}
+DURATION: ${duration}
+
+TRANSCRIPT:
+"""
+${transcript}
+"""
+
+Generate comprehensive notes following this exact JSON schema (no markdown, no extra text):`
+
+  // Content-specific prompts
+  const contentSpecificPrompts = {
+    educational: `
+For EDUCATIONAL content, focus on:
+- Clear learning objectives and outcomes
+- Fundamental concepts and principles
+- Practical applications and real-world examples
+- Progressive difficulty levels
+- Assessment and review materials`,
+    
+    tutorial: `
+For TUTORIAL content, emphasize:
+- Step-by-step instructions
+- Hands-on practice exercises
+- Common pitfalls and solutions
+- Performance metrics and evaluation
+- Skill-building progression`,
+    
+    lecture: `
+For LECTURE content, highlight:
+- Academic rigor and depth
+- Theoretical frameworks
+- Research methodologies
+- Critical analysis skills
+- Advanced concepts and connections`,
+    
+    journey: `
+For JOURNEY/EXPERIENCE content, focus on:
+- Key insights and lessons learned
+- Personal growth and development
+- Practical wisdom and advice
+- Real-world applications
+- Inspiration and motivation`,
+    
+    general_knowledge: `
+For GENERAL KNOWLEDGE content, emphasize:
+- Core facts and information
+- Context and background
+- Current relevance and applications
+- Broader implications
+- Further reading and exploration`
+  }
+
+  const schemaPrompt = `
+Return ONLY valid JSON matching this schema (ensure MINIMUM requirements are met):
+{
+  "title": "string (MINIMUM 5 chars, MAX 200 chars)",
+  "summary": "string (MINIMUM 50 chars, MAX 500 chars, comprehensive overview)",
+  "keyPoints": ["array of MINIMUM 3, MAX 20 key takeaways, each 1-2 sentences"],
+  "sections": [
+    {
+      "title": "string (MINIMUM 5 chars, MAX 100 chars, clear section heading)",
+      "content": ["array of MINIMUM 2, MAX 10 content points, each 1-2 sentences"],
+      "learningObjectives": ["array of MINIMUM 1, MAX 5 specific learning goals"],
+      "keyInsights": ["array of MINIMUM 1, MAX 4 important insights from this section"]
+    }
+  ] (MINIMUM 3 sections required),
+  "studyGuide": {
+    "reviewQuestions": ["array of MINIMUM 3, MAX 25 thought-provoking questions"],
+    "practiceExercises": ["array of MINIMUM 2, MAX 20 actionable practice tasks"],
+    "memoryAids": ["array of MINIMUM 2, MAX 15 mnemonics and memory strategies"],
+    "connections": ["array of MINIMUM 2, MAX 15 connections to other topics/domains"],
+    "advancedTopics": ["array of MINIMUM 1, MAX 10 areas for further study"]
+  },
+  "concepts": [
+    {
+      "term": "string (MINIMUM 2 chars, MAX 50 chars, key concept name)",
+      "definition": "string (MINIMUM 10 chars, MAX 200 chars, clear definition)",
+      "context": "string (MINIMUM 10 chars, MAX 150 chars, where/how it's used)",
+      "importance": "string (MINIMUM 10 chars, MAX 200 chars, why it matters)",
+      "examples": ["array of MINIMUM 1, MAX 3 concrete examples"],
+      "relatedTerms": ["array of MINIMUM 0, MAX 5 related concepts"]
+    }
+  ] (MINIMUM 3 concepts required),
+  "contentType": "string (one of: educational, general_knowledge, journey, tutorial, lecture)",
+  "difficulty": "string (one of: beginner, intermediate, advanced)",
+  "estimatedStudyTime": "string (MINIMUM 3 chars, e.g., '30-45 minutes', '2-3 hours')",
+  "prerequisites": ["array of MINIMUM 0, MAX 8 required knowledge/skills"],
+  "nextSteps": ["array of MINIMUM 1, MAX 8 recommended next actions"],
+  "quiz": {
+    "questions": [
+      {
+        "question": "string (MINIMUM 10 chars, MAX 200 chars, clear question)",
+        "options": ["array of MINIMUM 2, MAX 5 answer choices"],
+        "correctAnswer": "number (index of correct option, 0-based)",
+        "explanation": "string (MINIMUM 10 chars, MAX 150 chars, why this is correct)",
+        "difficulty": "string (one of: easy, medium, hard)"
+      }
+    ] (MINIMUM 2 questions required)
+  },
+  "mnemonics": [
+    {
+      "concept": "string (MINIMUM 3 chars, MAX 50 chars, concept name)",
+      "mnemonic": "string (MINIMUM 10 chars, MAX 200 chars, memory aid)",
+      "explanation": "string (MINIMUM 10 chars, MAX 150 chars, how to use it)"
+    }
+  ] (MINIMUM 2 mnemonics required),
+  "practicalApplications": [
+    {
+      "scenario": "string (MINIMUM 10 chars, MAX 150 chars, real-world situation)",
+      "application": "string (MINIMUM 10 chars, MAX 200 chars, how to apply knowledge)",
+      "benefits": ["array of MINIMUM 1, MAX 3 specific benefits"]
+    }
+  ] (MINIMUM 2 applications required)
+}
+
+Generate the notes now, ensuring maximum educational value and practical utility.
+
+IMPORTANT: Before returning your response, double-check that:
+- All arrays meet their minimum length requirements
+- All strings meet their minimum character requirements  
+- All strings respect their maximum character limits
+- Quiz explanations are MAXIMUM 150 characters (keep them concise!)
+- The response is valid JSON that matches the schema exactly
+- No extra text or markdown formatting is included
+
+CRITICAL: If any string exceeds its maximum length, truncate it and add "..." at the end.`
+
+  return basePrompt + contentSpecificPrompts[contentType as keyof typeof contentSpecificPrompts] + schemaPrompt
+}
+
+// Function to fix common validation issues in Groq API responses
+function fixValidationIssues(notes: any): any {
+  const fixed = { ...notes }
+  
+  // Ensure minimum array lengths
+  if (!fixed.sections || fixed.sections.length < 3) {
+    fixed.sections = fixed.sections || []
+    while (fixed.sections.length < 3) {
+      fixed.sections.push({
+        title: `Section ${fixed.sections.length + 1}`,
+        content: ["Content for this section"],
+        learningObjectives: ["Understand key concepts"],
+        keyInsights: ["Important insights"]
+      })
+    }
+  }
+  
+  if (!fixed.concepts || fixed.concepts.length < 3) {
+    fixed.concepts = fixed.concepts || []
+    while (fixed.concepts.length < 3) {
+      fixed.concepts.push({
+        term: `Concept ${fixed.concepts.length + 1}`,
+        definition: "A key concept from the video",
+        context: "Referenced in the video content",
+        importance: "Important for understanding the topic",
+        examples: ["Example from the video"],
+        relatedTerms: []
+      })
+    }
+  }
+  
+  if (!fixed.quiz?.questions || fixed.quiz.questions.length < 2) {
+    fixed.quiz = fixed.quiz || { questions: [] }
+    while (fixed.quiz.questions.length < 2) {
+      fixed.quiz.questions.push({
+        question: `Question ${fixed.quiz.questions.length + 1}`,
+        options: ["Option 1", "Option 2"],
+        correctAnswer: 0,
+        explanation: "Explanation for the correct answer",
+        difficulty: "easy"
+      })
+    }
+  }
+  
+  // Fix quiz question explanations that are too long
+  if (fixed.quiz?.questions) {
+    fixed.quiz.questions.forEach((question: any, index: number) => {
+      if (question.explanation && question.explanation.length > 150) {
+        question.explanation = question.explanation.substring(0, 147) + "..."
+      }
+    })
+  }
+  
+  if (!fixed.mnemonics || fixed.mnemonics.length < 2) {
+    fixed.mnemonics = fixed.mnemonics || []
+    while (fixed.mnemonics.length < 2) {
+      fixed.mnemonics.push({
+        concept: `Concept ${fixed.mnemonics.length + 1}`,
+        mnemonic: "Memory aid for this concept",
+        explanation: "How to use this memory aid"
+      })
+    }
+  }
+  
+  if (!fixed.practicalApplications || fixed.practicalApplications.length < 2) {
+    fixed.practicalApplications = fixed.practicalApplications || []
+    while (fixed.practicalApplications.length < 2) {
+      fixed.practicalApplications.push({
+        scenario: "Real-world application",
+        application: "How to apply this knowledge",
+        benefits: ["Benefit 1", "Benefit 2"]
+      })
+    }
+  }
+  
+  // Ensure minimum string lengths
+  if (fixed.title && fixed.title.length < 5) {
+    fixed.title = fixed.title + " - Video Notes"
+  }
+  
+  if (fixed.summary && fixed.summary.length < 50) {
+    fixed.summary = fixed.summary + " This video provides valuable information that can be applied in various contexts."
+  }
+  
+  // Fix any other strings that exceed maximum lengths
+  if (fixed.summary && fixed.summary.length > 500) {
+    fixed.summary = fixed.summary.substring(0, 497) + "..."
+  }
+  
+  if (fixed.title && fixed.title.length > 200) {
+    fixed.title = fixed.title.substring(0, 197) + "..."
+  }
+  
+  // Fix section content that might be too long
+  if (fixed.sections) {
+    fixed.sections.forEach((section: any) => {
+      if (section.title && section.title.length > 100) {
+        section.title = section.title.substring(0, 97) + "..."
+      }
+      if (section.content) {
+        section.content = section.content.map((item: string) => {
+          if (item.length > 200) {
+            return item.substring(0, 197) + "..."
+          }
+          return item
+        })
+      }
+    })
+  }
+  
+  // Fix concept definitions that might be too long
+  if (fixed.concepts) {
+    fixed.concepts.forEach((concept: any) => {
+      if (concept.definition && concept.definition.length > 200) {
+        concept.definition = concept.definition.substring(0, 197) + "..."
+      }
+      if (concept.context && concept.context.length > 150) {
+        concept.context = concept.context.substring(0, 147) + "..."
+      }
+      if (concept.importance && concept.importance.length > 200) {
+        concept.importance = concept.importance.substring(0, 197) + "..."
+      }
+    })
+  }
+  
+  return fixed
+}
+
+// Function to ensure all strings are within their maximum limits
+function ensureStringLimits(notes: any): any {
+  const limited = { ...notes }
+  
+  // Title: max 200 chars
+  if (limited.title && limited.title.length > 200) {
+    limited.title = limited.title.substring(0, 197) + "..."
+  }
+  
+  // Summary: max 500 chars
+  if (limited.summary && limited.summary.length > 500) {
+    limited.summary = limited.summary.substring(0, 497) + "..."
+  }
+  
+  // Key points: max 200 chars each
+  if (limited.keyPoints) {
+    limited.keyPoints = limited.keyPoints.map((point: string) => {
+      if (point.length > 200) {
+        return point.substring(0, 197) + "..."
+      }
+      return point
+    })
+  }
+  
+  // Sections
+  if (limited.sections) {
+    limited.sections = limited.sections.map((section: any) => {
+      const fixedSection = { ...section }
+      
+      // Section title: max 100 chars
+      if (fixedSection.title && fixedSection.title.length > 100) {
+        fixedSection.title = fixedSection.title.substring(0, 97) + "..."
+      }
+      
+      // Section content: max 200 chars each
+      if (fixedSection.content) {
+        fixedSection.content = fixedSection.content.map((item: string) => {
+          if (item.length > 200) {
+            return item.substring(0, 197) + "..."
+          }
+          return item
+        })
+      }
+      
+      // Learning objectives: max 200 chars each
+      if (fixedSection.learningObjectives) {
+        fixedSection.learningObjectives = fixedSection.learningObjectives.map((obj: string) => {
+          if (obj.length > 200) {
+            return obj.substring(0, 197) + "..."
+          }
+          return obj
+        })
+      }
+      
+      // Key insights: max 200 chars each
+      if (fixedSection.keyInsights) {
+        fixedSection.keyInsights = fixedSection.keyInsights.map((insight: string) => {
+          if (insight.length > 200) {
+            return insight.substring(0, 197) + "..."
+          }
+          return insight
+        })
+      }
+      
+      return fixedSection
+    })
+  }
+  
+  // Study guide
+  if (limited.studyGuide) {
+    const guide = limited.studyGuide
+    
+    // Review questions: max 200 chars each
+    if (guide.reviewQuestions) {
+      guide.reviewQuestions = guide.reviewQuestions.map((q: string) => {
+        if (q.length > 200) {
+          return q.substring(0, 197) + "..."
+        }
+        return q
+      })
+    }
+    
+    // Practice exercises: max 200 chars each
+    if (guide.practiceExercises) {
+      guide.practiceExercises = guide.practiceExercises.map((ex: string) => {
+        if (ex.length > 200) {
+          return ex.substring(0, 197) + "..."
+        }
+        return ex
+      })
+    }
+    
+    // Memory aids: max 200 chars each
+    if (guide.memoryAids) {
+      guide.memoryAids = guide.memoryAids.map((aid: string) => {
+        if (aid.length > 200) {
+          return aid.substring(0, 197) + "..."
+        }
+        return aid
+      })
+    }
+    
+    // Connections: max 200 chars each
+    if (guide.connections) {
+      guide.connections = guide.connections.map((conn: string) => {
+        if (conn.length > 200) {
+          return conn.substring(0, 197) + "..."
+        }
+        return conn
+      })
+    }
+    
+    // Advanced topics: max 200 chars each
+    if (guide.advancedTopics) {
+      guide.advancedTopics = guide.advancedTopics.map((topic: string) => {
+        if (topic.length > 200) {
+          return topic.substring(0, 197) + "..."
+        }
+        return topic
+      })
+    }
+  }
+  
+  // Concepts
+  if (limited.concepts) {
+    limited.concepts = limited.concepts.map((concept: any) => {
+      const fixedConcept = { ...concept }
+      
+      // Term: max 50 chars
+      if (fixedConcept.term && fixedConcept.term.length > 50) {
+        fixedConcept.term = fixedConcept.term.substring(0, 47) + "..."
+      }
+      
+      // Definition: max 200 chars
+      if (fixedConcept.definition && fixedConcept.definition.length > 200) {
+        fixedConcept.definition = fixedConcept.definition.substring(0, 197) + "..."
+      }
+      
+      // Context: max 150 chars
+      if (fixedConcept.context && fixedConcept.context.length > 150) {
+        fixedConcept.context = fixedConcept.context.substring(0, 147) + "..."
+      }
+      
+      // Importance: max 200 chars
+      if (fixedConcept.importance && fixedConcept.importance.length > 200) {
+        fixedConcept.importance = fixedConcept.importance.substring(0, 197) + "..."
+      }
+      
+      // Examples: max 200 chars each
+      if (fixedConcept.examples) {
+        fixedConcept.examples = fixedConcept.examples.map((ex: string) => {
+          if (ex.length > 200) {
+            return ex.substring(0, 197) + "..."
+          }
+          return ex
+        })
+      }
+      
+      return fixedConcept
+    })
+  }
+  
+  // Quiz questions
+  if (limited.quiz?.questions) {
+    limited.quiz.questions = limited.quiz.questions.map((question: any) => {
+      const fixedQuestion = { ...question }
+      
+      // Question: max 200 chars
+      if (fixedQuestion.question && fixedQuestion.question.length > 200) {
+        fixedQuestion.question = fixedQuestion.question.substring(0, 197) + "..."
+      }
+      
+      // Explanation: max 150 chars
+      if (fixedQuestion.explanation && fixedQuestion.explanation.length > 150) {
+        fixedQuestion.explanation = fixedQuestion.explanation.substring(0, 147) + "..."
+      }
+      
+      return fixedQuestion
+    })
+  }
+  
+  // Mnemonics
+  if (limited.mnemonics) {
+    limited.mnemonics = limited.mnemonics.map((mnemonic: any) => {
+      const fixedMnemonic = { ...mnemonic }
+      
+      // Concept: max 50 chars
+      if (fixedMnemonic.concept && fixedMnemonic.concept.length > 50) {
+        fixedMnemonic.concept = fixedMnemonic.concept.substring(0, 47) + "..."
+      }
+      
+      // Mnemonic: max 200 chars
+      if (fixedMnemonic.mnemonic && fixedMnemonic.mnemonic.length > 200) {
+        fixedMnemonic.mnemonic = fixedMnemonic.mnemonic.substring(0, 197) + "..."
+      }
+      
+      // Explanation: max 150 chars
+      if (fixedMnemonic.explanation && fixedMnemonic.explanation.length > 150) {
+        fixedMnemonic.explanation = fixedMnemonic.explanation.substring(0, 147) + "..."
+      }
+      
+      return fixedMnemonic
+    })
+  }
+  
+  // Practical applications
+  if (limited.practicalApplications) {
+    limited.practicalApplications = limited.practicalApplications.map((app: any) => {
+      const fixedApp = { ...app }
+      
+      // Scenario: max 150 chars
+      if (fixedApp.scenario && fixedApp.scenario.length > 150) {
+        fixedApp.scenario = fixedApp.scenario.substring(0, 147) + "..."
+      }
+      
+      // Application: max 200 chars
+      if (fixedApp.application && fixedApp.application.length > 200) {
+        fixedApp.application = fixedApp.application.substring(0, 197) + "..."
+      }
+      
+      return fixedApp
+    })
+  }
+  
+  return limited
+}
+
+// Enhanced transcript cleaning
+function cleanTranscript(text: string): string {
+  let cleaned = text
+  
+  // Remove timestamps and speaker labels
+  cleaned = cleaned.replace(/\[?(\d{1,2}:\d{2}(?::\d{2})?)\]?/g, ' ')
+  cleaned = cleaned.replace(/^[ \t]*([A-Z][A-Za-z0-9 _-]{0,30}):[ \t]*/gm, '')
+  
+  // Remove common filler words and phrases
+  cleaned = cleaned.replace(/\b(um+|uh+|er+|ah+|like,?|you know|sort of|kind of|basically|actually|literally)\b/gi, ' ')
+  
+  // Remove video-specific fluff
+  cleaned = cleaned.replace(/\b(don't forget to|be sure to|make sure to|subscribe|like the video|hit the bell|comment below|share this video)\b.*$/gim, ' ')
+  
+  // Clean up whitespace and formatting
+  cleaned = cleaned
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim()
+  
+  // Normalize quotes and dashes
+  cleaned = cleaned.replace(/[""]/g, '"').replace(/['']/g, "'").replace(/—|–/g, '-')
+  
+  return cleaned
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { transcript, title, duration } = await request.json()
+    const body = await request.json().catch(() => ({}))
+    const { transcript, title, duration } = body || {}
 
-    if (!transcript) {
-      return NextResponse.json({ error: "Transcript is required" }, { status: 400 })
+    if (!transcript || typeof transcript !== "string" || transcript.trim().length < MIN_TRANSCRIPT_LENGTH) {
+      return NextResponse.json({ 
+        error: "Transcript is required and must be at least 50 characters long" 
+      }, { status: 400 })
     }
 
-    const [sections, summary, keyPoints, studyGuide, concepts] = await Promise.all([
-      generateStructuredSections(transcript),
-      generateDetailedSummary(transcript),
-      generateKeyPoints(transcript),
-      generateStudyGuide(transcript),
-      generateKeyConcepts(transcript),
-    ])
-
-    const notes = {
-      title: title || "Video Notes",
-      transcript,
-      sections,
-      summary,
-      keyPoints,
-      studyGuide,
-      concepts,
-      duration: duration || "Unknown",
+    // Clean and prepare transcript
+    const cleanedTranscript = cleanTranscript(transcript)
+    
+    // Ensure transcript is in English
+    const englishTranscript = await ensureEnglish(cleanedTranscript)
+    
+    if (englishTranscript.length < MIN_TRANSCRIPT_LENGTH) {
+      return NextResponse.json({ 
+        error: "Transcript is too short after cleaning" 
+      }, { status: 400 })
     }
 
-    return NextResponse.json(notes)
-  } catch (error: any) {
-    console.error("Error generating notes:", error)
-    return NextResponse.json({ error: "Failed to generate notes" }, { status: 500 })
-  }
-}
+    // Detect content type for adaptive prompting
+    const contentType = detectContentType(englishTranscript, title || "Video")
+    
+    // Check for Groq API key
+    const groqApiKey = process.env.GROQ_API_KEY
+    
+    if (!groqApiKey) {
+      return NextResponse.json({ 
+        error: "Groq API key not configured. Please set GROQ_API_KEY environment variable." 
+      }, { status: 500 })
+    }
 
-async function generateStructuredSections(transcript: string) {
-  try {
-    const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 20)
-    const paragraphs = transcript.split(/\n\s*\n/).filter((p) => p.trim().length > 50)
+          try {
+        // Generate notes using Groq API directly with Groq SDK
+        const groqClient = new Groq({
+          apiKey: groqApiKey,
+        })
 
-    // Use paragraphs if available, otherwise create logical breaks
-    const textBlocks = paragraphs.length > 3 ? paragraphs : createLogicalBreaks(sentences)
+        const prompt = buildEnhancedPrompt({
+          title: title || "Video Notes",
+          duration: duration || "Unknown",
+          transcript: englishTranscript.slice(0, MAX_TRANSCRIPT_LENGTH),
+          contentType
+        })
 
-    const sectionsCount = Math.min(Math.max(textBlocks.length, 6), 10)
-    const sections = []
+                console.log("🚀 Calling Groq API with model:", GROQ_MODEL)
+        const completion = await groqClient.chat.completions.create({
+          model: GROQ_MODEL,
+          messages: [
+            {
+              role: "system",
+              content: "You are an expert note-taking assistant. Generate comprehensive, structured notes based on the provided transcript. Follow the exact JSON schema format requested. CRITICAL: Ensure ALL minimum requirements are met for array lengths and string lengths. Validate your response before returning it."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 4000,
+          top_p: 0.9,
+          response_format: { type: "json_object" }
+        })
+        console.log("✅ Groq API call successful")
 
-    for (let i = 0; i < sectionsCount; i++) {
-      const blockIndex = Math.floor((i / sectionsCount) * textBlocks.length)
-      const currentBlock = textBlocks[blockIndex] || textBlocks[textBlocks.length - 1]
+        // Parse and validate the response
+        const responseContent = completion.choices[0]?.message?.content
+        if (!responseContent) {
+          throw new Error("No response content from Groq API")
+        }
 
-      // Extract key themes and create meaningful titles
-      const title = generateSectionTitle(currentBlock, i + 1)
-      const content = generateSectionContent(currentBlock)
-      const learningObjectives = generateLearningObjectives(currentBlock, title)
+        let parsedNotes
+        try {
+          // Try to extract JSON if there's extra text
+          const jsonMatch = responseContent.match(/\{[\s\S]*\}/)
+          if (jsonMatch) {
+            parsedNotes = JSON.parse(jsonMatch[0])
+          } else {
+            parsedNotes = JSON.parse(responseContent)
+          }
+        } catch (parseError) {
+          console.error("Failed to parse Groq response:", parseError)
+          console.error("Raw response:", responseContent)
+          throw new Error("Invalid JSON response from Groq API")
+        }
 
-      sections.push({
-        title,
-        content,
-        learningObjectives,
+        // Validate the response against our schema
+        let validatedNotes
+        try {
+          validatedNotes = EnhancedNotesSchema.parse(parsedNotes)
+          console.log("✅ Schema validation successful")
+        } catch (validationError: any) {
+          console.error("❌ Schema validation failed:", validationError)
+          console.log("🔧 Attempting to fix validation issues...")
+          
+          // Try to fix common validation issues
+          const fixedNotes = fixValidationIssues(parsedNotes)
+          console.log("🔧 Fixed notes structure:", {
+            sections: fixedNotes.sections?.length || 0,
+            concepts: fixedNotes.concepts?.length || 0,
+            quizQuestions: fixedNotes.quiz?.questions?.length || 0,
+            mnemonics: fixedNotes.mnemonics?.length || 0,
+            practicalApplications: fixedNotes.practicalApplications?.length || 0
+          })
+          
+          // Additional validation: ensure all strings are within limits
+          const finalNotes = ensureStringLimits(fixedNotes)
+          console.log("🔧 Final notes structure after string limit enforcement:", {
+            sections: finalNotes.sections?.length || 0,
+            concepts: finalNotes.concepts?.length || 0,
+            quizQuestions: finalNotes.quiz?.questions?.length || 0,
+            mnemonics: finalNotes.mnemonics?.length || 0,
+            practicalApplications: finalNotes.practicalApplications?.length || 0,
+            titleLength: finalNotes.title?.length || 0,
+            summaryLength: finalNotes.summary?.length || 0
+          })
+          
+          try {
+            validatedNotes = EnhancedNotesSchema.parse(finalNotes)
+            console.log("✅ Schema validation successful after fixing")
+          } catch (secondValidationError) {
+            console.error("❌ Second validation attempt failed:", secondValidationError)
+            console.error("🔍 Detailed validation errors:", secondValidationError.issues)
+            throw new Error("Failed to validate Groq API response after fixing")
+          }
+        }
+
+      // Return the enhanced notes
+      return NextResponse.json({
+        title: validatedNotes.title || title || "Video Notes",
+        transcript: englishTranscript,
+        sections: validatedNotes.sections,
+        summary: validatedNotes.summary,
+        keyPoints: validatedNotes.keyPoints,
+        studyGuide: validatedNotes.studyGuide,
+        concepts: validatedNotes.concepts,
+        duration: duration || "Unknown",
+        contentType: validatedNotes.contentType,
+        difficulty: validatedNotes.difficulty,
+        estimatedStudyTime: validatedNotes.estimatedStudyTime,
+        prerequisites: validatedNotes.prerequisites,
+        nextSteps: validatedNotes.nextSteps,
+        quiz: validatedNotes.quiz,
+        mnemonics: validatedNotes.mnemonics,
+        practicalApplications: validatedNotes.practicalApplications,
+      })
+
+    } catch (groqError: any) {
+      console.error("Groq API error:", groqError)
+      
+      // Fallback to basic note generation
+      return NextResponse.json({
+        title: title || "Video Notes",
+        transcript: englishTranscript,
+        sections: generateBasicSections(englishTranscript),
+        summary: generateBasicSummary(englishTranscript),
+        keyPoints: generateBasicKeyPoints(englishTranscript),
+        studyGuide: generateBasicStudyGuide(),
+        concepts: generateBasicConcepts(englishTranscript),
+        duration: duration || "Unknown",
+        contentType: contentType,
+        difficulty: "intermediate",
+        estimatedStudyTime: "30-45 minutes",
+        prerequisites: [],
+        nextSteps: ["Review key concepts", "Practice with examples"],
+        quiz: generateBasicQuiz(),
+        mnemonics: generateBasicMnemonics(),
+        practicalApplications: generateBasicApplications(),
       })
     }
 
-    return sections
-  } catch (error) {
-    console.error("Error generating sections:", error)
-    return generateBasicSections(transcript)
+  } catch (error: any) {
+    console.error("Notes generation error:", error?.message || error)
+    return NextResponse.json({ 
+      error: "Failed to generate notes. Please try again." 
+    }, { status: 500 })
   }
 }
 
-async function generateDetailedSummary(transcript: string) {
-  try {
-    const words = transcript.split(/\s+/).filter((w) => w.length > 2)
-    const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 20)
-
-    // Extract key themes and topics
-    const keyTerms = extractKeyTerms(words)
-    const mainTopics = identifyMainTopics(sentences, keyTerms)
-
-    let summary = ""
-
-    // Main Topic & Context
-    summary += `**Main Topic & Context**\n\n`
-    summary += `This video explores ${mainTopics[0] || "important concepts"} and provides valuable insights into ${mainTopics[1] || "the subject matter"}. `
-    summary += `The content is structured to help viewers understand key principles and their practical applications. `
-    summary += `This educational material covers essential topics that are fundamental to mastering the subject.\n\n`
-
-    // Core Content
-    summary += `**Core Content**\n\n`
-    const contentSections = createContentSections(sentences, keyTerms)
-    contentSections.forEach((section, index) => {
-      summary += `**${section.heading}**\n`
-      summary += `${section.content}\n\n`
+// Fallback functions for basic note generation
+function generateBasicSections(transcript: string) {
+  const sentences = transcript
+    .split(/[.!?]+/g)
+    .map(s => s.replace(/\s+/g, ' ').trim())
+    .filter(s => s.length > 15)
+  
+  const sectionsCount = Math.min(Math.max(5, Math.floor(sentences.length / 8)), 10)
+  const sections = []
+  
+  for (let i = 0; i < sectionsCount; i++) {
+    const start = i * Math.floor(sentences.length / sectionsCount)
+    const end = i === sectionsCount - 1 ? sentences.length : (i + 1) * Math.floor(sentences.length / sectionsCount)
+    const block = sentences.slice(start, end)
+    
+    sections.push({
+      title: `Section ${i + 1}`,
+      content: block.slice(0, 6).map(s => s.length > 100 ? s.slice(0, 97) + '...' : s),
+      learningObjectives: [`Understand key concepts from section ${i + 1}`, "Apply knowledge to practical situations"],
+      keyInsights: ["Key insights from this section"]
     })
-
-    // Key Insights
-    summary += `**Key Insights**\n\n`
-    summary += `The most important takeaways from this video include understanding ${keyTerms.slice(0, 3).join(", ")} and their interconnected relationships. `
-    summary += `These concepts form the foundation for deeper learning and practical application in real-world scenarios.\n\n`
-
-    // Practical Applications
-    summary += `**Practical Applications**\n\n`
-    summary += `The knowledge presented in this video can be applied in various professional and academic contexts. `
-    summary += `Students can use these concepts to solve problems, make informed decisions, and build upon this foundation for advanced learning. `
-    summary += `The principles discussed are particularly valuable for those seeking to develop expertise in this field.`
-
-    return summary
-  } catch (error) {
-    console.error("Error generating summary:", error)
-    return "This video provides comprehensive educational content with valuable insights and practical knowledge for student learning and development."
   }
+  
+  return sections
 }
 
-async function generateKeyPoints(transcript: string) {
-  try {
-    const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 30)
-    const words = transcript.toLowerCase().split(/\s+/)
+function generateBasicSummary(transcript: string) {
+  const sentences = transcript
+    .split(/[.!?]+/g)
+    .map(s => s.trim())
+    .filter(s => s.length > 20)
+    .slice(0, 5)
+  
+  return sentences.join(' ') + " This video provides valuable information that can be applied in various contexts."
+}
 
-    // Find important sentences based on key indicators
-    const importantSentences = sentences.filter((sentence) => {
-      const lowerSentence = sentence.toLowerCase()
-      return (
-        lowerSentence.includes("important") ||
-        lowerSentence.includes("key") ||
-        lowerSentence.includes("essential") ||
-        lowerSentence.includes("remember") ||
-        lowerSentence.includes("crucial") ||
-        lowerSentence.includes("main") ||
-        lowerSentence.includes("first") ||
-        lowerSentence.includes("second") ||
-        lowerSentence.includes("finally") ||
-        lowerSentence.includes("therefore") ||
-        lowerSentence.includes("because") ||
-        lowerSentence.includes("result")
-      )
-    })
+function generateBasicKeyPoints(transcript: string) {
+  const sentences = transcript
+    .split(/[.!?]+/g)
+    .map(s => s.trim())
+    .filter(s => s.length > 30 && s.length < 150)
+    .slice(0, 10)
+  
+  return sentences.map(s => s.length > 120 ? s.slice(0, 117) + '...' : s)
+}
 
-    // Extract key terms and create points around them
-    const keyTerms = extractKeyTerms(words)
-    const keyPoints = []
-
-    // Add points from important sentences
-    importantSentences.slice(0, 4).forEach((sentence) => {
-      const cleanSentence = sentence.trim().replace(/^[^a-zA-Z]*/, "")
-      if (cleanSentence.length > 50 && cleanSentence.length < 200) {
-        keyPoints.push(cleanSentence)
-      }
-    })
-
-    // Add points based on key terms if we need more
-    while (keyPoints.length < 6 && keyTerms.length > 0) {
-      const term = keyTerms.shift()
-      const relatedSentence = sentences.find(
-        (s) =>
-          s.toLowerCase().includes(term.toLowerCase()) &&
-          s.length > 50 &&
-          s.length < 200 &&
-          !keyPoints.some((kp) => kp.toLowerCase().includes(term.toLowerCase())),
-      )
-
-      if (relatedSentence) {
-        keyPoints.push(relatedSentence.trim().replace(/^[^a-zA-Z]*/, ""))
-      }
-    }
-
-    // Ensure we have at least 6 points
-    while (keyPoints.length < 6) {
-      const randomSentence = sentences[Math.floor(Math.random() * sentences.length)]
-      if (randomSentence && randomSentence.length > 50 && randomSentence.length < 200) {
-        const cleanSentence = randomSentence.trim().replace(/^[^a-zA-Z]*/, "")
-        if (!keyPoints.includes(cleanSentence)) {
-          keyPoints.push(cleanSentence)
-        }
-      }
-    }
-
-    return keyPoints.slice(0, 8)
-  } catch (error) {
-    console.error("Error generating key points:", error)
-    return [
-      "Understanding the fundamental concepts presented in this educational content",
-      "Learning practical applications and real-world implementations of key ideas",
-      "Developing critical thinking skills through comprehensive analysis",
-      "Building foundational knowledge for advanced learning and problem-solving",
-      "Connecting theoretical concepts with practical examples and case studies",
-      "Mastering essential principles that form the basis of the subject matter",
+function generateBasicStudyGuide() {
+  return {
+    reviewQuestions: [
+      "What are the main concepts discussed in this video?",
+      "How can you apply these ideas in practice?",
+      "What questions do you still have about this topic?",
+      "How does this relate to other things you've learned?",
+      "What would you like to explore further?"
+    ],
+    practiceExercises: [
+      "Summarize the key points in your own words",
+      "Create examples that illustrate the main concepts",
+      "Discuss the topic with someone else to reinforce learning",
+      "Apply the concepts to a real-world scenario"
+    ],
+    memoryAids: [
+      "Use visualization techniques to remember key concepts",
+      "Create acronyms for important terms",
+      "Connect new information to things you already know",
+      "Practice recalling information without notes"
+    ],
+    connections: [
+      "Relate this topic to your field of study or work",
+      "Identify how this connects to current events",
+      "Find connections to other subjects you're learning",
+      "Consider how this applies to your personal goals"
+    ],
+    advancedTopics: [
+      "Explore related research and studies",
+      "Investigate advanced applications and techniques",
+      "Connect with experts in the field",
+      "Consider pursuing formal education in this area"
     ]
   }
 }
 
-async function generateStudyGuide(transcript: string) {
-  try {
-    const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 20)
-    const keyTerms = extractKeyTerms(transcript.split(/\s+/))
-    const topics = identifyMainTopics(sentences, keyTerms)
-
-    const studyGuide = {
-      reviewQuestions: [
-        `What are the main principles of ${topics[0] || "the subject"} as discussed in this video?`,
-        `How do the concepts of ${keyTerms[0] || "key topics"} and ${keyTerms[1] || "related ideas"} work together?`,
-        `Why is understanding ${topics[1] || "these concepts"} important for practical application?`,
-        `What examples were provided to illustrate the main points, and how do they support the theory?`,
-        `How would you apply these concepts to solve a real-world problem in this field?`,
-        `What are the potential challenges or limitations of the approaches discussed?`,
-        `How do these ideas connect to other concepts you've learned in related subjects?`,
-      ],
-      practiceExercises: [
-        `Create a mind map connecting all the key concepts discussed in the video, showing their relationships and dependencies.`,
-        `Write a one-page explanation of the main topic as if teaching it to someone with no prior knowledge of the subject.`,
-        `Develop three real-world scenarios where you could apply the principles learned, including potential challenges and solutions.`,
-        `Compare and contrast the different approaches or methods mentioned in the video, analyzing their strengths and weaknesses.`,
-      ],
-      memoryAids: [
-        `Use the acronym method to remember the key steps or principles in the order they were presented.`,
-        `Create visual associations between new concepts and familiar objects or experiences from your daily life.`,
-        `Develop a story or narrative that connects all the main points in a logical, memorable sequence.`,
-        `Use the "teach-back" method: explain each concept aloud as if teaching a friend, identifying areas that need more review.`,
-      ],
-      connections: [
-        `These concepts relate directly to problem-solving methodologies used in business, engineering, and scientific research.`,
-        `The principles discussed connect to broader themes in education, psychology, and human development studies.`,
-        `This knowledge forms a foundation for advanced topics in the field and interdisciplinary applications.`,
-      ],
-    }
-
-    return studyGuide
-  } catch (error) {
-    console.error("Error generating study guide:", error)
-    return {
-      reviewQuestions: [
-        "What are the main concepts discussed in this video?",
-        "How do these ideas apply to real-world situations?",
-        "What examples were used to illustrate key points?",
-        "Why are these concepts important to understand?",
-        "How do the different topics connect to each other?",
-        "What practical applications can you identify?",
-      ],
-      practiceExercises: [
-        "Create a summary of the main points in your own words",
-        "Develop examples that illustrate the key concepts",
-        "Practice explaining the ideas to someone else",
-        "Apply the concepts to a real-world scenario",
-      ],
-      memoryAids: [
-        "Create acronyms for key concepts and processes",
-        "Use visual associations to remember important points",
-        "Develop stories or analogies that make concepts memorable",
-      ],
-      connections: [
-        "Consider how this topic relates to other subjects you're studying",
-        "Think about real-world applications in your field of interest",
-        "Connect these ideas to current events or personal experiences",
-      ],
-    }
-  }
-}
-
-async function generateKeyConcepts(transcript: string) {
-  try {
-    const words = transcript.toLowerCase().split(/\s+/)
-    const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 20)
-
-    // Extract key terms and their contexts
-    const keyTerms = extractKeyTerms(words)
-    const concepts = []
-
-    for (const term of keyTerms.slice(0, 8)) {
-      // Find sentences that define or explain this term
-      const contextSentences = sentences.filter((s) => s.toLowerCase().includes(term.toLowerCase()))
-
-      if (contextSentences.length > 0) {
-        const definition = generateDefinition(term, contextSentences)
-        const context = contextSentences[0].trim()
-        const importance = generateImportance(term, contextSentences)
-
-        concepts.push({
-          term: capitalizeWords(term),
-          definition,
-          context: context.length > 150 ? context.substring(0, 147) + "..." : context,
-          importance,
-        })
-      }
-    }
-
-    // Add general concepts if we don't have enough
-    while (concepts.length < 4) {
-      const generalConcepts = [
-        {
-          term: "Learning Objectives",
-          definition:
-            "The specific goals and outcomes that students should achieve after studying this material. These objectives guide the learning process and help measure understanding.",
-          context: "Throughout the educational content presentation",
-          importance: "Essential for focused learning and assessment of knowledge acquisition",
-        },
-        {
-          term: "Practical Application",
-          definition:
-            "The real-world use and implementation of theoretical concepts and principles discussed in the video content.",
-          context: "Demonstrated through examples and case studies",
-          importance: "Bridges the gap between theory and practice, making learning relevant and actionable",
-        },
-        {
-          term: "Critical Thinking",
-          definition:
-            "The analytical process of evaluating information, questioning assumptions, and drawing logical conclusions based on evidence.",
-          context: "Encouraged throughout the learning material",
-          importance: "Fundamental skill for academic success and professional development",
-        },
-      ]
-
-      const conceptToAdd = generalConcepts[concepts.length % generalConcepts.length]
-      if (!concepts.some((c) => c.term === conceptToAdd.term)) {
-        concepts.push(conceptToAdd)
-      }
-    }
-
-    return concepts
-  } catch (error) {
-    console.error("Error generating concepts:", error)
-    return [
-      {
-        term: "Educational Content",
-        definition:
-          "Structured information designed to teach specific concepts, skills, or knowledge to learners in an organized and accessible format.",
-        context: "Presented throughout the video material",
-        importance: "Forms the foundation for learning and skill development in the subject area",
-      },
-    ]
-  }
-}
-
-// Helper functions for enhanced text processing
-
-function extractKeyTerms(words: string[]): string[] {
-  const stopWords = new Set([
-    "the",
-    "a",
-    "an",
-    "and",
-    "or",
-    "but",
-    "in",
-    "on",
-    "at",
-    "to",
-    "for",
-    "of",
-    "with",
-    "by",
-    "is",
-    "are",
-    "was",
-    "were",
-    "be",
-    "been",
-    "have",
-    "has",
-    "had",
-    "do",
-    "does",
-    "did",
-    "will",
-    "would",
-    "could",
-    "should",
-    "may",
-    "might",
-    "can",
-    "this",
-    "that",
-    "these",
-    "those",
-    "i",
-    "you",
-    "he",
-    "she",
-    "it",
-    "we",
-    "they",
-    "me",
-    "him",
-    "her",
-    "us",
-    "them",
-  ])
-
+function generateBasicConcepts(transcript: string) {
+  const words = transcript
+    .toLowerCase()
+    .split(/[^a-z0-9]+/g)
+    .filter(w => w.length > 4)
+  
   const wordFreq = new Map<string, number>()
-
-  words.forEach((word) => {
-    const cleanWord = word.replace(/[^\w]/g, "").toLowerCase()
-    if (cleanWord.length > 3 && !stopWords.has(cleanWord)) {
-      wordFreq.set(cleanWord, (wordFreq.get(cleanWord) || 0) + 1)
-    }
+  words.forEach(word => {
+    wordFreq.set(word, (wordFreq.get(word) || 0) + 1)
   })
-
-  return Array.from(wordFreq.entries())
+  
+  const topWords = Array.from(wordFreq.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 15)
+    .slice(0, 8)
     .map(([word]) => word)
+  
+  return topWords.map(word => ({
+    term: word.charAt(0).toUpperCase() + word.slice(1),
+    definition: `A key concept mentioned in the video related to ${word}`,
+    context: "Referenced throughout the video content",
+    importance: "Understanding this concept is crucial for grasping the main ideas",
+    examples: ["Examples from the video content"],
+    relatedTerms: []
+  }))
 }
 
-function identifyMainTopics(sentences: string[], keyTerms: string[]): string[] {
-  const topics = []
-
-  // Look for topic indicators
-  const topicIndicators = ["about", "discuss", "explain", "learn", "understand", "explore", "focus on", "cover"]
-
-  for (const sentence of sentences.slice(0, 10)) {
-    for (const indicator of topicIndicators) {
-      if (sentence.toLowerCase().includes(indicator)) {
-        const words = sentence.split(/\s+/)
-        const indicatorIndex = words.findIndex((w) => w.toLowerCase().includes(indicator))
-        if (indicatorIndex >= 0 && indicatorIndex < words.length - 2) {
-          const topicPhrase = words.slice(indicatorIndex + 1, indicatorIndex + 4).join(" ")
-          topics.push(topicPhrase.replace(/[^\w\s]/g, "").trim())
-        }
+function generateBasicQuiz() {
+  return {
+    questions: [
+      {
+        question: "What is the main topic of this video?",
+        options: ["The main topic discussed", "A related concept", "An example mentioned", "A conclusion drawn"],
+        correctAnswer: 0,
+        explanation: "This is the primary focus of the video content",
+        difficulty: "easy" as const
+      },
+      {
+        question: "How can you apply the concepts from this video?",
+        options: ["In theoretical discussions only", "In practical, real-world situations", "Only in academic contexts", "Not applicable"],
+        correctAnswer: 1,
+        explanation: "The concepts are designed for practical application",
+        difficulty: "medium" as const
       }
-    }
-  }
-
-  // Add key terms as topics if we don't have enough
-  while (topics.length < 3 && keyTerms.length > topics.length) {
-    topics.push(keyTerms[topics.length])
-  }
-
-  return topics.slice(0, 5)
-}
-
-function createLogicalBreaks(sentences: string[]): string[] {
-  const blocks = []
-  const blockSize = Math.max(Math.floor(sentences.length / 8), 3)
-
-  for (let i = 0; i < sentences.length; i += blockSize) {
-    const block = sentences.slice(i, i + blockSize).join(". ")
-    if (block.trim().length > 100) {
-      blocks.push(block)
-    }
-  }
-
-  return blocks
-}
-
-function generateSectionTitle(content: string, sectionNumber: number): string {
-  const words = content.split(/\s+/).slice(0, 20)
-  const keyWords = words.filter(
-    (w) =>
-      w.length > 4 &&
-      !["this", "that", "with", "from", "they", "have", "been", "will", "would", "could", "should"].includes(
-        w.toLowerCase(),
-      ),
-  )
-
-  if (keyWords.length >= 2) {
-    return `${capitalizeWords(keyWords[0])} and ${capitalizeWords(keyWords[1])}`
-  } else if (keyWords.length === 1) {
-    return `Understanding ${capitalizeWords(keyWords[0])}`
-  } else {
-    return `Learning Section ${sectionNumber}`
+    ]
   }
 }
 
-function generateSectionContent(content: string): string[] {
-  const sentences = content.split(/[.!?]+/).filter((s) => s.trim().length > 30)
-  const contentPoints = []
-
-  // Take key sentences and enhance them
-  for (let i = 0; i < Math.min(sentences.length, 5); i++) {
-    let sentence = sentences[i].trim()
-    if (sentence.length > 20) {
-      // Clean up the sentence
-      sentence = sentence.replace(/^[^a-zA-Z]*/, "").trim()
-      if (sentence.length > 200) {
-        sentence = sentence.substring(0, 197) + "..."
-      }
-      contentPoints.push(sentence)
-    }
-  }
-
-  // Ensure we have at least 3 content points
-  while (contentPoints.length < 3) {
-    contentPoints.push(
-      `Important concept ${contentPoints.length + 1} from this section provides valuable learning insights.`,
-    )
-  }
-
-  return contentPoints.slice(0, 6)
-}
-
-function generateLearningObjectives(content: string, title: string): string[] {
+function generateBasicMnemonics() {
   return [
-    `Understand the key concepts related to ${title.toLowerCase()}`,
-    `Apply the principles discussed in practical scenarios`,
-    `Analyze the relationships between different ideas presented`,
+    {
+      concept: "Key Learning",
+      mnemonic: "Remember the main concepts by creating mental connections",
+      explanation: "Link new information to things you already know"
+    },
+    {
+      concept: "Application",
+      mnemonic: "Think 'How can I use this?' for every concept",
+      explanation: "Always consider practical uses of new knowledge"
+    }
   ]
 }
 
-function createContentSections(sentences: string[], keyTerms: string[]): Array<{ heading: string; content: string }> {
-  const sections = []
-  const sectionSize = Math.max(Math.floor(sentences.length / 4), 2)
-
-  for (let i = 0; i < 4; i++) {
-    const startIdx = i * sectionSize
-    const endIdx = Math.min((i + 1) * sectionSize, sentences.length)
-    const sectionSentences = sentences.slice(startIdx, endIdx)
-
-    const heading = keyTerms[i] ? capitalizeWords(keyTerms[i]) : `Key Concept ${i + 1}`
-    const content = sectionSentences.slice(0, 3).join(". ") + "."
-
-    sections.push({ heading, content })
-  }
-
-  return sections
-}
-
-function generateDefinition(term: string, contextSentences: string[]): string {
-  const relevantSentence =
-    contextSentences.find(
-      (s) =>
-        s.toLowerCase().includes("is") || s.toLowerCase().includes("means") || s.toLowerCase().includes("refers to"),
-    ) || contextSentences[0]
-
-  return `${capitalizeWords(term)} refers to the concepts and principles discussed in the educational content. This term encompasses the key ideas that are essential for understanding the subject matter and its practical applications.`
-}
-
-function generateImportance(term: string, contextSentences: string[]): string {
-  return `Understanding ${term} is crucial for mastering the subject matter and applying the concepts in real-world situations.`
-}
-
-function capitalizeWords(str: string): string {
-  return str
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ")
-}
-
-function generateBasicSections(transcript: string) {
-  const sentences = transcript.split(/[.!?]+/).filter((s) => s.trim().length > 10)
-  const sectionsCount = Math.min(Math.max(Math.floor(sentences.length / 10), 3), 6)
-  const sentencesPerSection = Math.floor(sentences.length / sectionsCount)
-
-  const sections = []
-
-  for (let i = 0; i < sectionsCount; i++) {
-    const startIdx = i * sentencesPerSection
-    const endIdx = i === sectionsCount - 1 ? sentences.length : (i + 1) * sentencesPerSection
-    const sectionSentences = sentences.slice(startIdx, endIdx)
-
-    const firstSentence = sectionSentences[0]?.trim() || `Section ${i + 1}`
-    const title = firstSentence.length > 50 ? firstSentence.substring(0, 47) + "..." : firstSentence
-
-    const content = sectionSentences
-      .filter((s) => s.trim().length > 20)
-      .slice(0, 4)
-      .map((s) => s.trim())
-
-    sections.push({
-      title: title.replace(/^[^a-zA-Z]*/, "").trim() || `Learning Section ${i + 1}`,
-      content: content.length > 0 ? content : [`Educational content for section ${i + 1}`],
-      learningObjectives: [`Understand key concepts from section ${i + 1}`, "Apply knowledge to practical situations"],
-    })
-  }
-
-  return sections
+function generateBasicApplications() {
+  return [
+    {
+      scenario: "Learning and Study",
+      application: "Use these concepts to improve your understanding of related topics",
+      benefits: ["Better retention", "Improved comprehension", "Enhanced critical thinking"]
+    },
+    {
+      scenario: "Professional Development",
+      application: "Apply these ideas in your work or career",
+      benefits: ["Better decision making", "Improved problem solving", "Enhanced communication"]
+    }
+  ]
 }

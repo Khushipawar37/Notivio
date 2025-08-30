@@ -36,7 +36,8 @@ import Footer from "../components/home/Footer"
 type NoteSection = {
   title: string
   content: string[]
-  subsections?: { title: string; content: string[] }[]
+  learningObjectives: string[]
+  keyInsights: string[]
 }
 
 type Notes = {
@@ -46,17 +47,44 @@ type Notes = {
   summary: string
   keyPoints: string[]
   duration: string
+  contentType: string
+  difficulty: string
+  estimatedStudyTime: string
+  prerequisites: string[]
+  nextSteps: string[]
   studyGuide: {
     reviewQuestions: string[]
     practiceExercises: string[]
     memoryAids: string[]
     connections: string[]
+    advancedTopics: string[]
   }
   concepts: Array<{
     term: string
     definition: string
     context: string
     importance: string
+    examples: string[]
+    relatedTerms: string[]
+  }>
+  quiz: {
+    questions: Array<{
+      question: string
+      options: string[]
+      correctAnswer: number
+      explanation: string
+      difficulty: string
+    }>
+  }
+  mnemonics: Array<{
+    concept: string
+    mnemonic: string
+    explanation: string
+  }>
+  practicalApplications: Array<{
+    scenario: string
+    application: string
+    benefits: string[]
   }>
 }
 
@@ -563,6 +591,33 @@ export default function VideoNotesPage() {
                     <Brain className="h-4 w-4" />
                     <span>AI Generated</span>
                   </div>
+                  {notes.contentType && (
+                    <div className="flex items-center space-x-1">
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                        {notes.contentType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Badge>
+                    </div>
+                  )}
+                  {notes.difficulty && (
+                    <div className="flex items-center space-x-1">
+                      <Badge 
+                        variant="secondary" 
+                        className={`text-xs ${
+                          notes.difficulty === 'beginner' ? 'bg-green-100 text-green-700' :
+                          notes.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                        }`}
+                      >
+                        {notes.difficulty.charAt(0).toUpperCase() + notes.difficulty.slice(1)}
+                      </Badge>
+                    </div>
+                  )}
+                  {notes.estimatedStudyTime && (
+                    <div className="flex items-center space-x-1">
+                      <Clock className="h-4 w-4" />
+                      <span>{notes.estimatedStudyTime}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -658,6 +713,27 @@ export default function VideoNotesPage() {
                 >
                   <BookOpen className="h-4 w-4 mr-2" />
                   Key Concepts
+                </TabsTrigger>
+                <TabsTrigger
+                  value="quiz"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
+                >
+                  <Brain className="h-4 w-4 mr-2" />
+                  Quiz
+                </TabsTrigger>
+                <TabsTrigger
+                  value="mnemonics"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Mnemonics
+                </TabsTrigger>
+                <TabsTrigger
+                  value="applications"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
+                >
+                  <Zap className="h-4 w-4 mr-2" />
+                  Applications
                 </TabsTrigger>
                 <TabsTrigger
                   value="raw"
@@ -759,23 +835,61 @@ export default function VideoNotesPage() {
                                 </Button>
                               </div>
                             ) : (
-                              <ul className="space-y-4">
-                                {section.content.map((point, pIndex) => (
-                                  <motion.li
-                                    key={pIndex}
-                                    className="flex items-start space-x-3 text-gray-700 leading-relaxed"
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{
-                                      duration: 0.3,
-                                      delay: pIndex * 0.05,
-                                    }}
-                                  >
-                                    <div className="w-2 h-2 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full mt-2 flex-shrink-0"></div>
-                                    <span>{point}</span>
-                                  </motion.li>
-                                ))}
-                              </ul>
+                              <div className="space-y-6">
+                                <ul className="space-y-4">
+                                  {section.content.map((point, pIndex) => (
+                                    <motion.li
+                                      key={pIndex}
+                                      className="flex items-start space-x-3 text-gray-700 leading-relaxed"
+                                      initial={{ opacity: 0, x: -10 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{
+                                        duration: 0.3,
+                                        delay: pIndex * 0.05,
+                                      }}
+                                    >
+                                      <div className="w-2 h-2 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full mt-2 flex-shrink-0"></div>
+                                      <span>{point}</span>
+                                    </motion.li>
+                                  ))}
+                                </ul>
+
+                                {/* Learning Objectives */}
+                                {section.learningObjectives && section.learningObjectives.length > 0 && (
+                                  <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                                    <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
+                                      <BookOpen className="h-4 w-4 mr-2" />
+                                      Learning Objectives
+                                    </h4>
+                                    <ul className="space-y-2">
+                                      {section.learningObjectives.map((objective, index) => (
+                                        <li key={index} className="flex items-start space-x-2 text-blue-700 text-sm">
+                                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                          <span>{objective}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+
+                                {/* Key Insights */}
+                                {section.keyInsights && section.keyInsights.length > 0 && (
+                                  <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                                    <h4 className="font-semibold text-green-800 mb-3 flex items-center">
+                                      <Sparkles className="h-4 w-4 mr-2" />
+                                      Key Insights
+                                    </h4>
+                                    <ul className="space-y-2">
+                                      {section.keyInsights.map((insight, index) => (
+                                        <li key={index} className="flex items-start space-x-2 text-green-700 text-sm">
+                                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                                          <span>{insight}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
                             )}
                           </div>
                         )}
@@ -847,6 +961,71 @@ export default function VideoNotesPage() {
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Prerequisites & Next Steps */}
+                {(notes.prerequisites?.length > 0 || notes.nextSteps?.length > 0) && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                    {notes.prerequisites?.length > 0 && (
+                      <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                        <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                          <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                            <BookOpen className="h-5 w-4 mr-2" />
+                            Prerequisites
+                          </CardTitle>
+                          <CardDescription>Knowledge and skills you should have before studying this material</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                          <ul className="space-y-3">
+                            {notes.prerequisites.map((prereq, index) => (
+                              <motion.li
+                                key={index}
+                                className="flex items-start space-x-3"
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.3, delay: index * 0.1 }}
+                              >
+                                <div className="w-5 h-5 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
+                                  ✓
+                                </div>
+                                <span className="text-gray-700 leading-relaxed">{prereq}</span>
+                              </motion.li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {notes.nextSteps?.length > 0 && (
+                      <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                        <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                          <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                            <Zap className="h-5 w-4 mr-2" />
+                            Next Steps
+                          </CardTitle>
+                          <CardDescription>Recommended actions to continue your learning journey</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                          <ul className="space-y-3">
+                            {notes.nextSteps.map((step, index) => (
+                              <motion.li
+                                key={index}
+                                className="flex items-start space-x-3"
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.3, delay: index * 0.1 }}
+                              >
+                                <div className="w-5 h-5 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
+                                  →
+                                </div>
+                                <span className="text-gray-700 leading-relaxed">{step}</span>
+                              </motion.li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="study">
@@ -970,6 +1149,35 @@ export default function VideoNotesPage() {
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Advanced Topics */}
+                  <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                        <Brain className="h-5 w-5 mr-2" />
+                        Advanced Topics
+                      </CardTitle>
+                      <CardDescription>Areas for further study and deeper exploration</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-6">
+                      <div className="space-y-3">
+                        {notes.studyGuide?.advancedTopics?.map((topic, index) => (
+                          <motion.div
+                            key={index}
+                            className="p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200 flex items-center space-x-3"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                          >
+                            <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center">
+                              <Brain className="h-4 w-4 text-white" />
+                            </div>
+                            <p className="text-gray-700">{topic}</p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </TabsContent>
 
@@ -1015,6 +1223,212 @@ export default function VideoNotesPage() {
                                 Why Important
                               </Badge>
                               <p className="text-sm text-gray-600 leading-relaxed">{concept.importance}</p>
+                            </div>
+
+                            {concept.examples && concept.examples.length > 0 && (
+                              <div className="flex items-start space-x-2">
+                                <Badge variant="secondary" className="bg-purple-100 text-purple-700 text-xs">
+                                  Examples
+                                </Badge>
+                                <div className="text-sm text-gray-600">
+                                  {concept.examples.map((example, i) => (
+                                    <p key={i} className="leading-relaxed">• {example}</p>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {concept.relatedTerms && concept.relatedTerms.length > 0 && (
+                              <div className="flex items-start space-x-2">
+                                <Badge variant="secondary" className="bg-orange-100 text-orange-700 text-xs">
+                                  Related Terms
+                                </Badge>
+                                <p className="text-sm text-gray-600 leading-relaxed">
+                                  {concept.relatedTerms.join(', ')}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="quiz">
+                <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                  <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                    <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                      <Brain className="h-5 w-5 mr-2" />
+                      Interactive Quiz
+                    </CardTitle>
+                    <CardDescription>Test your knowledge with these questions based on the video content</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="space-y-6">
+                      {notes.quiz?.questions?.map((question, index) => (
+                        <motion.div
+                          key={index}
+                          className="p-6 bg-gradient-to-r from-[#f5f0e8] to-white rounded-xl border border-[#c6ac8f]/20 shadow-lg"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: index * 0.1 }}
+                        >
+                          <div className="mb-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <h3 className="text-lg font-semibold text-[#8a7559]">Question {index + 1}</h3>
+                              <Badge 
+                                variant="secondary" 
+                                className={`text-xs ${
+                                  question.difficulty === 'easy' ? 'bg-green-100 text-green-700' :
+                                  question.difficulty === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                                  'bg-red-100 text-red-700'
+                                }`}
+                              >
+                                {question.difficulty.charAt(0).toUpperCase() + question.difficulty.slice(1)}
+                              </Badge>
+                            </div>
+                            <p className="text-gray-700 leading-relaxed text-lg">{question.question}</p>
+                          </div>
+
+                          <div className="space-y-3 mb-4">
+                            {question.options.map((option, optionIndex) => (
+                              <div
+                                key={optionIndex}
+                                className="p-3 bg-white border border-[#c6ac8f]/30 rounded-lg hover:bg-[#f5f0e8] transition-colors cursor-pointer"
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-5 h-5 border-2 border-[#c6ac8f] rounded-full flex items-center justify-center">
+                                    <div className="w-3 h-3 bg-[#8a7559] rounded-full"></div>
+                                  </div>
+                                  <span className="text-gray-700">{option}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <CheckCircle2 className="h-5 w-5 text-blue-600" />
+                              <span className="font-semibold text-blue-800">Explanation</span>
+                            </div>
+                            <p className="text-blue-700 text-sm leading-relaxed">{question.explanation}</p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="mnemonics">
+                <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                  <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                    <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                      <Sparkles className="h-5 w-5 mr-2" />
+                      Memory Aids & Mnemonics
+                    </CardTitle>
+                    <CardDescription>Creative ways to remember key concepts and information</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {notes.mnemonics?.map((mnemonic, index) => (
+                        <motion.div
+                          key={index}
+                          className="p-6 bg-gradient-to-br from-white to-[#f5f0e8] rounded-xl border border-[#c6ac8f]/20 shadow-lg hover:shadow-xl transition-all duration-300"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: index * 0.1 }}
+                        >
+                          <div className="mb-4">
+                            <h3 className="text-lg font-bold text-[#8a7559] mb-3 flex items-center">
+                              <div className="w-8 h-8 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
+                                {index + 1}
+                              </div>
+                              {mnemonic.concept}
+                            </h3>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Sparkles className="h-4 w-4 text-purple-600" />
+                                <span className="font-semibold text-purple-800 text-sm">Mnemonic</span>
+                              </div>
+                              <p className="text-purple-700 leading-relaxed font-medium">{mnemonic.mnemonic}</p>
+                            </div>
+
+                            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Brain className="h-4 w-4 text-blue-600" />
+                                <span className="font-semibold text-blue-800 text-sm">How to Use</span>
+                              </div>
+                              <p className="text-blue-700 leading-relaxed text-sm">{mnemonic.explanation}</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="applications">
+                <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
+                  <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
+                    <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                      <Zap className="h-5 w-5 mr-2" />
+                      Practical Applications
+                    </CardTitle>
+                    <CardDescription>Real-world scenarios where you can apply this knowledge</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {notes.practicalApplications?.map((app, index) => (
+                        <motion.div
+                          key={index}
+                          className="p-6 bg-gradient-to-br from-white to-[#f5f0e8] rounded-xl border border-[#c6ac8f]/20 shadow-lg hover:shadow-xl transition-all duration-300"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: index * 0.1 }}
+                        >
+                          <div className="mb-4">
+                            <h3 className="text-lg font-bold text-[#8a7559] mb-3 flex items-center">
+                              <div className="w-8 h-8 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
+                                {index + 1}
+                              </div>
+                              Scenario {index + 1}
+                            </h3>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <MessageSquare className="h-4 w-4 text-green-600" />
+                                <span className="font-semibold text-green-800 text-sm">Real-World Scenario</span>
+                              </div>
+                              <p className="text-green-700 leading-relaxed">{app.scenario}</p>
+                            </div>
+
+                            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Zap className="h-4 w-4 text-blue-600" />
+                                <span className="font-semibold text-blue-800 text-sm">How to Apply</span>
+                              </div>
+                              <p className="text-blue-700 leading-relaxed">{app.application}</p>
+                            </div>
+
+                            <div className="p-4 bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg border border-purple-200">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <CheckCircle2 className="h-4 w-4 text-purple-600" />
+                                <span className="font-semibold text-purple-800 text-sm">Key Benefits</span>
+                              </div>
+                              <div className="space-y-1">
+                                {app.benefits.map((benefit, i) => (
+                                  <p key={i} className="text-purple-700 text-sm leading-relaxed">• {benefit}</p>
+                                ))}
+                              </div>
                             </div>
                           </div>
                         </motion.div>
