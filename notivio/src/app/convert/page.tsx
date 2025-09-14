@@ -503,7 +503,7 @@ export default function VideoNotesPage() {
                     onChange={(e) => setUrl(e.target.value)}
                     className={`h-14 text-lg border-2 focus:ring-[#c6ac8f] focus:border-[#c6ac8f] transition-all duration-200 ${
                       url && !isUrlValid ? "border-red-300 bg-red-50" : "border-[#c6ac8f]/30"
-                    } ${url && isUrlValid ? "border-[#c6ac8f] bg-green-50" : ""}`}
+                    } ${url && isUrlValid ? "border-[#c6ac8f] bg-[#f5f1eb]" : ""}`}
                     required
                   />
                   {url && !isUrlValid && (
@@ -512,7 +512,7 @@ export default function VideoNotesPage() {
                     </div>
                   )}
                   {url && isUrlValid && (
-                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-green-500">
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#8b7355]">
                       <CheckCircle2 className="h-6 w-6" />
                     </div>
                   )}
@@ -582,14 +582,14 @@ export default function VideoNotesPage() {
                   </div>
 
                   {chunkingProgress.isChunked && chunkingProgress.totalChunks > 1 && (
-                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="mt-3 p-3 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30">
                       <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm text-blue-700 font-medium">
+                        <Clock className="h-4 w-4 text-[#8b7355]" />
+                        <span className="text-sm text-[#8b7355] font-medium">
                           Large video detected - Processing in chunks for better quality
                         </span>
                       </div>
-                      <p className="text-xs text-blue-600 mt-1">
+                      <p className="text-xs text-[#8b7355]/80 mt-1">
                         Estimated time: {Math.ceil(chunkingProgress.totalChunks * 0.5)}-
                         {Math.ceil(chunkingProgress.totalChunks * 1)} minutes
                       </p>
@@ -634,14 +634,14 @@ export default function VideoNotesPage() {
               initial={{ opacity: 0, y: -20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.9 }}
-              className="fixed top-6 right-6 bg-white border border-green-300 text-green-700 px-6 py-4 rounded-xl shadow-xl flex items-center z-50"
+              className="fixed top-6 right-6 bg-white border border-[#c6ac8f] text-[#8b7355] px-6 py-4 rounded-xl shadow-xl flex items-center z-50"
             >
-              <CheckCircle2 className="h-6 w-6 mr-3 text-green-500" />
+              <CheckCircle2 className="h-6 w-6 mr-3 text-[#8b7355]" />
               <div>
                 <p className="font-semibold">
                   {editMode ? "Changes saved successfully!" : "Notes generated successfully!"}
                 </p>
-                <p className="text-sm text-green-600">Your notes are ready for review</p>
+                <p className="text-sm text-[#8b7355]/80">Your notes are ready for review</p>
               </div>
             </motion.div>
           )}
@@ -680,7 +680,7 @@ export default function VideoNotesPage() {
                   </div>
                   {notes.contentType && (
                     <div className="flex items-center space-x-1">
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                      <Badge variant="secondary" className="bg-[#f5f1eb] text-[#8b7355] text-xs">
                         {notes.contentType.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                       </Badge>
                     </div>
@@ -917,15 +917,15 @@ export default function VideoNotesPage() {
 
                                 {/* Learning Objectives */}
                                 {section.learningObjectives && section.learningObjectives.length > 0 && (
-                                  <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                                    <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
+                                  <div className="mt-6 p-4 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30">
+                                    <h4 className="font-semibold text-[#8b7355] mb-3 flex items-center">
                                       <BookOpen className="h-4 w-4 mr-2" />
                                       Learning Objectives
                                     </h4>
                                     <ul className="space-y-2">
                                       {section.learningObjectives.map((objective, index) => (
-                                        <li key={index} className="flex items-start space-x-2 text-blue-700 text-sm">
-                                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                                        <li key={index} className="flex items-start space-x-2 text-[#8b7355] text-sm">
+                                          <div className="w-2 h-2 bg-[#c6ac8f] rounded-full mt-2 flex-shrink-0"></div>
                                           <span>{objective}</span>
                                         </li>
                                       ))}
@@ -935,15 +935,15 @@ export default function VideoNotesPage() {
 
                                 {/* Key Insights */}
                                 {section.keyInsights && section.keyInsights.length > 0 && (
-                                  <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                                    <h4 className="font-semibold text-green-800 mb-3 flex items-center">
+                                  <div className="mt-4 p-4 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30">
+                                    <h4 className="font-semibold text-[#8b7355] mb-3 flex items-center">
                                       <Sparkles className="h-4 w-4 mr-2" />
                                       Key Insights
                                     </h4>
                                     <ul className="space-y-2">
                                       {section.keyInsights.map((insight, index) => (
-                                        <li key={index} className="flex items-start space-x-2 text-green-700 text-sm">
-                                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                                        <li key={index} className="flex items-start space-x-2 text-[#8b7355] text-sm">
+                                          <div className="w-2 h-2 bg-[#c6ac8f] rounded-full mt-2 flex-shrink-0"></div>
                                           <span>{insight}</span>
                                         </li>
                                       ))}
@@ -1107,13 +1107,13 @@ export default function VideoNotesPage() {
                         {notes.studyGuide?.reviewQuestions?.map((question, index) => (
                           <motion.div
                             key={index}
-                            className="p-4 bg-gradient-to-r from-[#f5f0e8] to-white rounded-lg border border-[#c6ac8f]/20"
+                            className="p-4 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30"
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                           >
                             <div className="flex items-start space-x-3">
-                              <div className="w-6 h-6 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                              <div className="w-6 h-6 bg-[#c6ac8f] rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                                 Q{index + 1}
                               </div>
                               <p className="text-gray-700 leading-relaxed">{question}</p>
@@ -1138,13 +1138,13 @@ export default function VideoNotesPage() {
                         {notes.studyGuide?.practiceExercises?.map((exercise, index) => (
                           <motion.div
                             key={index}
-                            className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200"
+                            className="p-4 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30"
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                           >
                             <div className="flex items-start space-x-3">
-                              <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                              <div className="w-6 h-6 bg-[#c6ac8f] rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                                 {index + 1}
                               </div>
                               <p className="text-gray-700 leading-relaxed">{exercise}</p>
@@ -1169,12 +1169,12 @@ export default function VideoNotesPage() {
                         {notes.studyGuide?.memoryAids?.map((aid, index) => (
                           <motion.div
                             key={index}
-                            className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200 flex items-center space-x-3"
+                            className="p-3 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30 flex items-center space-x-3"
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                           >
-                            <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                            <div className="w-8 h-8 bg-[#c6ac8f] rounded-full flex items-center justify-center">
                               <Sparkles className="h-4 w-4 text-white" />
                             </div>
                             <p className="text-gray-700 font-medium">{aid}</p>
@@ -1198,12 +1198,12 @@ export default function VideoNotesPage() {
                         {notes.studyGuide?.connections?.map((connection, index) => (
                           <motion.div
                             key={index}
-                            className="p-3 bg-gradient-to-r from-purple-50 to-violet-50 rounded-lg border border-purple-200 flex items-center space-x-3"
+                            className="p-3 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30 flex items-center space-x-3"
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                           >
-                            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-500 rounded-full flex items-center justify-center">
+                            <div className="w-8 h-8 bg-[#c6ac8f] rounded-full flex items-center justify-center">
                               <Plus className="h-4 w-4 text-white" />
                             </div>
                             <p className="text-gray-700">{connection}</p>
@@ -1227,12 +1227,12 @@ export default function VideoNotesPage() {
                         {notes.studyGuide?.advancedTopics?.map((topic, index) => (
                           <motion.div
                             key={index}
-                            className="p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200 flex items-center space-x-3"
+                            className="p-3 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30 flex items-center space-x-3"
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                           >
-                            <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full flex items-center justify-center">
+                            <div className="w-8 h-8 bg-[#c6ac8f] rounded-full flex items-center justify-center">
                               <Brain className="h-4 w-4 text-white" />
                             </div>
                             <p className="text-gray-700">{topic}</p>
