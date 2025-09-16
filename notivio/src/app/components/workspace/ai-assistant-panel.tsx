@@ -1,72 +1,98 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useCallback } from "react"
-import { Button } from "../ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
-import { Separator } from "../ui/separator"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../ui/dialog"
-import { Label } from "../ui/label"
-import { Sparkles, FileText, Brain, Target, Layers, Loader2, Zap } from "lucide-react"
+import { useState, useCallback } from "react";
+import { Button } from "../ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Separator } from "../ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import { Label } from "../ui/label";
+import {
+  Sparkles,
+  FileText,
+  Brain,
+  Target,
+  Layers,
+  Loader2,
+  Zap,
+} from "lucide-react";
 
 interface AIAssistantPanelProps {
-  content: string
-  selectedText: string
-  onContentUpdate: (content: string) => void
+  content: string;
+  selectedText: string;
+  onContentUpdate: (content: string) => void;
 }
 
 interface AIFeature {
-  id: string
-  name: string
-  description: string
-  icon: React.ReactNode
-  action: () => void
-  loading?: boolean
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  action: () => void;
+  loading?: boolean;
 }
 
 interface Flashcard {
-  id: string
-  question: string
-  answer: string
-  created: Date
+  id: string;
+  question: string;
+  answer: string;
+  created: Date;
 }
 
-export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIAssistantPanelProps) {
-  const [aiLoading, setAiLoading] = useState<string | null>(null)
-  const [summary, setSummary] = useState("")
-  const [flashcards, setFlashcards] = useState<Flashcard[]>([])
-  const [showSummaryDialog, setShowSummaryDialog] = useState(false)
-  const [showFlashcardDialog, setShowFlashcardDialog] = useState(false)
-  const [showStructureDialog, setShowStructureDialog] = useState(false)
-  const [showEnhanceDialog, setShowEnhanceDialog] = useState(false)
-  const [structureSuggestions, setStructureSuggestions] = useState<string[]>([])
-  const [enhancedText, setEnhancedText] = useState("")
+export function AIAssistantPanel({
+  content,
+  selectedText,
+  onContentUpdate,
+}: AIAssistantPanelProps) {
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [summary, setSummary] = useState("");
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [showSummaryDialog, setShowSummaryDialog] = useState(false);
+  const [showFlashcardDialog, setShowFlashcardDialog] = useState(false);
+  const [showStructureDialog, setShowStructureDialog] = useState(false);
+  const [showEnhanceDialog, setShowEnhanceDialog] = useState(false);
+  const [structureSuggestions, setStructureSuggestions] = useState<string[]>(
+    []
+  );
+  const [enhancedText, setEnhancedText] = useState("");
 
   const handleSummarizeNotes = useCallback(async () => {
-    if (!content.trim()) return
+    if (!content.trim()) return;
 
-    setAiLoading("summarize")
+    setAiLoading("summarize");
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const mockSummary = `This comprehensive note covers several key areas: fundamental concepts and definitions, practical applications with real-world examples, detailed analysis of methodologies, and conclusions with actionable insights. The content demonstrates a thorough understanding of the subject matter with clear explanations and supporting evidence.`
+      const mockSummary = `This comprehensive note covers several key areas: fundamental concepts and definitions, practical applications with real-world examples, detailed analysis of methodologies, and conclusions with actionable insights. The content demonstrates a thorough understanding of the subject matter with clear explanations and supporting evidence.`;
 
-      setSummary(mockSummary)
-      setShowSummaryDialog(true)
+      setSummary(mockSummary);
+      setShowSummaryDialog(true);
     } catch (error) {
-      console.error("Error summarizing notes:", error)
+      console.error("Error summarizing notes:", error);
     } finally {
-      setAiLoading(null)
+      setAiLoading(null);
     }
-  }, [content])
+  }, [content]);
 
   const handleGenerateFlashcards = useCallback(async () => {
-    if (!selectedText && !content.trim()) return
+    if (!selectedText && !content.trim()) return;
 
-    setAiLoading("flashcards")
+    setAiLoading("flashcards");
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const mockFlashcards = [
         {
@@ -90,23 +116,23 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
             "The key takeaways emphasize the importance of understanding core principles, applying methodical approaches, and connecting theory to practice.",
           created: new Date(),
         },
-      ]
+      ];
 
-      setFlashcards((prev) => [...prev, ...mockFlashcards])
-      setShowFlashcardDialog(true)
+      setFlashcards((prev) => [...prev, ...mockFlashcards]);
+      setShowFlashcardDialog(true);
     } catch (error) {
-      console.error("Error generating flashcards:", error)
+      console.error("Error generating flashcards:", error);
     } finally {
-      setAiLoading(null)
+      setAiLoading(null);
     }
-  }, [selectedText, content])
+  }, [selectedText, content]);
 
   const handleSmartStructuring = useCallback(async () => {
-    if (!content.trim()) return
+    if (!content.trim()) return;
 
-    setAiLoading("structure")
+    setAiLoading("structure");
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const mockSuggestions = [
         "Executive Summary",
@@ -117,42 +143,42 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
         "Analysis and Discussion",
         "Conclusions and Recommendations",
         "Future Considerations",
-      ]
+      ];
 
-      setStructureSuggestions(mockSuggestions)
-      setShowStructureDialog(true)
+      setStructureSuggestions(mockSuggestions);
+      setShowStructureDialog(true);
     } catch (error) {
-      console.error("Error generating structure:", error)
+      console.error("Error generating structure:", error);
     } finally {
-      setAiLoading(null)
+      setAiLoading(null);
     }
-  }, [content])
+  }, [content]);
 
   const handleEnhanceText = useCallback(async () => {
-    if (!selectedText && !content.trim()) return
+    if (!selectedText && !content.trim()) return;
 
-    setAiLoading("enhance")
+    setAiLoading("enhance");
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const textToEnhance = selectedText || content.slice(0, 200) + "..."
-      const mockEnhanced = `Enhanced version: ${textToEnhance}\n\nThis enhanced text provides greater clarity, improved structure, and more comprehensive explanations. Key improvements include better flow, clearer terminology, and additional context that helps readers understand the concepts more effectively.`
+      const textToEnhance = selectedText || content.slice(0, 200) + "...";
+      const mockEnhanced = `Enhanced version: ${textToEnhance}\n\nThis enhanced text provides greater clarity, improved structure, and more comprehensive explanations. Key improvements include better flow, clearer terminology, and additional context that helps readers understand the concepts more effectively.`;
 
-      setEnhancedText(mockEnhanced)
-      setShowEnhanceDialog(true)
+      setEnhancedText(mockEnhanced);
+      setShowEnhanceDialog(true);
     } catch (error) {
-      console.error("Error enhancing text:", error)
+      console.error("Error enhancing text:", error);
     } finally {
-      setAiLoading(null)
+      setAiLoading(null);
     }
-  }, [selectedText, content])
+  }, [selectedText, content]);
 
   const handleGenerateQuestions = useCallback(async () => {
-    if (!content.trim()) return
+    if (!content.trim()) return;
 
-    setAiLoading("questions")
+    setAiLoading("questions");
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const questions = [
         "What are the fundamental principles discussed in this material?",
@@ -160,24 +186,26 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
         "What are the potential challenges in implementing these ideas?",
         "How do these concepts relate to other areas of study?",
         "What are the implications for future research or development?",
-      ]
+      ];
 
       const questionsHTML = `
         <div style="margin: 20px 0; padding: 15px; border: 1px solid #d9c6b8; border-radius: 8px; background: #f5f0e8;">
           <h3 style="color: #8a7559; margin-bottom: 10px;">Review Questions</h3>
           <ol style="color: #333; line-height: 1.6;">
-            ${questions.map((q) => `<li style="margin-bottom: 8px;">${q}</li>`).join("")}
+            ${questions
+              .map((q) => `<li style="margin-bottom: 8px;">${q}</li>`)
+              .join("")}
           </ol>
         </div>
-      `
+      `;
 
-      onContentUpdate(content + questionsHTML)
+      onContentUpdate(content + questionsHTML);
     } catch (error) {
-      console.error("Error generating questions:", error)
+      console.error("Error generating questions:", error);
     } finally {
-      setAiLoading(null)
+      setAiLoading(null);
     }
-  }, [content, onContentUpdate])
+  }, [content, onContentUpdate]);
 
   const aiFeatures: AIFeature[] = [
     {
@@ -220,7 +248,7 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
       action: handleEnhanceText,
       loading: aiLoading === "enhance",
     },
-  ]
+  ];
 
   return (
     <>
@@ -230,7 +258,9 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
             <Sparkles className="h-5 w-5 mr-2 text-primary" />
             AI Assistant
           </CardTitle>
-          <CardDescription>Enhance your notes with AI-powered features</CardDescription>
+          <CardDescription>
+            Enhance your notes with AI-powered features
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {aiFeatures.map((feature) => (
@@ -243,11 +273,17 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
             >
               <div className="flex items-start space-x-3">
                 <div className="mt-0.5">
-                  {feature.loading ? <Loader2 className="h-4 w-4 animate-spin" /> : feature.icon}
+                  {feature.loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    feature.icon
+                  )}
                 </div>
                 <div className="flex-1">
                   <div className="font-medium text-sm">{feature.name}</div>
-                  <div className="text-xs text-muted-foreground mt-1">{feature.description}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {feature.description}
+                  </div>
                 </div>
               </div>
             </Button>
@@ -259,7 +295,9 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Words</span>
-              <span className="font-medium">{content.split(/\s+/).filter((word) => word.length > 0).length}</span>
+              <span className="font-medium">
+                {content.split(/\s+/).filter((word) => word.length > 0).length}
+              </span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Characters</span>
@@ -287,21 +325,26 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
               <FileText className="h-5 w-5 mr-2" />
               AI Generated Summary
             </DialogTitle>
-            <DialogDescription>Here's a concise summary of your notes</DialogDescription>
+            <DialogDescription>
+              Here's a concise summary of your notes
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="p-4 bg-muted/50 rounded-lg">
               <p className="text-sm leading-relaxed">{summary}</p>
             </div>
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowSummaryDialog(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowSummaryDialog(false)}
+              >
                 Close
               </Button>
               <Button
                 onClick={() => {
-                  const summaryHTML = `<div style="margin: 20px 0; padding: 15px; border: 1px solid #d9c6b8; border-radius: 8px; background: #f5f0e8;"><h3 style="color: #8a7559; margin-bottom: 10px;">Summary</h3><p style="color: #333; line-height: 1.6;">${summary}</p></div>`
-                  onContentUpdate(content + summaryHTML)
-                  setShowSummaryDialog(false)
+                  const summaryHTML = `<div style="margin: 20px 0; padding: 15px; border: 1px solid #d9c6b8; border-radius: 8px; background: #f5f0e8;"><h3 style="color: #8a7559; margin-bottom: 10px;">Summary</h3><p style="color: #333; line-height: 1.6;">${summary}</p></div>`;
+                  onContentUpdate(content + summaryHTML);
+                  setShowSummaryDialog(false);
                 }}
               >
                 Add to Notes
@@ -319,26 +362,37 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
               <Brain className="h-5 w-5 mr-2" />
               Generated Flashcards
             </DialogTitle>
-            <DialogDescription>Review and edit your AI-generated flashcards</DialogDescription>
+            <DialogDescription>
+              Review and edit your AI-generated flashcards
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {flashcards.slice(-3).map((flashcard, index) => (
               <Card key={flashcard.id} className="p-4">
                 <div className="space-y-3">
                   <div>
-                    <Label className="text-sm font-medium">Question {index + 1}</Label>
-                    <p className="text-sm mt-1 p-2 bg-muted/50 rounded">{flashcard.question}</p>
+                    <Label className="text-sm font-medium">
+                      Question {index + 1}
+                    </Label>
+                    <p className="text-sm mt-1 p-2 bg-muted/50 rounded">
+                      {flashcard.question}
+                    </p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Answer</Label>
-                    <p className="text-sm mt-1 p-2 bg-muted/50 rounded">{flashcard.answer}</p>
+                    <p className="text-sm mt-1 p-2 bg-muted/50 rounded">
+                      {flashcard.answer}
+                    </p>
                   </div>
                 </div>
               </Card>
             ))}
           </div>
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setShowFlashcardDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowFlashcardDialog(false)}
+            >
               Close
             </Button>
             <Button>Save Flashcards</Button>
@@ -354,18 +408,23 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
               <Layers className="h-5 w-5 mr-2" />
               Smart Structure Suggestions
             </DialogTitle>
-            <DialogDescription>AI suggests these headings to organize your content</DialogDescription>
+            <DialogDescription>
+              AI suggests these headings to organize your content
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             {structureSuggestions.map((suggestion, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 border rounded-lg"
+              >
                 <span className="text-sm font-medium">{suggestion}</span>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => {
-                    const heading = `<h2 style="color: #8a7559; margin: 20px 0 10px 0; font-weight: bold;">${suggestion}</h2><p><br></p>`
-                    onContentUpdate(content + heading)
+                    const heading = `<h2 style="color: #8a7559; margin: 20px 0 10px 0; font-weight: bold;">${suggestion}</h2><p><br></p>`;
+                    onContentUpdate(content + heading);
                   }}
                 >
                   Add
@@ -374,18 +433,22 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
             ))}
           </div>
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setShowStructureDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowStructureDialog(false)}
+            >
               Close
             </Button>
             <Button
               onClick={() => {
                 const allHeadings = structureSuggestions
                   .map(
-                    (s) => `<h2 style="color: #8a7559; margin: 20px 0 10px 0; font-weight: bold;">${s}</h2><p><br></p>`,
+                    (s) =>
+                      `<h2 style="color: #8a7559; margin: 20px 0 10px 0; font-weight: bold;">${s}</h2><p><br></p>`
                   )
-                  .join("")
-                onContentUpdate(content + allHeadings)
-                setShowStructureDialog(false)
+                  .join("");
+                onContentUpdate(content + allHeadings);
+                setShowStructureDialog(false);
               }}
             >
               Add All
@@ -402,21 +465,31 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
               <Zap className="h-5 w-5 mr-2" />
               Enhanced Text
             </DialogTitle>
-            <DialogDescription>AI has improved the clarity and readability of your text</DialogDescription>
+            <DialogDescription>
+              AI has improved the clarity and readability of your text
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="p-4 bg-muted/50 rounded-lg max-h-64 overflow-y-auto">
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">{enhancedText}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                {enhancedText}
+              </p>
             </div>
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setShowEnhanceDialog(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowEnhanceDialog(false)}
+              >
                 Close
               </Button>
               <Button
                 onClick={() => {
-                  const enhancedHTML = `<div style="margin: 20px 0; padding: 15px; border: 1px solid #d9c6b8; border-radius: 8px; background: #f5f0e8;"><h3 style="color: #8a7559; margin-bottom: 10px;">Enhanced Text</h3><p style="color: #333; line-height: 1.6;">${enhancedText.replace(/\n/g, "<br>")}</p></div>`
-                  onContentUpdate(content + enhancedHTML)
-                  setShowEnhanceDialog(false)
+                  const enhancedHTML = `<div style="margin: 20px 0; padding: 15px; border: 1px solid #d9c6b8; border-radius: 8px; background: #f5f0e8;"><h3 style="color: #8a7559; margin-bottom: 10px;">Enhanced Text</h3><p style="color: #333; line-height: 1.6;">${enhancedText.replace(
+                    /\n/g,
+                    "<br>"
+                  )}</p></div>`;
+                  onContentUpdate(content + enhancedHTML);
+                  setShowEnhanceDialog(false);
                 }}
               >
                 Replace Text
@@ -426,5 +499,5 @@ export function AIAssistantPanel({ content, selectedText, onContentUpdate }: AIA
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }
