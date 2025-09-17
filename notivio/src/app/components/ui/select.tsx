@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   Select as RadixSelect,
   SelectContent,
@@ -10,11 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
   SelectViewport,
-} from "@radix-ui/react-select"
-import { ChevronDown } from "lucide-react"
-import { cn } from "../../lib/utils"  // adjust path if needed
+} from "@radix-ui/react-select";
+import { ChevronDown } from "lucide-react";
+import { cn } from "../../lib/utils"; // adjust path if needed
 
-export const Select = RadixSelect
+export const Select = RadixSelect;
 
 export const CustomSelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectTrigger>,
@@ -31,8 +31,8 @@ export const CustomSelectTrigger = React.forwardRef<
     {children}
     <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
   </SelectTrigger>
-))
-CustomSelectTrigger.displayName = SelectTrigger.displayName
+));
+CustomSelectTrigger.displayName = SelectTrigger.displayName;
 
 export const CustomSelectContent = React.forwardRef<
   React.ElementRef<typeof SelectContent>,
@@ -48,8 +48,8 @@ export const CustomSelectContent = React.forwardRef<
   >
     <SelectViewport>{children}</SelectViewport>
   </SelectContent>
-))
-CustomSelectContent.displayName = SelectContent.displayName
+));
+CustomSelectContent.displayName = SelectContent.displayName;
 
 export const CustomSelectItem = React.forwardRef<
   React.ElementRef<typeof SelectItem>,
@@ -65,8 +65,8 @@ export const CustomSelectItem = React.forwardRef<
   >
     {children}
   </SelectItem>
-))
-CustomSelectItem.displayName = SelectItem.displayName
+));
+CustomSelectItem.displayName = SelectItem.displayName;
 
 export {
   SelectContent,
@@ -76,4 +76,4 @@ export {
   SelectGroup,
   SelectLabel,
   SelectViewport,
-}
+};
