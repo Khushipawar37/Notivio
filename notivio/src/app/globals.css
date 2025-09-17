@@ -1,1 +1,204 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Updated color tokens to match Notivio's warm beige/brown theme */
+  --background: #f5f0e8; /* Light beige for main background */
+  --foreground: #8a7559; /* Warm brown for text */
+  --card: #ffffff; /* White for card backgrounds */
+  --card-foreground: #8a7559; /* Warm brown for card text */
+  --popover: #d9c6b8; /* Soft taupe for popovers */
+  --popover-foreground: #8a7559; /* Warm brown for popover text */
+  --primary: #8a7559; /* Primary color for buttons and highlights */
+  --primary-foreground: #ffffff; /* White text for primary buttons */
+  --secondary: #a68b5b; /* Medium brown for secondary actions */
+  --secondary-foreground: #ffffff; /* White text for secondary buttons */
+  --muted: #d9c6b8; /* Soft taupe for muted text */
+  --muted-foreground: #4b5563; /* Darker shade for muted text contrast */
+  --accent: #ec4899; /* Accent color for notifications or alerts */
+  --accent-foreground: #ffffff; /* White text for accent elements */
+  --destructive: #e53e3e; /* Red for destructive actions */
+  --destructive-foreground: #ffffff; /* White text for destructive actions */
+  --border: #e2e8f0; /* Light gray for borders */
+  --input: #ffffff; /* White for input fields */
+  --ring: rgba(138, 117, 89, 0.5); /* Semi-transparent warm brown for focus rings */
+  --chart-1: #8a7559; /* Warm brown for charts */
+  --chart-2: #a68b5b; /* Medium brown for charts */
+  --chart-3: #d9c6b8; /* Soft taupe for charts */
+  --chart-4: #f5f0e8; /* Light beige for charts */
+  --chart-5: #ec4899; /* Accent color for charts */
+  --radius: 0.5rem; /* Rounded corners */
+  --sidebar: #f5f0e8; /* Light beige for sidebar background */
+  --sidebar-foreground: #8a7559; /* Warm brown for sidebar text */
+  --sidebar-primary: #a68b5b; /* Medium brown for primary sidebar elements */
+  --sidebar-primary-foreground: #ffffff; /* White text for primary sidebar elements */
+  --sidebar-accent: #d9c6b8; /* Soft taupe for sidebar accents */
+  --sidebar-accent-foreground: #8a7559; /* Warm brown for sidebar accent text */
+  --sidebar-border: #e2e8f0; /* Light gray for sidebar borders */
+  --sidebar-ring: rgba(138, 117, 89, 0.5); /* Semi-transparent warm brown for sidebar focus */
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.prose {
+  color: #333;
+  max-width: none;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: #8a7559;
+  font-weight: bold;
+}
+
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.prose table th,
+.prose table td {
+  border: 1px solid #d9c6b8;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.prose table th {
+  background-color: #f5f0e8;
+  font-weight: bold;
+  color: #8a7559;
+}
+
+.prose blockquote {
+  border-left: 4px solid #8a7559;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  background: #f5f0e8;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.prose code {
+  background: #f5f0e8;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-family: "Courier New", monospace;
+  color: #8a7559;
+}
+
+.prose pre {
+  background: #f5f0e8;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  border: 1px solid #d9c6b8;
+}
+
+/* Remove pink hover effects */
+.hover\:bg-pink-50:hover {
+  background-color: rgba(138, 117, 89, 0.1) !important;
+}
+
+.hover\:text-pink-600:hover {
+  color: #8a7559 !important;
+}
+
+.hover\:border-pink-300:hover {
+  border-color: #d9c6b8 !important;
+}
+
+/* Improve button hover states */
+.hover\:bg-muted\/50:hover {
+  background-color: rgba(138, 117, 89, 0.1) !important;
+}

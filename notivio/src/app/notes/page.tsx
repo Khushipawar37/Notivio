@@ -62,7 +62,7 @@ export default function NotivioEditor() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 mt-[10rem]">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-primary rounded-lg">
                 <PenTool className="h-6 w-6 text-primary-foreground" />

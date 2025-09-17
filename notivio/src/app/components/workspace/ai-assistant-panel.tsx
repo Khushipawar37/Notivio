@@ -211,7 +211,7 @@ export function AIAssistantPanel({
     {
       id: "summarize",
       name: "AI Summarize",
-      description: "Create a concise summary of your notes",
+      description: "Create a concise summary.",
       icon: <FileText className="h-4 w-4" />,
       action: handleSummarizeNotes,
       loading: aiLoading === "summarize",
@@ -219,7 +219,7 @@ export function AIAssistantPanel({
     {
       id: "flashcards",
       name: "Generate Flashcards",
-      description: "Convert content into study flashcards",
+      description: "Convert content into flashcards",
       icon: <Brain className="h-4 w-4" />,
       action: handleGenerateFlashcards,
       loading: aiLoading === "flashcards",
@@ -227,7 +227,7 @@ export function AIAssistantPanel({
     {
       id: "structure",
       name: "Smart Structure",
-      description: "AI suggests headings and organization",
+      description: "AI suggests headings",
       icon: <Layers className="h-4 w-4" />,
       action: handleSmartStructuring,
       loading: aiLoading === "structure",
@@ -235,7 +235,7 @@ export function AIAssistantPanel({
     {
       id: "questions",
       name: "Review Questions",
-      description: "Generate quiz-style questions from content",
+      description: "Generate quiz-style questions.",
       icon: <Target className="h-4 w-4" />,
       action: handleGenerateQuestions,
       loading: aiLoading === "questions",
@@ -267,7 +267,7 @@ export function AIAssistantPanel({
             <Button
               key={feature.id}
               variant="outline"
-              className="w-full justify-start h-auto p-4 text-left bg-transparent hover:bg-muted/50"
+              className="w-full justify-start h-auto p-4 text-left bg-transparent hover:#ec4899"
               onClick={feature.action}
               disabled={feature.loading || !!aiLoading}
             >
@@ -281,7 +281,7 @@ export function AIAssistantPanel({
                 </div>
                 <div className="flex-1">
                   <div className="font-medium text-sm">{feature.name}</div>
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="text-xs text-black hover:#000000 mt-1">
                     {feature.description}
                   </div>
                 </div>
