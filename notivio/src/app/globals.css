@@ -23,7 +23,12 @@
   --destructive-foreground: #ffffff; /* White text for destructive actions */
   --border: #e2e8f0; /* Light gray for borders */
   --input: #ffffff; /* White for input fields */
-  --ring: rgba(138, 117, 89, 0.5); /* Semi-transparent warm brown for focus rings */
+  --ring: rgba(
+    138,
+    117,
+    89,
+    0.5
+  ); /* Semi-transparent warm brown for focus rings */
   --chart-1: #8a7559; /* Warm brown for charts */
   --chart-2: #a68b5b; /* Medium brown for charts */
   --chart-3: #d9c6b8; /* Soft taupe for charts */
@@ -37,7 +42,12 @@
   --sidebar-accent: #d9c6b8; /* Soft taupe for sidebar accents */
   --sidebar-accent-foreground: #8a7559; /* Warm brown for sidebar accent text */
   --sidebar-border: #e2e8f0; /* Light gray for sidebar borders */
-  --sidebar-ring: rgba(138, 117, 89, 0.5); /* Semi-transparent warm brown for sidebar focus */
+  --sidebar-ring: rgba(
+    138,
+    117,
+    89,
+    0.5
+  ); /* Semi-transparent warm brown for sidebar focus */
 }
 
 .dark {
