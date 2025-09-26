@@ -18,18 +18,18 @@ interface Note {
   summary?: string;
   flashcards: Array<{
     id: string;
-    question: string;
+    question: string;   
     answer: string;
     created: Date;
   }>;
   created: Date;
-  modified: Date;
+  modified: Date;  
 }
 
 export default function NotivioEditor() {
   const [content, setContent] = useState("");
   const [selectedText, setSelectedText] = useState("");
-  const [currentNote, setCurrentNote] = useState<Note>({
+  const [currentNote, setCurrentNote] = useState<Note>({   
     id: "1",
     title: "Untitled Note",
     content: "",
