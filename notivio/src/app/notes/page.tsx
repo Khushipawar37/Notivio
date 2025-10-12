@@ -10,6 +10,7 @@ import { Badge } from "../components/ui/badge";
 import { Input } from "../components/ui/input";
 import { AdvancedRichTextEditor } from "../components/workspace/advanced-rich-text-editor";
 import { AIAssistantPanel } from "../components/workspace/ai-assistant-panel";
+import Footer from "../components/home/Footer";
 
 interface Note {
   id: string;
@@ -100,9 +101,9 @@ export default function NotivioEditor() {
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-[7rem]">
           {/* Main Editor */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 ">
             <Card className="h-full">
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
@@ -145,6 +146,7 @@ export default function NotivioEditor() {
           </div>
         </div>
       </div>
+    <Footer/>
     </div>
   );
 }
