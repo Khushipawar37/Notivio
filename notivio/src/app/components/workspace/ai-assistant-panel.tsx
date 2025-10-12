@@ -267,7 +267,7 @@ export function AIAssistantPanel({
             <Button
               key={feature.id}
               variant="outline"
-              className="w-full justify-start h-auto p-4 text-left bg-transparent hover:#ec4899"
+              className="w-full justify-start h-auto p-4 text-left bg-transparent "
               onClick={feature.action}
               disabled={feature.loading || !!aiLoading}
             >
