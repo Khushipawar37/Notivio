@@ -146,7 +146,7 @@ export default function NotivioEditor() {
           </div>
         </div>
       </div>
-    <Footer/>
+      <Footer />
     </div>
   );
 }
