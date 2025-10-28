@@ -1,15 +1,32 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useCallback, useEffect } from "react"
-import { Button } from "../ui/button"
-import { Separator } from "../ui/separator"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip"
-import { Label } from "../ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog"
+import { useState, useRef, useCallback, useEffect } from "react";
+import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
+import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 import {
   Bold,
   Italic,
@@ -37,17 +54,17 @@ import {
   Circle,
   Triangle,
   FileBarChart as FlowChart,
-} from "lucide-react"
-import { DrawingCanvas } from "./drawing-canvas"
-import { ChartBuilder } from "./chart-builder"
-import { FlowchartBuilder } from "./flowchart-builder"
+} from "lucide-react";
+import { DrawingCanvas } from "./drawing-canvas";
+import { ChartBuilder } from "./chart-builder";
+import { FlowchartBuilder } from "./flowchart-builder";
 
 interface AdvancedRichTextEditorProps {
-  content: string
-  onChange: (content: string) => void
-  onTextSelect?: (selectedText: string) => void
-  placeholder?: string
-  className?: string
+  content: string;
+  onChange: (content: string) => void;
+  onTextSelect?: (selectedText: string) => void;
+  placeholder?: string;
+  className?: string;
 }
 
 export function AdvancedRichTextEditor({
@@ -57,53 +74,53 @@ export function AdvancedRichTextEditor({
   placeholder = "Start writing...",
   className = "",
 }: AdvancedRichTextEditorProps) {
-  const editorRef = useRef<HTMLDivElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const videoInputRef = useRef<HTMLInputElement>(null)
-  const [selectedText, setSelectedText] = useState("")
-  const [currentFontSize, setCurrentFontSize] = useState("14")
-  const [currentFontFamily, setCurrentFontFamily] = useState("Arial")
-  const [showColorPicker, setShowColorPicker] = useState(false)
-  const [showDrawingDialog, setShowDrawingDialog] = useState(false)
-  const [showChartDialog, setShowChartDialog] = useState(false)
-  const [showFlowchartDialog, setShowFlowchartDialog] = useState(false)
+  const editorRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const [selectedText, setSelectedText] = useState("");
+  const [currentFontSize, setCurrentFontSize] = useState("14");
+  const [currentFontFamily, setCurrentFontFamily] = useState("Arial");
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showDrawingDialog, setShowDrawingDialog] = useState(false);
+  const [showChartDialog, setShowChartDialog] = useState(false);
+  const [showFlowchartDialog, setShowFlowchartDialog] = useState(false);
 
   const executeCommand = useCallback(
     (command: string, value?: string) => {
-      document.execCommand(command, false, value)
+      document.execCommand(command, false, value);
       if (editorRef.current) {
-        editorRef.current.focus()
-        onChange(editorRef.current.innerHTML)
+        editorRef.current.focus();
+        onChange(editorRef.current.innerHTML);
       }
     },
-    [onChange],
-  )
+    [onChange]
+  );
 
   const handleInput = useCallback(() => {
     if (editorRef.current) {
-      onChange(editorRef.current.innerHTML)
+      onChange(editorRef.current.innerHTML);
     }
-  }, [onChange])
+  }, [onChange]);
 
   const handleSelection = useCallback(() => {
-    const selection = window.getSelection()
+    const selection = window.getSelection();
     if (selection && selection.toString().trim()) {
-      const text = selection.toString()
-      setSelectedText(text)
-      onTextSelect?.(text)
+      const text = selection.toString();
+      setSelectedText(text);
+      onTextSelect?.(text);
     } else {
-      setSelectedText("")
-      onTextSelect?.("")
+      setSelectedText("");
+      onTextSelect?.("");
     }
-  }, [onTextSelect])
+  }, [onTextSelect]);
 
   const insertHeading = (level: number) => {
-    executeCommand("formatBlock", `h${level}`)
-  }
+    executeCommand("formatBlock", `h${level}`);
+  };
 
   const insertList = (ordered = false) => {
-    executeCommand(ordered ? "insertOrderedList" : "insertUnorderedList")
-  }
+    executeCommand(ordered ? "insertOrderedList" : "insertUnorderedList");
+  };
 
   const setAlignment = (alignment: "left" | "center" | "right" | "justify") => {
     const commands = {
@@ -111,106 +128,110 @@ export function AdvancedRichTextEditor({
       center: "justifyCenter",
       right: "justifyRight",
       justify: "justifyFull",
-    }
-    executeCommand(commands[alignment])
-  }
+    };
+    executeCommand(commands[alignment]);
+  };
 
   const changeFontSize = (size: string) => {
-    setCurrentFontSize(size)
-    executeCommand("fontSize", "7")
+    setCurrentFontSize(size);
+    executeCommand("fontSize", "7");
     // Apply custom font size via CSS
-    const selection = window.getSelection()
+    const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0)
-      const span = document.createElement("span")
-      span.style.fontSize = `${size}px`
+      const range = selection.getRangeAt(0);
+      const span = document.createElement("span");
+      span.style.fontSize = `${size}px`;
       try {
-        range.surroundContents(span)
+        range.surroundContents(span);
       } catch (e) {
-        span.appendChild(range.extractContents())
-        range.insertNode(span)
+        span.appendChild(range.extractContents());
+        range.insertNode(span);
       }
     }
-  }
+  };
 
   const changeFontFamily = (family: string) => {
-    setCurrentFontFamily(family)
-    executeCommand("fontName", family)
-  }
+    setCurrentFontFamily(family);
+    executeCommand("fontName", family);
+  };
 
   const changeTextColor = (color: string) => {
-    executeCommand("foreColor", color)
-    setShowColorPicker(false)
-  }
+    executeCommand("foreColor", color);
+    setShowColorPicker(false);
+  };
 
   const changeBackgroundColor = (color: string) => {
-    executeCommand("backColor", color)
-  }
+    executeCommand("backColor", color);
+  };
 
   const insertLink = () => {
-    const url = prompt("Enter URL:")
+    const url = prompt("Enter URL:");
     if (url) {
-      executeCommand("createLink", url)
+      executeCommand("createLink", url);
     }
-  }
+  };
 
   const insertImage = () => {
-    fileInputRef.current?.click()
-  }
+    fileInputRef.current?.click();
+  };
 
   const insertVideo = () => {
-    videoInputRef.current?.click()
-  }
+    videoInputRef.current?.click();
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (e) => {
-        const result = e.target?.result as string
+        const result = e.target?.result as string;
         if (file.type.startsWith("image/")) {
           executeCommand(
             "insertHTML",
-            `<img src="${result}" style="max-width: 100%; height: auto; margin: 10px 0;" alt="Uploaded image" />`,
-          )
+            `<img src="${result}" style="max-width: 100%; height: auto; margin: 10px 0;" alt="Uploaded image" />`
+          );
         }
-      }
-      reader.readAsDataURL(file)
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0];
     if (file && file.type.startsWith("video/")) {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = (e) => {
-        const result = e.target?.result as string
+        const result = e.target?.result as string;
         executeCommand(
           "insertHTML",
-          `<video controls style="max-width: 100%; margin: 10px 0;"><source src="${result}" type="${file.type}">Your browser does not support the video tag.</video>`,
-        )
-      }
-      reader.readAsDataURL(file)
+          `<video controls style="max-width: 100%; margin: 10px 0;"><source src="${result}" type="${file.type}">Your browser does not support the video tag.</video>`
+        );
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
 
   const insertTable = () => {
-    const rows = prompt("Number of rows:")
-    const cols = prompt("Number of columns:")
+    const rows = prompt("Number of rows:");
+    const cols = prompt("Number of columns:");
     if (rows && cols) {
       let tableHTML =
-        '<table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 2px solid #8a7559;">'
+        '<table style="border-collapse: collapse; width: 100%; margin: 10px 0; border: 2px solid #8a7559;">';
       for (let i = 0; i < Number.parseInt(rows); i++) {
-        tableHTML += "<tr>"
+        tableHTML += "<tr>";
         for (let j = 0; j < Number.parseInt(cols); j++) {
-          tableHTML += `<td style="padding: 12px; border: 1px solid #d9c6b8; background: ${i === 0 ? "#f5f0e8" : "#ffffff"}; ${i === 0 ? "font-weight: bold;" : ""}">${i === 0 ? `Header ${j + 1}` : "&nbsp;"}</td>`
+          tableHTML += `<td style="padding: 12px; border: 1px solid #d9c6b8; background: ${
+            i === 0 ? "#f5f0e8" : "#ffffff"
+          }; ${i === 0 ? "font-weight: bold;" : ""}">${
+            i === 0 ? `Header ${j + 1}` : "&nbsp;"
+          }</td>`;
         }
-        tableHTML += "</tr>"
+        tableHTML += "</tr>";
       }
-      tableHTML += "</table><br>"
-      executeCommand("insertHTML", tableHTML)
+      tableHTML += "</table><br>";
+      executeCommand("insertHTML", tableHTML);
     }
-  }
+  };
 
   const insertShape = (shape: string) => {
     const shapes = {
@@ -220,33 +241,33 @@ export function AdvancedRichTextEditor({
         '<div style="width: 100px; height: 100px; background: #8a7559; border-radius: 50%; margin: 10px; display: inline-block;"></div>',
       triangle:
         '<div style="width: 0; height: 0; border-left: 50px solid transparent; border-right: 50px solid transparent; border-bottom: 100px solid #8a7559; margin: 10px; display: inline-block;"></div>',
-    }
-    executeCommand("insertHTML", shapes[shape as keyof typeof shapes])
-  }
+    };
+    executeCommand("insertHTML", shapes[shape as keyof typeof shapes]);
+  };
 
   const insertDrawing = (drawingData: string) => {
     executeCommand(
       "insertHTML",
-      `<img src="${drawingData}" style="max-width: 100%; margin: 10px 0;" alt="Hand drawing" />`,
-    )
-    setShowDrawingDialog(false)
-  }
+      `<img src="${drawingData}" style="max-width: 100%; margin: 10px 0;" alt="Hand drawing" />`
+    );
+    setShowDrawingDialog(false);
+  };
 
   const insertChart = (chartHTML: string) => {
-    executeCommand("insertHTML", chartHTML)
-    setShowChartDialog(false)
-  }
+    executeCommand("insertHTML", chartHTML);
+    setShowChartDialog(false);
+  };
 
   const insertFlowchart = (flowchartHTML: string) => {
-    executeCommand("insertHTML", flowchartHTML)
-    setShowFlowchartDialog(false)
-  }
+    executeCommand("insertHTML", flowchartHTML);
+    setShowFlowchartDialog(false);
+  };
 
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== content) {
-      editorRef.current.innerHTML = content
+      editorRef.current.innerHTML = content;
     }
-  }, [content])
+  }, [content]);
 
   const colors = [
     "#000000",
@@ -264,7 +285,7 @@ export function AdvancedRichTextEditor({
     "#38b2ac",
     "#4299e1",
     "#9f7aea",
-  ]
+  ];
 
   return (
     <div className={`border rounded-lg ${className}`}>
@@ -311,7 +332,11 @@ export function AdvancedRichTextEditor({
           <div className="flex items-center space-x-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => executeCommand("bold")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => executeCommand("bold")}
+                >
                   <Bold className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -320,7 +345,11 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => executeCommand("italic")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => executeCommand("italic")}
+                >
                   <Italic className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -329,7 +358,11 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => executeCommand("underline")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => executeCommand("underline")}
+                >
                   <Underline className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -338,7 +371,11 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => executeCommand("strikeThrough")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => executeCommand("strikeThrough")}
+                >
                   <Strikethrough className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -391,7 +428,11 @@ export function AdvancedRichTextEditor({
           <div className="flex items-center space-x-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => insertHeading(1)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => insertHeading(1)}
+                >
                   <Heading1 className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -400,7 +441,11 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => insertHeading(2)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => insertHeading(2)}
+                >
                   <Heading2 className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -409,7 +454,11 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => insertHeading(3)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => insertHeading(3)}
+                >
                   <Heading3 className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -423,7 +472,11 @@ export function AdvancedRichTextEditor({
           <div className="flex items-center space-x-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => setAlignment("left")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAlignment("left")}
+                >
                   <AlignLeft className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -432,7 +485,11 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => setAlignment("center")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAlignment("center")}
+                >
                   <AlignCenter className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -441,7 +498,11 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => setAlignment("right")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAlignment("right")}
+                >
                   <AlignRight className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -450,7 +511,11 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => setAlignment("justify")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAlignment("justify")}
+                >
                   <AlignJustify className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -464,7 +529,11 @@ export function AdvancedRichTextEditor({
           <div className="flex items-center space-x-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => insertList(false)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => insertList(false)}
+                >
                   <List className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -473,7 +542,11 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => insertList(true)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => insertList(true)}
+                >
                   <ListOrdered className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -528,7 +601,11 @@ export function AdvancedRichTextEditor({
           <div className="flex items-center space-x-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => insertShape("square")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => insertShape("square")}
+                >
                   <Square className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -537,7 +614,11 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => insertShape("circle")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => insertShape("circle")}
+                >
                   <Circle className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -546,7 +627,11 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => insertShape("triangle")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => insertShape("triangle")}
+                >
                   <Triangle className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -558,7 +643,10 @@ export function AdvancedRichTextEditor({
 
           {/* Advanced Features */}
           <div className="flex items-center space-x-1">
-            <Dialog open={showDrawingDialog} onOpenChange={setShowDrawingDialog}>
+            <Dialog
+              open={showDrawingDialog}
+              onOpenChange={setShowDrawingDialog}
+            >
               <DialogTrigger asChild>
                 <Button variant="ghost" size="sm">
                   <Pencil className="h-4 w-4" />
@@ -586,7 +674,10 @@ export function AdvancedRichTextEditor({
               </DialogContent>
             </Dialog>
 
-            <Dialog open={showFlowchartDialog} onOpenChange={setShowFlowchartDialog}>
+            <Dialog
+              open={showFlowchartDialog}
+              onOpenChange={setShowFlowchartDialog}
+            >
               <DialogTrigger asChild>
                 <Button variant="ghost" size="sm">
                   <FlowChart className="h-4 w-4" />
@@ -607,7 +698,11 @@ export function AdvancedRichTextEditor({
           <div className="flex items-center space-x-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => executeCommand("undo")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => executeCommand("undo")}
+                >
                   <Undo className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -616,7 +711,11 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={() => executeCommand("redo")}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => executeCommand("redo")}
+                >
                   <Redo className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -644,8 +743,20 @@ export function AdvancedRichTextEditor({
       />
 
       {/* Hidden file inputs */}
-      <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
-      <input ref={videoInputRef} type="file" accept="video/*" onChange={handleVideoUpload} className="hidden" />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
+      <input
+        ref={videoInputRef}
+        type="file"
+        accept="video/*"
+        onChange={handleVideoUpload}
+        className="hidden"
+      />
 
       <style jsx>{`
         [contenteditable]:empty:before {
@@ -655,5 +766,5 @@ export function AdvancedRichTextEditor({
         }
       `}</style>
     </div>
-  )
+  );
 }
