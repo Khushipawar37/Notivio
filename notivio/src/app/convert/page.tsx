@@ -501,9 +501,8 @@ export default function VideoNotesPage() {
                     placeholder="https://www.youtube.com/watch?v=..."
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    className={`h-14 text-lg border-2 focus:ring-[#c6ac8f] focus:border-[#c6ac8f] transition-all duration-200 ${
-                      url && !isUrlValid ? "border-red-300 bg-red-50" : "border-[#c6ac8f]/30"
-                    } ${url && isUrlValid ? "border-[#c6ac8f] bg-[#f5f1eb]" : ""}`}
+                    className={`h-14 text-lg border-2 focus:ring-[#c6ac8f] focus:border-[#c6ac8f] transition-all duration-200 ${url && !isUrlValid ? "border-red-300 bg-red-50" : "border-[#c6ac8f]/30"
+                      } ${url && isUrlValid ? "border-[#c6ac8f] bg-[#f5f1eb]" : ""}`}
                     required
                   />
                   {url && !isUrlValid && (
@@ -689,13 +688,12 @@ export default function VideoNotesPage() {
                     <div className="flex items-center space-x-1">
                       <Badge
                         variant="secondary"
-                        className={`text-xs ${
-                          notes.difficulty === "beginner"
+                        className={`text-xs ${notes.difficulty === "beginner"
                             ? "bg-green-100 text-green-700"
                             : notes.difficulty === "intermediate"
                               ? "bg-yellow-100 text-yellow-700"
                               : "bg-red-100 text-red-700"
-                        }`}
+                          }`}
                       >
                         {notes.difficulty.charAt(0).toUpperCase() + notes.difficulty.slice(1)}
                       </Badge>
