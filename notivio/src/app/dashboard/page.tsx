@@ -111,9 +111,8 @@ export default function Dashboard() {
   return (
     <AuthGuard>
       <div
-        className={`min-h-screen ${
-          darkMode ? "bg-gray-900 text-gray-100" : "bg-[#f5f0e8] text-gray-800"
-        } transition-colors duration-300`}
+        className={`min-h-screen ${darkMode ? "bg-gray-900 text-gray-100" : "bg-[#f5f0e8] text-gray-800"
+          } transition-colors duration-300`}
       >
         <div className="container mx-auto px-4 py-8">
           {/* Header */}
@@ -147,11 +146,10 @@ export default function Dashboard() {
               <Input
                 type="text"
                 placeholder="Search your notes..."
-                className={`pl-10 ${
-                  darkMode
+                className={`pl-10 ${darkMode
                     ? "bg-gray-800 border-gray-700"
                     : "bg-white border-[#c6ac8f]/30"
-                } focus:border-[#c6ac8f] transition-all duration-300`}
+                  } focus:border-[#c6ac8f] transition-all duration-300`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -166,9 +164,8 @@ export default function Dashboard() {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar */}
             <div
-              className={`w-full lg:w-64 ${
-                darkMode ? "bg-gray-800" : "bg-white"
-              } rounded-lg p-6 h-fit`}
+              className={`w-full lg:w-64 ${darkMode ? "bg-gray-800" : "bg-white"
+                } rounded-lg p-6 h-fit`}
             >
               <div className="space-y-4">
                 <div>
@@ -178,15 +175,14 @@ export default function Dashboard() {
                       <button
                         key={category}
                         onClick={() => setActiveCategory(category)}
-                        className={`w-full text-left px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${
-                          activeCategory === category
+                        className={`w-full text-left px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${activeCategory === category
                             ? darkMode
                               ? "bg-gray-700"
                               : "bg-[#c6ac8f]/20"
                             : darkMode
-                            ? "hover:bg-gray-700"
-                            : "hover:bg-gray-100"
-                        }`}
+                              ? "hover:bg-gray-700"
+                              : "hover:bg-gray-100"
+                          }`}
                       >
                         {category === "Favorites" && (
                           <Heart className="h-4 w-4" />
@@ -205,15 +201,14 @@ export default function Dashboard() {
                         <button
                           key={folder.id}
                           onClick={() => setActiveCategory(folder.name)}
-                          className={`w-full text-left px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${
-                            activeCategory === folder.name
+                          className={`w-full text-left px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${activeCategory === folder.name
                               ? darkMode
                                 ? "bg-gray-700"
                                 : "bg-[#c6ac8f]/20"
                               : darkMode
-                              ? "hover:bg-gray-700"
-                              : "hover:bg-gray-100"
-                          }`}
+                                ? "hover:bg-gray-700"
+                                : "hover:bg-gray-100"
+                            }`}
                         >
                           <Folder
                             className="h-4 w-4"
@@ -234,15 +229,14 @@ export default function Dashboard() {
                         <button
                           key={tag.id}
                           onClick={() => setActiveCategory(tag.name)}
-                          className={`w-full text-left px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${
-                            activeCategory === tag.name
+                          className={`w-full text-left px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${activeCategory === tag.name
                               ? darkMode
                                 ? "bg-gray-700"
                                 : "bg-[#c6ac8f]/20"
                               : darkMode
-                              ? "hover:bg-gray-700"
-                              : "hover:bg-gray-100"
-                          }`}
+                                ? "hover:bg-gray-700"
+                                : "hover:bg-gray-100"
+                            }`}
                         >
                           <Tag
                             className="h-4 w-4"
@@ -269,9 +263,8 @@ export default function Dashboard() {
                 {filteredNotes.map((note) => (
                   <Card
                     key={note.id}
-                    className={`${
-                      darkMode ? "bg-gray-800 border-gray-700" : "bg-white"
-                    } hover:shadow-md transition-shadow cursor-pointer`}
+                    className={`${darkMode ? "bg-gray-800 border-gray-700" : "bg-white"
+                      } hover:shadow-md transition-shadow cursor-pointer`}
                   >
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-2">
@@ -287,19 +280,17 @@ export default function Dashboard() {
                           className="p-1 h-auto"
                         >
                           <Heart
-                            className={`h-4 w-4 ${
-                              note.isFavorite
+                            className={`h-4 w-4 ${note.isFavorite
                                 ? "fill-red-500 text-red-500"
                                 : "text-gray-400"
-                            }`}
+                              }`}
                           />
                         </Button>
                       </div>
 
                       <p
-                        className={`text-sm ${
-                          darkMode ? "text-gray-400" : "text-gray-600"
-                        } mb-4 line-clamp-3`}
+                        className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"
+                          } mb-4 line-clamp-3`}
                       >
                         {note.content || "No content"}
                       </p>
@@ -349,9 +340,8 @@ export default function Dashboard() {
               {filteredNotes.length === 0 && (
                 <div className="text-center py-12">
                   <p
-                    className={`text-lg ${
-                      darkMode ? "text-gray-400" : "text-gray-600"
-                    }`}
+                    className={`text-lg ${darkMode ? "text-gray-400" : "text-gray-600"
+                      }`}
                   >
                     {searchQuery
                       ? "No notes found matching your search."
