@@ -1,33 +1,54 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { MoreHorizontal, Star, Clock, Download, Trash, Edit, BookOpen, FileText, Video, Music } from "lucide-react"
-import { Button } from "../../components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../components/ui/dropdown-menu"
-import { useNotes, type Note } from "./note-context"
-import { formatDistanceToNow } from "date-fns"
-import { useToast } from "../../components/ui/use-toast"
-import EditNoteDialog from "./edit-note"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  MoreHorizontal,
+  Star,
+  Clock,
+  Download,
+  Trash,
+  Edit,
+  BookOpen,
+  FileText,
+  Video,
+  Music,
+} from "lucide-react";
+import { Button } from "../../components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../../components/ui/dropdown-menu";
+import { useNotes, type Note } from "./note-context";
+import { formatDistanceToNow } from "date-fns";
+import { useToast } from "../../components/ui/use-toast";
+import EditNoteDialog from "./edit-note";
 
 interface NotesGridProps {
-  darkMode: boolean
-  searchQuery: string
-  activeCategory: string
+  darkMode: boolean;
+  searchQuery: string;
+  activeCategory: string;
 }
 
-export default function NotesGrid({ darkMode, searchQuery, activeCategory }: NotesGridProps) {
-  const { notes, folders, tags, toggleStarred, deleteNote, logActivity } = useNotes()
-  const [hoveredNote, setHoveredNote] = useState<string | null>(null)
-  const [filteredNotes, setFilteredNotes] = useState<Note[]>([])
-  const [editingNote, setEditingNote] = useState<string | null>(null)
-  const { toast } = useToast()
+export default function NotesGrid({
+  darkMode,
+  searchQuery,
+  activeCategory,
+}: NotesGridProps) {
+  const { notes, folders, tags, toggleStarred, deleteNote, logActivity } =
+    useNotes();
+  const [hoveredNote, setHoveredNote] = useState<string | null>(null);
+  const [filteredNotes, setFilteredNotes] = useState<Note[]>([]);
+  const [editingNote, setEditingNote] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Filter notes based on search query and active category
   useEffect(() => {
-    let filtered = [...notes]
+    let filtered = [...notes];
 
     // Apply search filter
     if (searchQuery) {
@@ -35,117 +56,127 @@ export default function NotesGrid({ darkMode, searchQuery, activeCategory }: Not
         (note) =>
           note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           note.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          note.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())),
-      )
+          note.tags.some((tag) =>
+            tag.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+      );
     }
 
     // Apply category filter
     if (activeCategory !== "All Notes") {
       if (activeCategory === "Starred") {
-        filtered = filtered.filter((note) => note.starred)
+        filtered = filtered.filter((note) => note.starred);
       } else if (activeCategory === "Recent") {
         // Sort by last modified date
         filtered = [...filtered]
-          .sort((a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime())
-          .slice(0, 10) // Show only 10 most recent
+          .sort(
+            (a, b) =>
+              new Date(b.lastModified).getTime() -
+              new Date(a.lastModified).getTime()
+          )
+          .slice(0, 10); // Show only 10 most recent
       } else if (activeCategory === "Trash") {
         // In a real app, you'd have a "deleted" flag or a separate trash collection
-        filtered = []
+        filtered = [];
       } else {
         // Check if it's a folder
-        const folder = folders.find((f) => f.name === activeCategory)
+        const folder = folders.find((f) => f.name === activeCategory);
         if (folder) {
-          filtered = filtered.filter((note) => note.folder === folder.id)
+          filtered = filtered.filter((note) => note.folder === folder.id);
         } else {
           // Check if it's a tag
-          const tag = tags.find((t) => t.name === activeCategory)
+          const tag = tags.find((t) => t.name === activeCategory);
           if (tag) {
-            filtered = filtered.filter((note) => note.tags.includes(tag.name))
+            filtered = filtered.filter((note) => note.tags.includes(tag.name));
           }
         }
       }
     }
 
-    setFilteredNotes(filtered)
-  }, [notes, searchQuery, activeCategory, folders, tags])
+    setFilteredNotes(filtered);
+  }, [notes, searchQuery, activeCategory, folders, tags]);
 
   // Handle note open
   const handleOpenNote = (noteId: string) => {
-    logActivity("view", noteId)
-    setEditingNote(noteId)
-  }
+    logActivity("view", noteId);
+    setEditingNote(noteId);
+  };
 
   // Handle note download
   const handleDownload = (e: React.MouseEvent, note: Note) => {
-    e.stopPropagation()
+    e.stopPropagation();
 
     // Create a blob with the note content
-    const blob = new Blob([note.content], { type: "text/plain" })
-    const url = URL.createObjectURL(blob)
+    const blob = new Blob([note.content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
 
     // Create a temporary link and trigger download
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `${note.title}.txt`
-    document.body.appendChild(a)
-    a.click()
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${note.title}.txt`;
+    document.body.appendChild(a);
+    a.click();
 
     // Clean up
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
-    logActivity("download", note.id)
+    logActivity("download", note.id);
 
     toast({
       title: "Note downloaded",
       description: `${note.title} has been downloaded as a text file.`,
-    })
-  }
+    });
+  };
 
   // Handle note deletion
   const handleDelete = (e: React.MouseEvent, noteId: string) => {
-    e.stopPropagation()
-    deleteNote(noteId)
+    e.stopPropagation();
+    deleteNote(noteId);
 
     toast({
       title: "Note deleted",
       description: "The note has been deleted.",
-    })
-  }
+    });
+  };
 
   // Get icon based on note type
   const getNoteIcon = (type: string) => {
     switch (type) {
       case "video":
-        return <Video className="h-4 w-4" />
+        return <Video className="h-4 w-4" />;
       case "audio":
-        return <Music className="h-4 w-4" />
+        return <Music className="h-4 w-4" />;
       default:
-        return <FileText className="h-4 w-4" />
+        return <FileText className="h-4 w-4" />;
     }
-  }
+  };
 
   // Format date for display
   const formatDate = (dateString: string) => {
     try {
-      return formatDistanceToNow(new Date(dateString), { addSuffix: true })
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
     } catch (error) {
-      return "Unknown date"
+      return "Unknown date";
     }
-  }
+  };
 
   return (
     <>
       {filteredNotes.length === 0 ? (
-        <div className={`text-center py-12 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+        <div
+          className={`text-center py-12 ${
+            darkMode ? "text-gray-400" : "text-gray-500"
+          }`}
+        >
           <FileText className="h-12 w-12 mx-auto mb-4 opacity-30" />
           <h3 className="text-lg font-medium mb-2">No notes found</h3>
           <p>
             {searchQuery
               ? "No notes match your search query."
               : activeCategory === "All Notes"
-                ? "You haven't created any notes yet."
-                : `No notes in ${activeCategory}.`}
+              ? "You haven't created any notes yet."
+              : `No notes in ${activeCategory}.`}
           </p>
         </div>
       ) : (
@@ -156,7 +187,11 @@ export default function NotesGrid({ darkMode, searchQuery, activeCategory }: Not
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.05 }}
-              className={`relative rounded-xl border ${darkMode ? "bg-gray-800 border-gray-700 hover:border-gray-600" : "bg-white border-[#c6ac8f]/30 hover:border-[#c6ac8f]"} p-5 shadow-sm transition-all duration-300 cursor-pointer`}
+              className={`relative rounded-xl border ${
+                darkMode
+                  ? "bg-gray-800 border-gray-700 hover:border-gray-600"
+                  : "bg-white border-[#c6ac8f]/30 hover:border-[#c6ac8f]"
+              } p-5 shadow-sm transition-all duration-300 cursor-pointer`}
               style={{
                 borderLeftWidth: "4px",
                 borderLeftColor: note.color,
@@ -167,7 +202,11 @@ export default function NotesGrid({ darkMode, searchQuery, activeCategory }: Not
             >
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-2">
-                  <div className={`p-1.5 rounded-md ${darkMode ? "bg-gray-700" : "bg-[#c6ac8f]/10"}`}>
+                  <div
+                    className={`p-1.5 rounded-md ${
+                      darkMode ? "bg-gray-700" : "bg-[#c6ac8f]/10"
+                    }`}
+                  >
                     {getNoteIcon(note.type)}
                   </div>
                   <div className="flex flex-col">
@@ -182,12 +221,19 @@ export default function NotesGrid({ darkMode, searchQuery, activeCategory }: Not
                 <div className="flex items-center gap-1">
                   <button
                     onClick={(e) => {
-                      e.stopPropagation()
-                      toggleStarred(note.id)
+                      e.stopPropagation();
+                      toggleStarred(note.id);
                     }}
-                    className={`p-1 rounded-full transition-colors ${note.starred ? "text-amber-400" : "text-gray-400 hover:text-amber-400"}`}
+                    className={`p-1 rounded-full transition-colors ${
+                      note.starred
+                        ? "text-amber-400"
+                        : "text-gray-400 hover:text-amber-400"
+                    }`}
                   >
-                    <Star className="h-4 w-4" fill={note.starred ? "currentColor" : "none"} />
+                    <Star
+                      className="h-4 w-4"
+                      fill={note.starred ? "currentColor" : "none"}
+                    />
                   </button>
 
                   <DropdownMenu>
@@ -199,18 +245,26 @@ export default function NotesGrid({ darkMode, searchQuery, activeCategory }: Not
                         <MoreHorizontal className="h-4 w-4" />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className={darkMode ? "bg-gray-800 border-gray-700" : "bg-white"}>
+                    <DropdownMenuContent
+                      align="end"
+                      className={
+                        darkMode ? "bg-gray-800 border-gray-700" : "bg-white"
+                      }
+                    >
                       <DropdownMenuItem
                         className="flex items-center gap-2"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          setEditingNote(note.id)
+                          e.stopPropagation();
+                          setEditingNote(note.id);
                         }}
                       >
                         <Edit className="h-4 w-4" />
                         <span>Edit</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center gap-2" onClick={(e) => handleDownload(e, note)}>
+                      <DropdownMenuItem
+                        className="flex items-center gap-2"
+                        onClick={(e) => handleDownload(e, note)}
+                      >
                         <Download className="h-4 w-4" />
                         <span>Download</span>
                       </DropdownMenuItem>
@@ -226,7 +280,11 @@ export default function NotesGrid({ darkMode, searchQuery, activeCategory }: Not
                 </div>
               </div>
 
-              <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-600"} line-clamp-2 mb-4`}>
+              <p
+                className={`text-sm ${
+                  darkMode ? "text-gray-400" : "text-gray-600"
+                } line-clamp-2 mb-4`}
+              >
                 {note.excerpt}
               </p>
 
@@ -234,7 +292,11 @@ export default function NotesGrid({ darkMode, searchQuery, activeCategory }: Not
                 {note.tags.map((tag, i) => (
                   <span
                     key={i}
-                    className={`text-xs px-2 py-0.5 rounded-full ${darkMode ? "bg-gray-700 text-gray-300" : "bg-[#c6ac8f]/20 text-[#8a7559]"}`}
+                    className={`text-xs px-2 py-0.5 rounded-full ${
+                      darkMode
+                        ? "bg-gray-700 text-gray-300"
+                        : "bg-[#c6ac8f]/20 text-[#8a7559]"
+                    }`}
                   >
                     {tag}
                   </span>
@@ -265,11 +327,11 @@ export default function NotesGrid({ darkMode, searchQuery, activeCategory }: Not
           noteId={editingNote}
           open={!!editingNote}
           onOpenChange={(open) => {
-            if (!open) setEditingNote(null)
+            if (!open) setEditingNote(null);
           }}
           darkMode={darkMode}
         />
       )}
     </>
-  )
+  );
 }
