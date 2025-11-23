@@ -1,80 +1,92 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { Clock, Edit, Trash, Download, FileText, Video, Music } from "lucide-react"
-import { useNotes } from "./note-context"
-import { formatDistanceToNow } from "date-fns"
+import { motion } from "framer-motion";
+import {
+  Clock,
+  Edit,
+  Trash,
+  Download,
+  FileText,
+  Video,
+  Music,
+} from "lucide-react";
+import { useNotes } from "./note-context";
+import { formatDistanceToNow } from "date-fns";
 
 interface RecentActivityProps {
-  darkMode: boolean
+  darkMode: boolean;
 }
 
 export default function RecentActivity({ darkMode }: RecentActivityProps) {
-  const { activities, notes } = useNotes()
+  const { activities, notes } = useNotes();
 
   // Get icon based on activity type
   const getActivityIcon = (type: string) => {
     switch (type) {
       case "edit":
-        return <Edit className="h-4 w-4" />
+        return <Edit className="h-4 w-4" />;
       case "create":
-        return <FileText className="h-4 w-4" />
+        return <FileText className="h-4 w-4" />;
       case "download":
-        return <Download className="h-4 w-4" />
+        return <Download className="h-4 w-4" />;
       case "delete":
-        return <Trash className="h-4 w-4" />
+        return <Trash className="h-4 w-4" />;
       case "view":
-        return <FileText className="h-4 w-4" />
+        return <FileText className="h-4 w-4" />;
       default:
-        return <Edit className="h-4 w-4" />
+        return <Edit className="h-4 w-4" />;
     }
-  }
+  };
 
   // Get icon based on note type
   const getNoteTypeIcon = (type: string) => {
     switch (type) {
       case "video":
-        return <Video className="h-3 w-3" />
+        return <Video className="h-3 w-3" />;
       case "audio":
-        return <Music className="h-3 w-3" />
+        return <Music className="h-3 w-3" />;
       default:
-        return <FileText className="h-3 w-3" />
+        return <FileText className="h-3 w-3" />;
     }
-  }
+  };
 
   // Format timestamp for display
   const formatTimestamp = (timestamp: number) => {
     try {
-      return formatDistanceToNow(new Date(timestamp), { addSuffix: true })
+      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
     } catch (error) {
-      return "Unknown time"
+      return "Unknown time";
     }
-  }
+  };
 
   // Get activity verb
   const getActivityVerb = (type: string) => {
     switch (type) {
       case "edit":
-        return "Edited"
+        return "Edited";
       case "create":
-        return "Created"
+        return "Created";
       case "download":
-        return "Downloaded"
+        return "Downloaded";
       case "delete":
-        return "Deleted"
+        return "Deleted";
       case "view":
-        return "Viewed"
+        return "Viewed";
       default:
-        return "Modified"
+        return "Modified";
     }
-  }
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className={`hidden xl:block w-80 h-fit sticky top-24 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-[#c6ac8f]/30"} rounded-xl border p-4 shadow-sm`}
+      className={`hidden xl:block w-80 h-fit sticky top-24 ${
+        darkMode
+          ? "bg-gray-800 border-gray-700"
+          : "bg-white border-[#c6ac8f]/30"
+      } rounded-xl border p-4 shadow-sm`}
     >
       <div className="flex items-center gap-2 mb-4">
         <Clock className="h-5 w-5" />
@@ -82,7 +94,11 @@ export default function RecentActivity({ darkMode }: RecentActivityProps) {
       </div>
 
       {activities.length === 0 ? (
-        <div className={`text-center py-8 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+        <div
+          className={`text-center py-8 ${
+            darkMode ? "text-gray-400" : "text-gray-500"
+          }`}
+        >
           <Clock className="h-8 w-8 mx-auto mb-2 opacity-30" />
           <p className="text-sm">No recent activity</p>
         </div>
@@ -94,27 +110,55 @@ export default function RecentActivity({ darkMode }: RecentActivityProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
-              className={`p-3 rounded-lg ${darkMode ? "bg-gray-700 hover:bg-gray-600" : "bg-[#c6ac8f]/10 hover:bg-[#c6ac8f]/20"} cursor-pointer transition-colors`}
+              className={`p-3 rounded-lg ${
+                darkMode
+                  ? "bg-gray-700 hover:bg-gray-600"
+                  : "bg-[#c6ac8f]/10 hover:bg-[#c6ac8f]/20"
+              } cursor-pointer transition-colors`}
             >
               <div className="flex items-start gap-3">
-                <div className={`p-2 rounded-md ${darkMode ? "bg-gray-600" : "bg-white"}`}>
+                <div
+                  className={`p-2 rounded-md ${
+                    darkMode ? "bg-gray-600" : "bg-white"
+                  }`}
+                >
                   {getActivityIcon(activity.type)}
                 </div>
 
                 <div className="flex-1">
                   <div className="flex items-center gap-1 mb-1">
-                    <span className="text-sm font-medium line-clamp-1">{activity.noteTitle}</span>
-                    <div className={`p-1 rounded-full ${darkMode ? "bg-gray-600" : "bg-white"}`}>
+                    <span className="text-sm font-medium line-clamp-1">
+                      {activity.noteTitle}
+                    </span>
+                    <div
+                      className={`p-1 rounded-full ${
+                        darkMode ? "bg-gray-600" : "bg-white"
+                      }`}
+                    >
                       {getNoteTypeIcon(activity.noteType)}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1">
-                    <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                    <span
+                      className={`text-xs ${
+                        darkMode ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
                       {getActivityVerb(activity.type)}
                     </span>
-                    <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>•</span>
-                    <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                    <span
+                      className={`text-xs ${
+                        darkMode ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
+                      •
+                    </span>
+                    <span
+                      className={`text-xs ${
+                        darkMode ? "text-gray-400" : "text-gray-500"
+                      }`}
+                    >
                       {formatTimestamp(activity.timestamp)}
                     </span>
                   </div>
@@ -143,7 +187,11 @@ export default function RecentActivity({ darkMode }: RecentActivityProps) {
             }}
             className="w-12 h-12 text-[#8a7559]"
           >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <path
                 d="M21.7071 2.29289C22.0976 2.68342 22.0976 3.31658 21.7071 3.70711L11.7071 13.7071C11.3166 14.0976 10.6834 14.0976 10.2929 13.7071C9.90237 13.3166 9.90237 12.6834 10.2929 12.2929L20.2929 2.29289C20.6834 1.90237 21.3166 1.90237 21.7071 2.29289Z"
                 fill="currentColor"
@@ -157,11 +205,15 @@ export default function RecentActivity({ darkMode }: RecentActivityProps) {
         </div>
 
         <div className="absolute bottom-4 left-0 right-0 text-center">
-          <p className={`text-sm font-medium ${darkMode ? "text-white" : "text-[#8a7559]"}`}>
+          <p
+            className={`text-sm font-medium ${
+              darkMode ? "text-white" : "text-[#8a7559]"
+            }`}
+          >
             Share your notes with friends
           </p>
         </div>
       </div>
     </motion.div>
-  )
+  );
 }
