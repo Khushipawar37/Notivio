@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useAuth } from "./auth-provider"
-import LoginForm from "./login-form"
+import { useState } from "react";
+import { useAuth } from "./auth-provider";
+import LoginForm from "./login-form";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth()
-  const [isSignUp, setIsSignUp] = useState(false)
+  const { user, loading } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(false);
 
   if (loading) {
     return (
@@ -18,12 +18,17 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           <p className="mt-2 text-gray-600">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!user) {
-    return <LoginForm onToggleMode={() => setIsSignUp(!isSignUp)} isSignUp={isSignUp} />
+    return (
+      <LoginForm
+        onToggleMode={() => setIsSignUp(!isSignUp)}
+        isSignUp={isSignUp}
+      />
+    );
   }
 
-  return <>{children}</>
+  return <>{children}</>;
 }
