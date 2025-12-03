@@ -48,7 +48,7 @@ export default function CreateFolderDialog({
       setLoading(false);
     }
   };
-
+  
   const colorOptions = [
     "#c6ac8f",
     "#8a7559",
