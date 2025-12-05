@@ -58,7 +58,7 @@ export default function CreateFolderDialog({
     "#f39c12",
     "#9b59b6",
     "#1abc9c",
-  ];
+  ];   
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
