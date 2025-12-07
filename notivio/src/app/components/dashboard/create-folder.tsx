@@ -66,20 +66,18 @@ export default function CreateFolderDialog({
         <Button
           variant="outline"
           size="sm"
-          className={`${
-            darkMode
+          className={`${darkMode
               ? "border-gray-600 hover:bg-gray-700"
               : "border-[#c6ac8f]/30 hover:bg-[#c6ac8f]/10"
-          }`}
+            }`}
         >
           <FolderPlus className="h-4 w-4 mr-2" />
           New Folder
         </Button>
       </DialogTrigger>
       <DialogContent
-        className={`sm:max-w-[425px] ${
-          darkMode ? "bg-gray-800 text-gray-100" : "bg-white"
-        }`}
+        className={`sm:max-w-[425px] ${darkMode ? "bg-gray-800 text-gray-100" : "bg-white"
+          }`}
       >
         <DialogHeader>
           <DialogTitle>Create New Folder</DialogTitle>
@@ -109,11 +107,10 @@ export default function CreateFolderDialog({
                     key={colorOption}
                     type="button"
                     onClick={() => setColor(colorOption)}
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      color === colorOption
+                    className={`w-8 h-8 rounded-full border-2 ${color === colorOption
                         ? "border-gray-400"
                         : "border-transparent"
-                    }`}
+                      }`}
                     style={{ backgroundColor: colorOption }}
                   />
                 ))}
@@ -133,11 +130,10 @@ export default function CreateFolderDialog({
             <Button
               type="submit"
               disabled={loading || !name.trim()}
-              className={`${
-                darkMode
+              className={`${darkMode
                   ? "bg-[#8a7559] hover:bg-[#8a7559]/90"
                   : "bg-[#c6ac8f] hover:bg-[#c6ac8f]/90"
-              } text-white`}
+                } text-white`}
             >
               {loading ? "Creating..." : "Create Folder"}
             </Button>
