@@ -67,8 +67,8 @@ export default function CreateFolderDialog({
           variant="outline"
           size="sm"
           className={`${darkMode
-              ? "border-gray-600 hover:bg-gray-700"
-              : "border-[#c6ac8f]/30 hover:bg-[#c6ac8f]/10"
+            ? "border-gray-600 hover:bg-gray-700"
+            : "border-[#c6ac8f]/30 hover:bg-[#c6ac8f]/10"
             }`}
         >
           <FolderPlus className="h-4 w-4 mr-2" />
@@ -108,8 +108,8 @@ export default function CreateFolderDialog({
                     type="button"
                     onClick={() => setColor(colorOption)}
                     className={`w-8 h-8 rounded-full border-2 ${color === colorOption
-                        ? "border-gray-400"
-                        : "border-transparent"
+                      ? "border-gray-400"
+                      : "border-transparent"
                       }`}
                     style={{ backgroundColor: colorOption }}
                   />
@@ -131,8 +131,8 @@ export default function CreateFolderDialog({
               type="submit"
               disabled={loading || !name.trim()}
               className={`${darkMode
-                  ? "bg-[#8a7559] hover:bg-[#8a7559]/90"
-                  : "bg-[#c6ac8f] hover:bg-[#c6ac8f]/90"
+                ? "bg-[#8a7559] hover:bg-[#8a7559]/90"
+                : "bg-[#c6ac8f] hover:bg-[#c6ac8f]/90"
                 } text-white`}
             >
               {loading ? "Creating..." : "Create Folder"}
