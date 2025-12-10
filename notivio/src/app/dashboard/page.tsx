@@ -147,8 +147,8 @@ export default function Dashboard() {
                 type="text"
                 placeholder="Search your notes..."
                 className={`pl-10 ${darkMode
-                    ? "bg-gray-800 border-gray-700"
-                    : "bg-white border-[#c6ac8f]/30"
+                  ? "bg-gray-800 border-gray-700"
+                  : "bg-white border-[#c6ac8f]/30"
                   } focus:border-[#c6ac8f] transition-all duration-300`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -176,12 +176,12 @@ export default function Dashboard() {
                         key={category}
                         onClick={() => setActiveCategory(category)}
                         className={`w-full text-left px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${activeCategory === category
-                            ? darkMode
-                              ? "bg-gray-700"
-                              : "bg-[#c6ac8f]/20"
-                            : darkMode
-                              ? "hover:bg-gray-700"
-                              : "hover:bg-gray-100"
+                          ? darkMode
+                            ? "bg-gray-700"
+                            : "bg-[#c6ac8f]/20"
+                          : darkMode
+                            ? "hover:bg-gray-700"
+                            : "hover:bg-gray-100"
                           }`}
                       >
                         {category === "Favorites" && (
@@ -202,12 +202,12 @@ export default function Dashboard() {
                           key={folder.id}
                           onClick={() => setActiveCategory(folder.name)}
                           className={`w-full text-left px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${activeCategory === folder.name
-                              ? darkMode
-                                ? "bg-gray-700"
-                                : "bg-[#c6ac8f]/20"
-                              : darkMode
-                                ? "hover:bg-gray-700"
-                                : "hover:bg-gray-100"
+                            ? darkMode
+                              ? "bg-gray-700"
+                              : "bg-[#c6ac8f]/20"
+                            : darkMode
+                              ? "hover:bg-gray-700"
+                              : "hover:bg-gray-100"
                             }`}
                         >
                           <Folder
@@ -230,12 +230,12 @@ export default function Dashboard() {
                           key={tag.id}
                           onClick={() => setActiveCategory(tag.name)}
                           className={`w-full text-left px-3 py-2 rounded-md transition-colors flex items-center gap-2 ${activeCategory === tag.name
-                              ? darkMode
-                                ? "bg-gray-700"
-                                : "bg-[#c6ac8f]/20"
-                              : darkMode
-                                ? "hover:bg-gray-700"
-                                : "hover:bg-gray-100"
+                            ? darkMode
+                              ? "bg-gray-700"
+                              : "bg-[#c6ac8f]/20"
+                            : darkMode
+                              ? "hover:bg-gray-700"
+                              : "hover:bg-gray-100"
                             }`}
                         >
                           <Tag
@@ -281,8 +281,8 @@ export default function Dashboard() {
                         >
                           <Heart
                             className={`h-4 w-4 ${note.isFavorite
-                                ? "fill-red-500 text-red-500"
-                                : "text-gray-400"
+                              ? "fill-red-500 text-red-500"
+                              : "text-gray-400"
                               }`}
                           />
                         </Button>
