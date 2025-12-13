@@ -16,7 +16,7 @@ import CreateFolderDialog from "../components/dashboard/create-folder";
 export default function Dashboard() {
   const [darkMode, setDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All Notes");
+  const [activeCategory, setActiveCategory] = useState("All Notes");   
   const router = useRouter();  
 
   const {
