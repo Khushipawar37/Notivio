@@ -72,7 +72,7 @@ export default function Dashboard() {
     // Check if it's a tag category
     const tag = tags.find((t) => t.name === activeCategory);
     if (tag) return matchesSearch && note.tags?.includes(tag.id);
-
+ 
     return matchesSearch;
   });
 
