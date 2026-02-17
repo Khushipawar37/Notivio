@@ -43,9 +43,8 @@ export function EditorLayout({
 
   return (
     <div
-      className={`flex flex-col w-screen h-screen overflow-hidden ${
-        darkMode ? "dark bg-slate-950" : "bg-white"
-      }`}
+      className={`flex flex-col w-screen h-screen overflow-hidden ${darkMode ? "dark bg-slate-950" : "bg-white"
+        }`}
     >
       {/* Top Navigation Bar */}
       <EditorTopBar
