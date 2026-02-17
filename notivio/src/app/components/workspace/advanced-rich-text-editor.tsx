@@ -54,10 +54,14 @@ import {
   Circle,
   Triangle,
   FileBarChart as FlowChart,
+  Code,
+  Quote,
+  Minus,
 } from "lucide-react";
 import { DrawingCanvas } from "./drawing-canvas";
 import { ChartBuilder } from "./chart-builder";
 import { FlowchartBuilder } from "./flowchart-builder";
+import { ColorPicker } from "./color-picker";
 
 interface AdvancedRichTextEditorProps {
   content: string;
@@ -78,9 +82,11 @@ export function AdvancedRichTextEditor({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [selectedText, setSelectedText] = useState("");
-  const [currentFontSize, setCurrentFontSize] = useState("14");
-  const [currentFontFamily, setCurrentFontFamily] = useState("Arial");
-  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [currentFontSize, setCurrentFontSize] = useState("16");
+  const [currentFontFamily, setCurrentFontFamily] = useState("Inter");
+  const [currentTextColor, setCurrentTextColor] = useState("#000000");
+  const [currentBgColor, setCurrentBgColor] = useState("#ffffff");
+  const [showColorPicker, setShowColorPicker] = useState<"text" | "bg" | null>(null);
   const [showDrawingDialog, setShowDrawingDialog] = useState(false);
   const [showChartDialog, setShowChartDialog] = useState(false);
   const [showFlowchartDialog, setShowFlowchartDialog] = useState(false);
@@ -134,19 +140,19 @@ export function AdvancedRichTextEditor({
 
   const changeFontSize = (size: string) => {
     setCurrentFontSize(size);
-    executeCommand("fontSize", "7");
-    // Apply custom font size via CSS
+    // Use HTML span with style instead of deprecated fontSize command
     const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
+    if (selection && selection.rangeCount > 0 && selection.toString()) {
       const span = document.createElement("span");
       span.style.fontSize = `${size}px`;
+      const range = selection.getRangeAt(0);
       try {
         range.surroundContents(span);
-      } catch (e) {
+      } catch {
         span.appendChild(range.extractContents());
         range.insertNode(span);
       }
+      onChange(editorRef.current?.innerHTML || "");
     }
   };
 
@@ -156,12 +162,15 @@ export function AdvancedRichTextEditor({
   };
 
   const changeTextColor = (color: string) => {
+    setCurrentTextColor(color);
     executeCommand("foreColor", color);
-    setShowColorPicker(false);
+    setShowColorPicker(null);
   };
 
   const changeBackgroundColor = (color: string) => {
+    setCurrentBgColor(color);
     executeCommand("backColor", color);
+    setShowColorPicker(null);
   };
 
   const insertLink = () => {
@@ -269,47 +278,33 @@ export function AdvancedRichTextEditor({
     }
   }, [content]);
 
-  const colors = [
-    "#000000",
-    "#8a7559",
-    "#a68b5b",
-    "#d9c6b8",
-    "#f5f0e8",
-    "#e53e3e",
-    "#38a169",
-    "#3182ce",
-    "#805ad5",
-    "#d69e2e",
-    "#ed8936",
-    "#e53e3e",
-    "#38b2ac",
-    "#4299e1",
-    "#9f7aea",
-  ];
-
   return (
-    <div className={`border rounded-lg ${className}`}>
-      {/* Advanced Toolbar */}
-      <div className="flex flex-wrap items-center gap-1 p-3 border-b bg-muted/20">
+    <div className={`flex flex-col h-full border rounded-lg overflow-hidden bg-white ${className}`}>
+      {/* Premium Toolbar - Multi-row */}
+      <div className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
         <TooltipProvider>
-          {/* Font Controls */}
-          <div className="flex items-center space-x-2 mr-3">
+          {/* First Row: Font Controls */}
+          <div className="flex items-center gap-2 p-3 border-b border-slate-200 flex-wrap">
             <Select value={currentFontFamily} onValueChange={changeFontFamily}>
-              <SelectTrigger className="w-32 h-8">
+              <SelectTrigger className="w-40 h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Arial">Arial</SelectItem>
+                <SelectItem value="Inter">Inter</SelectItem>
+                <SelectItem value="Roboto">Roboto</SelectItem>
                 <SelectItem value="Georgia">Georgia</SelectItem>
-                <SelectItem value="Times New Roman">Times</SelectItem>
+                <SelectItem value="Times New Roman">Times New Roman</SelectItem>
                 <SelectItem value="Helvetica">Helvetica</SelectItem>
-                <SelectItem value="Courier New">Courier</SelectItem>
+                <SelectItem value="Courier New">Courier New</SelectItem>
                 <SelectItem value="Verdana">Verdana</SelectItem>
+                <SelectItem value="Comic Sans MS">Comic Sans MS</SelectItem>
+                <SelectItem value="Trebuchet MS">Trebuchet MS</SelectItem>
+                <SelectItem value="Arial">Arial</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={currentFontSize} onValueChange={changeFontSize}>
-              <SelectTrigger className="w-16 h-8">
+              <SelectTrigger className="w-20 h-9 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -322,25 +317,27 @@ export function AdvancedRichTextEditor({
                 <SelectItem value="24">24</SelectItem>
                 <SelectItem value="28">28</SelectItem>
                 <SelectItem value="32">32</SelectItem>
+                <SelectItem value="36">36</SelectItem>
+                <SelectItem value="42">42</SelectItem>
+                <SelectItem value="48">48</SelectItem>
               </SelectContent>
             </Select>
-          </div>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
 
-          {/* Text Formatting */}
-          <div className="flex items-center space-x-1">
+            {/* Text Formatting Buttons */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => executeCommand("bold")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
                 >
                   <Bold className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Bold</TooltipContent>
+              <TooltipContent>Bold (Ctrl+B)</TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -349,11 +346,12 @@ export function AdvancedRichTextEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => executeCommand("italic")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
                 >
                   <Italic className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Italic</TooltipContent>
+              <TooltipContent>Italic (Ctrl+I)</TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -362,11 +360,12 @@ export function AdvancedRichTextEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => executeCommand("underline")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
                 >
                   <Underline className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Underline</TooltipContent>
+              <TooltipContent>Underline (Ctrl+U)</TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -375,65 +374,74 @@ export function AdvancedRichTextEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => executeCommand("strikeThrough")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
                 >
                   <Strikethrough className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Strikethrough</TooltipContent>
             </Tooltip>
-          </div>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
 
-          {/* Color Controls */}
-          <div className="flex items-center space-x-1">
-            <Popover open={showColorPicker} onOpenChange={setShowColorPicker}>
+            {/* Color Pickers */}
+            <Popover open={showColorPicker === "text"} onOpenChange={(open) => setShowColorPicker(open ? "text" : null)}>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 hover:bg-slate-200 relative"
+                  title="Text Color"
+                >
                   <Palette className="h-4 w-4" />
+                  <div
+                    className="absolute bottom-0 right-0 w-3 h-3 rounded-full border border-gray-400"
+                    style={{ backgroundColor: currentTextColor }}
+                  />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-64">
-                <div className="space-y-3">
-                  <Label>Text Color</Label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {colors.map((color) => (
-                      <button
-                        key={color}
-                        className="w-8 h-8 rounded border-2 border-gray-300 hover:border-gray-500"
-                        style={{ backgroundColor: color }}
-                        onClick={() => changeTextColor(color)}
-                      />
-                    ))}
-                  </div>
-                  <Label>Background Color</Label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {colors.map((color) => (
-                      <button
-                        key={`bg-${color}`}
-                        className="w-8 h-8 rounded border-2 border-gray-300 hover:border-gray-500"
-                        style={{ backgroundColor: color }}
-                        onClick={() => changeBackgroundColor(color)}
-                      />
-                    ))}
-                  </div>
-                </div>
+              <PopoverContent className="w-80">
+                <ColorPicker
+                  color={currentTextColor}
+                  onChange={changeTextColor}
+                  label="Text Color"
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Popover open={showColorPicker === "bg"} onOpenChange={(open) => setShowColorPicker(open ? "bg" : null)}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 hover:bg-slate-200 relative"
+                  title="Background Color"
+                >
+                  <div className="h-4 w-4 border border-gray-400 rounded" style={{ backgroundColor: currentBgColor }} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <ColorPicker
+                  color={currentBgColor}
+                  onChange={changeBackgroundColor}
+                  label="Background Color"
+                />
               </PopoverContent>
             </Popover>
           </div>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
-          {/* Headings */}
-          <div className="flex items-center space-x-1">
+          {/* Second Row: Structure & Formatting */}
+          <div className="flex items-center gap-2 p-3 border-b border-slate-200 flex-wrap">
+            {/* Headings */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => insertHeading(1)}
+                  className="h-9 px-2 hover:bg-slate-200 text-xs"
                 >
-                  <Heading1 className="h-4 w-4" />
+                  <Heading1 className="h-4 w-4 mr-1" /> H1
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Heading 1</TooltipContent>
@@ -445,8 +453,9 @@ export function AdvancedRichTextEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => insertHeading(2)}
+                  className="h-9 px-2 hover:bg-slate-200 text-xs"
                 >
-                  <Heading2 className="h-4 w-4" />
+                  <Heading2 className="h-4 w-4 mr-1" /> H2
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Heading 2</TooltipContent>
@@ -458,81 +467,24 @@ export function AdvancedRichTextEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => insertHeading(3)}
+                  className="h-9 px-2 hover:bg-slate-200 text-xs"
                 >
-                  <Heading3 className="h-4 w-4" />
+                  <Heading3 className="h-4 w-4 mr-1" /> H3
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Heading 3</TooltipContent>
             </Tooltip>
-          </div>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
 
-          {/* Alignment */}
-          <div className="flex items-center space-x-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setAlignment("left")}
-                >
-                  <AlignLeft className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Align Left</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setAlignment("center")}
-                >
-                  <AlignCenter className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Align Center</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setAlignment("right")}
-                >
-                  <AlignRight className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Align Right</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setAlignment("justify")}
-                >
-                  <AlignJustify className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Justify</TooltipContent>
-            </Tooltip>
-          </div>
-
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
-          {/* Lists */}
-          <div className="flex items-center space-x-1">
+            {/* Lists */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => insertList(false)}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
                 >
                   <List className="h-4 w-4" />
                 </Button>
@@ -546,21 +498,113 @@ export function AdvancedRichTextEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => insertList(true)}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
                 >
                   <ListOrdered className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Numbered List</TooltipContent>
             </Tooltip>
-          </div>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
-          {/* Insert Elements */}
-          <div className="flex items-center space-x-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={insertLink}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => executeCommand("formatBlock", "blockquote")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
+                >
+                  <Quote className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Quote</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => executeCommand("formatBlock", "pre")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
+                >
+                  <Code className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Code Block</TooltipContent>
+            </Tooltip>
+
+            <Separator orientation="vertical" className="h-6 mx-1" />
+
+            {/* Alignment */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAlignment("left")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
+                >
+                  <AlignLeft className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Align Left</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAlignment("center")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
+                >
+                  <AlignCenter className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Align Center</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAlignment("right")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
+                >
+                  <AlignRight className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Align Right</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setAlignment("justify")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
+                >
+                  <AlignJustify className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Justify</TooltipContent>
+            </Tooltip>
+          </div>
+
+          {/* Third Row: Insert Elements & Advanced Features */}
+          <div className="flex items-center gap-2 p-3 flex-wrap">
+            {/* Insert Elements */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={insertLink}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
+                >
                   <Link className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -569,7 +613,12 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={insertImage}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={insertImage}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
+                >
                   <ImageIcon className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -578,7 +627,12 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={insertVideo}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={insertVideo}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
+                >
                   <Video className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -587,24 +641,28 @@ export function AdvancedRichTextEditor({
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={insertTable}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={insertTable}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
+                >
                   <Table className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Insert Table</TooltipContent>
             </Tooltip>
-          </div>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
 
-          {/* Shapes */}
-          <div className="flex items-center space-x-1">
+            {/* Shapes */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => insertShape("square")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
                 >
                   <Square className="h-4 w-4" />
                 </Button>
@@ -618,6 +676,7 @@ export function AdvancedRichTextEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => insertShape("circle")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
                 >
                   <Circle className="h-4 w-4" />
                 </Button>
@@ -631,26 +690,31 @@ export function AdvancedRichTextEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => insertShape("triangle")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
                 >
                   <Triangle className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Insert Triangle</TooltipContent>
             </Tooltip>
-          </div>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
 
-          {/* Advanced Features */}
-          <div className="flex items-center space-x-1">
-            <Dialog
-              open={showDrawingDialog}
-              onOpenChange={setShowDrawingDialog}
-            >
+            {/* Advanced Features */}
+            <Dialog open={showDrawingDialog} onOpenChange={setShowDrawingDialog}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <Pencil className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-9 p-0 hover:bg-slate-200"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Drawing Canvas</TooltipContent>
+                </Tooltip>
               </DialogTrigger>
               <DialogContent className="max-w-4xl">
                 <DialogHeader>
@@ -662,9 +726,18 @@ export function AdvancedRichTextEditor({
 
             <Dialog open={showChartDialog} onOpenChange={setShowChartDialog}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <BarChart3 className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-9 p-0 hover:bg-slate-200"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Chart Builder</TooltipContent>
+                </Tooltip>
               </DialogTrigger>
               <DialogContent className="max-w-4xl">
                 <DialogHeader>
@@ -674,14 +747,20 @@ export function AdvancedRichTextEditor({
               </DialogContent>
             </Dialog>
 
-            <Dialog
-              open={showFlowchartDialog}
-              onOpenChange={setShowFlowchartDialog}
-            >
+            <Dialog open={showFlowchartDialog} onOpenChange={setShowFlowchartDialog}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <FlowChart className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 w-9 p-0 hover:bg-slate-200"
+                    >
+                      <FlowChart className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Flowchart Builder</TooltipContent>
+                </Tooltip>
               </DialogTrigger>
               <DialogContent className="max-w-4xl">
                 <DialogHeader>
@@ -690,18 +769,17 @@ export function AdvancedRichTextEditor({
                 <FlowchartBuilder onInsert={insertFlowchart} />
               </DialogContent>
             </Dialog>
-          </div>
 
-          <Separator orientation="vertical" className="h-6 mx-1" />
+            <Separator orientation="vertical" className="h-6 mx-1" />
 
-          {/* Undo/Redo */}
-          <div className="flex items-center space-x-1">
+            {/* Undo/Redo */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => executeCommand("undo")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
                 >
                   <Undo className="h-4 w-4" />
                 </Button>
@@ -715,6 +793,7 @@ export function AdvancedRichTextEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => executeCommand("redo")}
+                  className="h-9 w-9 p-0 hover:bg-slate-200"
                 >
                   <Redo className="h-4 w-4" />
                 </Button>
@@ -725,18 +804,19 @@ export function AdvancedRichTextEditor({
         </TooltipProvider>
       </div>
 
-      {/* Editor Content */}
+      {/* Editor Content Area */}
       <div
         ref={editorRef}
         contentEditable
         onInput={handleInput}
         onMouseUp={handleSelection}
         onKeyUp={handleSelection}
-        className="min-h-[600px] p-6 focus:outline-none prose prose-sm max-w-none"
+        className="flex-1 overflow-y-auto p-8 focus:outline-none prose prose-sm max-w-none text-base"
         style={{
+          lineHeight: "1.8",
+          fontSize: "16px",
+          fontFamily: "Inter, system-ui, sans-serif",
           minHeight: "600px",
-          lineHeight: "1.6",
-          fontSize: "14px",
         }}
         suppressContentEditableWarning={true}
         data-placeholder={placeholder}
@@ -763,6 +843,90 @@ export function AdvancedRichTextEditor({
           content: attr(data-placeholder);
           color: #9ca3af;
           pointer-events: none;
+          font-size: 16px;
+        }
+
+        [contenteditable] {
+          word-wrap: break-word;
+          word-break: break-word;
+          white-space: pre-wrap;
+        }
+
+        /* Link styling */
+        [contenteditable] a {
+          color: #0066cc;
+          text-decoration: underline;
+          cursor: pointer;
+        }
+
+        [contenteditable] a:hover {
+          color: #0052a3;
+        }
+
+        /* Code styling */
+        [contenteditable] code {
+          background-color: #f1f5f9;
+          padding: 2px 6px;
+          border-radius: 3px;
+          font-family: "Courier New", monospace;
+          color: #c7254e;
+        }
+
+        /* Blockquote styling */
+        [contenteditable] blockquote {
+          border-left: 4px solid #e2e8f0;
+          padding-left: 16px;
+          margin-left: 0;
+          color: #475569;
+          font-style: italic;
+        }
+
+        /* List styling */
+        [contenteditable] ul, [contenteditable] ol {
+          margin-left: 24px;
+        }
+
+        [contenteditable] li {
+          margin-bottom: 8px;
+        }
+
+        /* Table styling */
+        [contenteditable] table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 16px 0;
+        }
+
+        [contenteditable] table td,
+        [contenteditable] table th {
+          border: 1px solid #e2e8f0;
+          padding: 12px;
+        }
+
+        [contenteditable] table th {
+          background-color: #f1f5f9;
+          font-weight: 600;
+        }
+
+        /* Heading styling */
+        [contenteditable] h1 {
+          font-size: 32px;
+          font-weight: 700;
+          margin-bottom: 16px;
+        }
+
+        [contenteditable] h2 {
+          font-size: 24px;
+          font-weight: 600;
+          margin-top: 24px;
+          margin-bottom: 12px;
+        }
+
+        [contenteditable] h3 {
+          font-size: 20px;
+          font-weight: 600;
+          margin-top: 20px;
+          margin-bottom: 10px;
         }
       `}</style>
     </div>
