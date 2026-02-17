@@ -164,13 +164,11 @@ export function AdvancedRichTextEditor({
   const changeTextColor = (color: string) => {
     setCurrentTextColor(color);
     executeCommand("foreColor", color);
-    setShowColorPicker(null);
   };
 
   const changeBackgroundColor = (color: string) => {
     setCurrentBgColor(color);
     executeCommand("backColor", color);
-    setShowColorPicker(null);
   };
 
   const insertLink = () => {
@@ -281,7 +279,7 @@ export function AdvancedRichTextEditor({
   return (
     <div className={`flex flex-col h-full border rounded-lg overflow-hidden bg-white ${className}`}>
       {/* Premium Toolbar - Multi-row */}
-      <div className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+      <div className="editor-toolbar bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
         <TooltipProvider>
           {/* First Row: Font Controls */}
           <div className="flex items-center gap-2 p-3 border-b border-slate-200 flex-wrap">
@@ -811,7 +809,7 @@ export function AdvancedRichTextEditor({
         onInput={handleInput}
         onMouseUp={handleSelection}
         onKeyUp={handleSelection}
-        className="flex-1 overflow-y-auto p-8 focus:outline-none prose prose-sm max-w-none text-base"
+        className="editor flex-1 overflow-y-auto p-8 focus:outline-none prose prose-sm max-w-none text-base"
         style={{
           lineHeight: "1.8",
           fontSize: "16px",
@@ -927,6 +925,34 @@ export function AdvancedRichTextEditor({
           font-weight: 600;
           margin-top: 20px;
           margin-bottom: 10px;
+        }
+
+        /* Toolbar accessibility and contrast fixes */
+        .editor-toolbar button {
+          color: #475569; /* slate-600 */
+          transition: background-color 0.12s ease, color 0.12s ease;
+        }
+
+        .editor-toolbar button svg {
+          stroke: currentColor;
+          color: inherit;
+        }
+
+        .editor-toolbar button:hover {
+          background-color: #eef2f7 !important; /* light slate */
+          color: #0f172a !important; /* slate-900 */
+        }
+
+        .editor-toolbar .h-9.w-9.p-0 {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        /* Ensure popovers/tooltips appear above toolbar */
+        .editor-toolbar .radix-popover-content,
+        .editor-toolbar .radix-tooltip-content {
+          z-index: 60;
         }
       `}</style>
     </div>

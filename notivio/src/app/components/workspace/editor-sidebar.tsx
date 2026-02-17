@@ -35,6 +35,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { ColorPicker } from "./color-picker";
+import { DrawingCanvas } from "./drawing-canvas";
+import { ChartBuilder } from "./chart-builder";
+import { FlowchartBuilder } from "./flowchart-builder";
 import {
   Tooltip,
   TooltipContent,
@@ -343,65 +348,150 @@ export function EditorSidebar({
         {/* DIVIDER */}
         <Separator className={darkMode ? "bg-slate-800" : "bg-slate-200"} />
 
-        {/* INSERT ELEMENTS */}
+        {/* INSERT & ADVANCED CONTROLS */}
         <div>
           <div className={`text-xs font-semibold mb-2 px-2 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-            Insert Elements
+            Editor Controls
           </div>
-          <div className={`space-y-2 ${darkMode ? "bg-slate-800/50" : "bg-slate-100/50"} p-2 rounded-lg`}>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className={`w-full justify-start text-sm ${
-                      darkMode
-                        ? "bg-slate-700 border-slate-600 text-slate-50 hover:bg-slate-600"
-                        : ""
-                    }`}
-                  >
-                    <Zap className="h-4 w-4 mr-2 text-indigo-600" />
-                    <span className="flex-1 text-left">AI Concept</span>
-                    <Badge variant="outline" className="text-xs bg-indigo-100 text-indigo-700 border-indigo-300">
-                      AI
-                    </Badge>
+
+          <div className={`space-y-3 p-2 rounded-lg ${darkMode ? "bg-slate-800/50" : "bg-slate-100/50"}`}>
+            {/* Headings */}
+            <div className="grid grid-cols-3 gap-2">
+              <Button variant="ghost" size="sm" className="h-9 w-full justify-center text-sm" onClick={() => executeCommand("formatBlock", "<h1>")}>H1</Button>
+              <Button variant="ghost" size="sm" className="h-9 w-full justify-center text-sm" onClick={() => executeCommand("formatBlock", "<h2>")}>H2</Button>
+              <Button variant="ghost" size="sm" className="h-9 w-full justify-center text-sm" onClick={() => executeCommand("formatBlock", "<h3>")}>H3</Button>
+            </div>
+
+            {/* Lists & Align */}
+            <div className="grid grid-cols-3 gap-2">
+              <Button variant="ghost" size="sm" className="h-9" onClick={() => executeCommand("insertUnorderedList")}><List className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="sm" className="h-9" onClick={() => executeCommand("insertOrderedList")}><ListOrdered className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="sm" className="h-9" onClick={() => executeCommand("formatBlock", "<blockquote>")}><Quote className="h-4 w-4" /></Button>
+            </div>
+
+            <div className="grid grid-cols-4 gap-2">
+              <Button variant="ghost" size="sm" className="h-9" onClick={() => executeCommand("justifyLeft")}><AlignLeft className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="sm" className="h-9" onClick={() => executeCommand("justifyCenter")}><AlignCenter className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="sm" className="h-9" onClick={() => executeCommand("justifyRight")}><AlignRight className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="sm" className="h-9" onClick={() => executeCommand("justifyFull")}><AlignCenter className="h-4 w-4 rotate-90" /></Button>
+            </div>
+
+            {/* Color pickers */}
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={`flex-1 justify-start text-sm ${darkMode ? "bg-slate-700 border-slate-600 text-slate-50" : ""}`}>
+                    <div className="w-4 h-4 rounded mr-2" style={{ backgroundColor: textColor }} />
+                    Text Color
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                  Add an AI-powered concept explanation
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+                </PopoverTrigger>
+                <PopoverContent className="w-64">
+                  <ColorPicker color={textColor} onChange={(c) => { setTextColor(c); executeCommand("foreColor", c); }} label="Text Color" />
+                </PopoverContent>
+              </Popover>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className={`w-full justify-start text-sm ${
-                darkMode
-                  ? "bg-slate-700 border-slate-600 text-slate-50 hover:bg-slate-600"
-                  : ""
-              }`}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Code Block
-            </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={`flex-1 justify-start text-sm ${darkMode ? "bg-slate-700 border-slate-600 text-slate-50" : ""}`}>
+                    <div className="w-4 h-4 rounded mr-2" style={{ backgroundColor: "#ffffff" }} />
+                    Background
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64">
+                  <ColorPicker color={"#ffffff"} onChange={(c) => { executeCommand("backColor", c); }} label="Background Color" />
+                </PopoverContent>
+              </Popover>
+            </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className={`w-full justify-start text-sm ${
-                darkMode
-                  ? "bg-slate-700 border-slate-600 text-slate-50 hover:bg-slate-600"
-                  : ""
-              }`}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Image
-            </Button>
+            {/* Inserts */}
+            <div className="space-y-2">
+              <Button variant="outline" size="sm" className={`w-full justify-start text-sm ${darkMode ? "bg-slate-700 border-slate-600 text-slate-50" : ""}`} onClick={() => { const url = prompt('Enter URL:'); if (url) executeCommand('createLink', url); }}>
+                <Plus className="h-4 w-4 mr-2" /> Insert Link
+              </Button>
+
+              <Button variant="outline" size="sm" className={`w-full justify-start text-sm ${darkMode ? "bg-slate-700 border-slate-600 text-slate-50" : ""}`} onClick={() => { document.querySelector<HTMLInputElement>('input[type=file].sidebar-image')?.click(); }}>
+                <Plus className="h-4 w-4 mr-2" /> Insert Image
+              </Button>
+
+              <input type="file" accept="image/*" className="hidden sidebar-image" onChange={(e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    const res = ev.target?.result as string;
+                    document.execCommand('insertHTML', false, `<img src="${res}" style="max-width:100%; margin:8px 0;"/>`);
+                    onContentChange(document.querySelector('.editor')?.innerHTML || '');
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }} />
+
+              <Button variant="outline" size="sm" className={`w-full justify-start text-sm ${darkMode ? "bg-slate-700 border-slate-600 text-slate-50" : ""}`} onClick={() => { const rows = prompt('Rows'); const cols = prompt('Cols'); if (rows && cols) { let table = '<table style="width:100%; border-collapse:collapse; margin:8px 0;">'; for (let r=0;r<parseInt(rows);r++){ table += '<tr>'; for (let c=0;c<parseInt(cols);c++){ table += `<td style="border:1px solid #e2e8f0;padding:8px">${r===0? 'Header': '&nbsp;'}</td>` } table += '</tr>'; } table += '</table><br/>'; document.execCommand('insertHTML', false, table); onContentChange(document.querySelector('.editor')?.innerHTML || ''); } }}>
+                <Plus className="h-4 w-4 mr-2" /> Insert Table
+              </Button>
+            </div>
+
+            {/* Shapes & Advanced */}
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" className="h-9 w-9" onClick={() => document.execCommand('insertHTML', false, '<div style="width:80px;height:80px;background:#8a7559;display:inline-block;margin:6px"></div>')}><svg className="h-4 w-4" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /></svg></Button>
+              <Button variant="ghost" size="sm" className="h-9 w-9" onClick={() => document.execCommand('insertHTML', false, '<div style="width:80px;height:80px;background:#8a7559;border-radius:50%;display:inline-block;margin:6px"></div>')}><svg className="h-4 w-4" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /></svg></Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-9 w-9"><Plus className="h-4 w-4" /></Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader><DialogTitle>Advanced Inserts</DialogTitle></DialogHeader>
+                  <div className="space-y-2">
+                    <Button variant="outline" onClick={() => { document.execCommand('insertHTML', false, '<blockquote style="border-left:4px solid #e2e8f0;padding-left:12px">Blockquote</blockquote>'); onContentChange(document.querySelector('.editor')?.innerHTML || ''); }}>Insert Callout</Button>
+                    <Button variant="outline" onClick={() => { document.execCommand('insertHTML', false, '<pre><code>Code block</code></pre>'); onContentChange(document.querySelector('.editor')?.innerHTML || ''); }}>Insert Code</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Drawing / Charts / Flowcharts */}
+            <div className="flex flex-col gap-2">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start"> <Plus className="h-4 w-4 mr-2" />Drawing Canvas</Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader><DialogTitle>Drawing Canvas</DialogTitle></DialogHeader>
+                  <DrawingCanvas onSave={(d) => { document.execCommand('insertHTML', false, `<img src="${d}" style="max-width:100%"/>`); onContentChange(document.querySelector('.editor')?.innerHTML || ''); }} />
+                </DialogContent>
+              </Dialog>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start"> <Plus className="h-4 w-4 mr-2" />Chart Builder</Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader><DialogTitle>Chart Builder</DialogTitle></DialogHeader>
+                  <ChartBuilder onInsert={(h) => { document.execCommand('insertHTML', false, h); onContentChange(document.querySelector('.editor')?.innerHTML || ''); }} />
+                </DialogContent>
+              </Dialog>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full justify-start"> <Plus className="h-4 w-4 mr-2" />Flowchart Builder</Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader><DialogTitle>Flowchart Builder</DialogTitle></DialogHeader>
+                  <FlowchartBuilder onInsert={(h) => { document.execCommand('insertHTML', false, h); onContentChange(document.querySelector('.editor')?.innerHTML || ''); }} />
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Undo/Redo */}
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" className="h-9 w-9" onClick={() => executeCommand('undo')}><svg className="h-4 w-4" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.86 0 7 3.14 7 7 0 1.38-.38 2.67-1.04 3.77L19 18c.62-1.03 1-2.22 1-3.5 0-4.97-4.03-9-9-9z"/></svg></Button>
+              <Button variant="ghost" size="sm" className="h-9 w-9" onClick={() => executeCommand('redo')}><svg className="h-4 w-4" viewBox="0 0 24 24"><path d="M12 5v4l5-5-5-5v4C8.14 3 5 6.14 5 10c0 1.38.38 2.67 1.04 3.77L5 14c-.62-1.03-1-2.22-1-3.5 0-4.97 4.03-9 9-9z"/></svg></Button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+export default EditorSidebar;

@@ -4,6 +4,7 @@ import React, { useState, ReactNode } from "react";
 import { EditorTopBar } from "./editor-top-bar";
 import { EditorSidebar } from "./editor-sidebar";
 import { EditorCanvas } from "./editor-canvas";
+import { AdvancedRichTextEditor } from "./advanced-rich-text-editor";
 import { AIPanelContainer } from "./ai-panel-container";
 
 interface EditorLayoutProps {
@@ -56,7 +57,7 @@ export function EditorLayout({
       />
 
       {/* Main Content Area with Three-Panel Layout */}
-      <div className="flex flex-1 overflow-hidden min-h-0">
+      <div className="flex flex-1 overflow-hidden min-h-0 pt-16">
         {/* Left Sidebar */}
         <EditorSidebar
           content={content}
@@ -68,17 +69,16 @@ export function EditorLayout({
           darkMode={darkMode}
         />
 
-        {/* Center Canvas - Full remaining space */}
-        <EditorCanvas
-          content={content}
-          onContentChange={onContentChange}
-          onTextSelect={onTextSelect}
-          placeholder="Start writing your notes..."
-          selectedFormat={selectedFormat}
-          darkMode={darkMode}
-        >
-          {children}
-        </EditorCanvas>
+        {/* Center Canvas - Full remaining space (Advanced Editor) */}
+        <div className="flex-1 min-w-0">
+          <AdvancedRichTextEditor
+            content={content}
+            onChange={onContentChange}
+            onTextSelect={onTextSelect}
+            placeholder="Start writing your notes..."
+            className="h-full"
+          />
+        </div>
 
         {/* Right AI Panel */}
         <AIPanelContainer
