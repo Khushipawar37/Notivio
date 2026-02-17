@@ -227,11 +227,9 @@ export function AdvancedRichTextEditor({
       for (let i = 0; i < Number.parseInt(rows); i++) {
         tableHTML += "<tr>";
         for (let j = 0; j < Number.parseInt(cols); j++) {
-          tableHTML += `<td style="padding: 12px; border: 1px solid #d9c6b8; background: ${
-            i === 0 ? "#f5f0e8" : "#ffffff"
-          }; ${i === 0 ? "font-weight: bold;" : ""}">${
-            i === 0 ? `Header ${j + 1}` : "&nbsp;"
-          }</td>`;
+          tableHTML += `<td style="padding: 12px; border: 1px solid #d9c6b8; background: ${i === 0 ? "#f5f0e8" : "#ffffff"
+            }; ${i === 0 ? "font-weight: bold;" : ""}">${i === 0 ? `Header ${j + 1}` : "&nbsp;"
+            }</td>`;
         }
         tableHTML += "</tr>";
       }
