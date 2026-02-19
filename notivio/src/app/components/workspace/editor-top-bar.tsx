@@ -57,11 +57,10 @@ export function EditorTopBar({
 
   return (
     <div
-      className={`h-16 border-b flex items-center px-6 gap-4 sticky top-0 z-50 transition-all duration-150 ${
-        darkMode
+      className={`h-16 border-b flex items-center px-6 gap-4 sticky top-0 z-50 transition-all duration-150 ${darkMode
           ? "bg-slate-900 border-slate-800"
           : "bg-white border-slate-200"
-      }`}
+        }`}
     >
       {/* Left Section: Back Button & Title */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -71,11 +70,10 @@ export function EditorTopBar({
               <Button
                 variant="ghost"
                 size="sm"
-                className={`h-9 w-9 p-0 ${
-                  darkMode
+                className={`h-9 w-9 p-0 ${darkMode
                     ? "hover:bg-slate-800"
                     : "hover:bg-slate-100"
-                }`}
+                  }`}
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
@@ -94,11 +92,10 @@ export function EditorTopBar({
               onChange={(e) => setTitleInput(e.target.value)}
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
-              className={`text-lg font-semibold w-full max-w-md outline-none transition-colors ${
-                darkMode
+              className={`text-lg font-semibold w-full max-w-md outline-none transition-colors ${darkMode
                   ? "bg-slate-900 text-slate-50"
                   : "bg-white text-slate-900"
-              }`}
+                }`}
               placeholder="Untitled Note"
             />
           ) : (
@@ -107,9 +104,8 @@ export function EditorTopBar({
                 setIsEditingTitle(true);
                 setTitleInput(noteTitle);
               }}
-              className={`text-lg font-semibold max-w-md truncate text-left transition-colors hover:text-opacity-70 ${
-                darkMode ? "text-slate-50" : "text-slate-900"
-              }`}
+              className={`text-lg font-semibold max-w-md truncate text-left transition-colors hover:text-opacity-70 ${darkMode ? "text-slate-50" : "text-slate-900"
+                }`}
             >
               {noteTitle || "Untitled Note"}
             </button>
@@ -132,15 +128,14 @@ export function EditorTopBar({
                 variant="ghost"
                 size="sm"
                 onClick={onAIPanelToggle}
-                className={`h-9 px-3 ${
-                  aiPanelOpen
+                className={`h-9 px-3 ${aiPanelOpen
                     ? darkMode
                       ? "bg-indigo-900/30 text-indigo-400"
                       : "bg-indigo-100 text-indigo-700"
                     : darkMode
-                    ? "hover:bg-slate-800"
-                    : "hover:bg-slate-100"
-                }`}
+                      ? "hover:bg-slate-800"
+                      : "hover:bg-slate-100"
+                  }`}
               >
                 <BarChart3 className="h-4 w-4" />
               </Button>
@@ -154,11 +149,10 @@ export function EditorTopBar({
               <Button
                 variant="ghost"
                 size="sm"
-                className={`h-9 w-9 p-0 ${
-                  darkMode
+                className={`h-9 w-9 p-0 ${darkMode
                     ? "hover:bg-slate-800"
                     : "hover:bg-slate-100"
-                }`}
+                  }`}
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
