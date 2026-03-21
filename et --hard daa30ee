@@ -1,0 +1,75 @@
+[33m17ec324[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Few changes
+[33m02ed4ca[m Updated nav
+[33mc515a44[m Improved editor layout
+[33m8641489[m Added advanced formatting features
+[33m23ba48f[m Improved text editor
+[33me439fa3[m Merge branch 'fix-workspace'
+[33m399e69b[m[33m ([m[1;31morigin/fix-workspace[m[33m, [m[1;32mfix-workspace[m[33m)[m Created a workspace
+[33mdaa30ee[m Added notes enhancing features
+[33m0bd3a81[m Few changes
+[33m9cc4a6d[m Few changes
+[33m3ca87a3[m Few updations
+[33mcaff2e5[m Updated dashboard
+[33m1c52152[m Few changes
+[33m1c208ce[m Updated dashboard
+[33m815c314[m Few changes
+[33mc44bdc0[m Few changes
+[33mf62fc94[m Folder creation done
+[33mb1dd831[m Few changes
+[33mfceac6a[m Create folder option added
+[33m04fde38[m Removed unnecessary files
+[33m9782006[m Few modifications
+[33mf08050d[m Few changes
+[33m2f17fe8[m Create folder option added
+[33mea35223[m Added login-form
+[33ma277bef[m Formatted auth-provider
+[33m5d85f33[m auth-guard done
+[33me7f6121[m Added slider to profile
+[33m289aafc[m Added recent activity section
+[33m6838507[m Working on profile section
+[33m81e4c6e[m Added grids section
+[33mc7d6f15[m Notes sec formatted
+[33mdbe9018[m Edit note feature added
+[33m6e1a015[m Addition of notes can be done
+[33m87d3d13[m Integrating groq to improve notes quality
+[33m90cec12[m PDF Generation of notes done
+[33m1685d6e[m Working on dashboard
+[33m0daa905[m Video to notes feature ready
+[33m057f59a[m contact form works
+[33m2fbb716[m Working on canvas
+[33m2d524b2[m Working on notes sec
+[33ma8b67af[m Notes section ui ready
+[33m8d22758[m Added footer to notes section
+[33m2970da2[m Added footer to notes section
+[33me13cafe[m Update README.md
+[33m4ab0c28[m Few changes
+[33m546f0be[m Small updations
+[33m8fa9c56[m Larger videos can be proccessed now
+[33me8b9d35[m Global styling added
+[33m7c7ab85[m Added select component
+[33mb073a72[m Added canvas
+[33mdfb3f3a[m Added canvas
+[33mf60bfde[m Added charts
+[33m8b1ce85[m Added ai features panel
+[33mdad737e[m Created a text-editor
+[33mee5cd01[m Basic editor created
+[33m44494cb[m Convert page ready
+[33mc9281b4[m Notes generated successfully
+[33m0756e84[m Transcript fetching done using 3 methods
+[33m6ba98cb[m PDF's generated
+[33madb6a0d[m Notes gen works now
+[33mfc7113b[m Added constraints to note section
+[33m3808ccd[m Groq sdk works correctly
+[33m240577e[m Groq api works
+[33ma98eaa8[m Added questions and practice sets
+[33m62cdc74[m Improved prompt for all sections
+[33m9bc17c5[m Better structured notes
+[33md6c6c93[m Convert sec ui done
+[33m960c993[m Integrated groq
+[33m09113a8[m pdf's can be downloaded
+[33m99ff1f6[m PDF Generation done
+[33mf954ade[m Transcript fetching done
+[33m163fe3a[m Ai summary made
+[33mc6cd9e4[m Transcript and summary creation done
+[33mc39675c[m Added testing script
+[33m0297ef4[m Debugging transcript issues
