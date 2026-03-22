@@ -36,6 +36,12 @@ const SYSTEM_PROMPTS: Record<string, string> = {
     "Convert the content into an engaging narrative while keeping facts accurate.",
   exam_predictor:
     'Predict likely exam questions and return JSON array with fields: "question", "type", "difficulty", "model_answer".',
+  source_summary:
+    "Summarize this source for a student in 6-10 concise bullet points, focusing on core ideas and exam-relevant facts.",
+  source_tags:
+    'Return ONLY a JSON array of 5-10 short topic tags based on the content. Example: ["Mitosis","Cell Cycle"]',
+  compare_sources:
+    "Compare Source A and Source B. Return concise markdown with: overlaps, key differences, possible contradictions, and what to revise first.",
   chat:
     "You are StudySpace AI. Answer primarily using the student's notes context. Be concise, clear, and encouraging. Use markdown for readability.",
 };

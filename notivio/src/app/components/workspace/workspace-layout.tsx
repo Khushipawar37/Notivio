@@ -15,6 +15,7 @@ import { NotebookSidebar } from "./notebook-sidebar";
 import { TipTapEditor } from "./tiptap-editor";
 import { AIFeaturesPanel } from "./ai-features-panel";
 import { AIChatWidget } from "./ai-chat-widget";
+import { SourcesPanel } from "./sources-panel";
 import { NoteTemplates } from "./note-templates";
 import { exportToMarkdown, exportToPDF } from "../../lib/export-utils";
 import { useWorkspace } from "../../hooks/use-workspace";
@@ -310,14 +311,15 @@ export function WorkspaceLayout() {
                 }}
               />
             ) : (
-              <div className="h-full flex items-center justify-center px-6">
-                <div className="text-center">
-                  <h3 className="text-sm font-semibold text-[#6f5b43]">Sources Panel (Phase 2)</h3>
-                  <p className="mt-2 text-xs text-[#8e775e]">
-                    PDF viewer, audio transcripts, and citation linking will be added here next.
-                  </p>
-                </div>
-              </div>
+              <SourcesPanel
+                workspaceKey={activePage?.id || "global"}
+                onInsertCitation={(html) => {
+                  editorApiRef.current?.insertHTMLAtCursor(html);
+                }}
+                onInsertPlain={(text) => {
+                  editorApiRef.current?.insertTextAtCursor(text);
+                }}
+              />
             )}
           </div>
         </aside>
