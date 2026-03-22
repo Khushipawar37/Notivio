@@ -17,6 +17,7 @@ import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import Image from "@tiptap/extension-image";
+import { Extension } from "@tiptap/core";
 import { all, createLowlight } from "lowlight";
 import { Callout } from "./extensions/callout-extension";
 import { SlashCommandMenu, type SlashCommandItem } from "./slash-command";
@@ -64,20 +65,78 @@ interface TipTapEditorProps {
 }
 
 const HIGHLIGHT_COLORS = [
-  { name: "Yellow", color: "#fef08a", label: "Important" },
-  { name: "Green", color: "#bbf7d0", label: "Definition" },
-  { name: "Pink", color: "#fbcfe8", label: "Exam-likely" },
-  { name: "Blue", color: "#bfdbfe", label: "Reference" },
-  { name: "Orange", color: "#fed7aa", label: "Example" },
+  { name: "Amber", color: "#facc15", label: "Important" },
+  { name: "Mint", color: "#86efac", label: "Definition" },
+  { name: "Rose", color: "#f9a8d4", label: "Exam-Likely" },
+  { name: "Sky", color: "#7dd3fc", label: "Reference" },
+  { name: "Peach", color: "#fdba74", label: "Example" },
+  { name: "Lavender", color: "#c4b5fd", label: "Formula" },
 ];
 
 const TEXT_COLORS = [
-  "#000000", "#374151", "#991b1b", "#9a3412", "#854d0e",
-  "#166534", "#1e40af", "#5b21b6", "#9d174d", "#0f766e",
+  "#1f2937", "#6f5b43", "#b91c1c", "#c2410c", "#92400e",
+  "#166534", "#0f766e", "#1d4ed8", "#7c3aed", "#be185d",
+  "#0f172a", "#334155", "#525252", "#78350f", "#14532d",
 ];
 
-const FONT_SIZES = ["12px", "14px", "16px", "18px", "22px", "28px"];
+const FONT_SIZE_OPTIONS = [
+  { label: "12", value: "12px" },
+  { label: "14", value: "14px" },
+  { label: "16", value: "16px" },
+  { label: "18", value: "18px" },
+  { label: "20", value: "20px" },
+  { label: "24", value: "24px" },
+  { label: "28", value: "28px" },
+  { label: "32", value: "32px" },
+  { label: "36", value: "36px" },
+];
+const FONT_FAMILIES = [
+  { label: "Default", value: "" },
+  { label: "Classic Serif", value: "Georgia, Cambria, 'Times New Roman', serif" },
+  { label: "Modern Sans", value: "Arial, Helvetica, sans-serif" },
+  { label: "Academic", value: "'Trebuchet MS', Verdana, sans-serif" },
+  { label: "Notebook", value: "'Segoe UI', Tahoma, sans-serif" },
+  { label: "Code", value: "'Courier New', monospace" },
+];
 const SYMBOLS = ["•", "→", "⇒", "✓", "★", "∞", "±", "≠", "≤", "≥", "∑", "√", "π", "Ω"];
+
+const TextStyleAttributes = Extension.create({
+  name: "textStyleAttributes",
+  addGlobalAttributes() {
+    const buildStyle = (attributes: Record<string, string | null | undefined>) => {
+      const chunks: string[] = [];
+      if (attributes.fontSize) chunks.push(`font-size: ${attributes.fontSize}`);
+      if (attributes.fontFamily) chunks.push(`font-family: ${attributes.fontFamily}`);
+      return chunks.join("; ");
+    };
+
+    return [
+      {
+        types: ["textStyle"],
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: (element) => element.style.fontSize || null,
+            renderHTML: (attributes) => {
+              const style = buildStyle(attributes as Record<string, string | null | undefined>);
+              if (!style) return {};
+              return { style };
+            },
+          },
+          fontFamily: {
+            default: null,
+            parseHTML: (element) => element.style.fontFamily || null,
+            renderHTML: (attributes) => {
+              const style = buildStyle(attributes as Record<string, string | null | undefined>);
+              if (!style) return {};
+              return { style };
+            },
+          },
+        },
+      },
+    ];
+  },
+});
 
 export function TipTapEditor({
   content,
@@ -114,6 +173,7 @@ export function TipTapEditor({
       Placeholder.configure({ placeholder }),
       CodeBlockLowlight.configure({ lowlight }),
       TextStyle,
+      TextStyleAttributes,
       Color,
       Image.configure({ inline: false, allowBase64: true }),
       Callout,
@@ -273,7 +333,7 @@ export function TipTapEditor({
   return (
     <div className="tiptap-editor-wrapper flex flex-col h-full">
       {/* Toolbar */}
-      <div className="tiptap-toolbar flex items-center gap-0.5 px-3 py-2 bg-[#f8f1e7] border-b border-[#e4d7c8] flex-wrap overflow-x-auto">
+      <div className="tiptap-toolbar flex items-center gap-0.5 gap-y-1 px-3 py-2 bg-[#f8f1e7] border-b border-[#e4d7c8] flex-wrap">
         <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} title="Undo">
           <Undo className="w-4 h-4" />
         </ToolbarBtn>
@@ -300,6 +360,26 @@ export function TipTapEditor({
         <ToolbarSep />
 
         <select
+          value={editor.getAttributes("textStyle").fontFamily || ""}
+          onChange={(event) => {
+            const fontFamily = event.target.value;
+            if (!fontFamily) {
+              editor.chain().focus().setMark("textStyle", { fontFamily: null }).run();
+            } else {
+              editor.chain().focus().setMark("textStyle", { fontFamily }).run();
+            }
+          }}
+          className="h-8 px-2 rounded-md border border-[#d8c6b2] bg-[#fff8ee] text-[#6f5b43] text-xs outline-none"
+          title="Font Style"
+        >
+          {FONT_FAMILIES.map((font) => (
+            <option key={font.label} value={font.value}>
+              {font.label}
+            </option>
+          ))}
+        </select>
+
+        <select
           value={editor.getAttributes("textStyle").fontSize || ""}
           onChange={(event) => {
             const size = event.target.value;
@@ -312,10 +392,10 @@ export function TipTapEditor({
           className="h-8 px-2 rounded-md border border-[#d8c6b2] bg-[#fff8ee] text-[#6f5b43] text-xs outline-none"
           title="Font Size"
         >
-          <option value="">Default</option>
-          {FONT_SIZES.map((size) => (
-            <option key={size} value={size}>
-              {size}
+          <option value="">Auto</option>
+          {FONT_SIZE_OPTIONS.map((size) => (
+            <option key={size.label} value={size.value}>
+              {size.label}
             </option>
           ))}
         </select>
