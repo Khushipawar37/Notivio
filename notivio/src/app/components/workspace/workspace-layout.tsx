@@ -14,8 +14,8 @@ import {
 import { NotebookSidebar } from "./notebook-sidebar";
 import { TipTapEditor } from "./tiptap-editor";
 import { AIFeaturesPanel } from "./ai-features-panel";
+import { AIChatWidget } from "./ai-chat-widget";
 import { NoteTemplates } from "./note-templates";
-import { PomodoroTimer } from "./pomodoro-timer";
 import { exportToMarkdown, exportToPDF } from "../../lib/export-utils";
 import { useWorkspace } from "../../hooks/use-workspace";
 
@@ -58,7 +58,6 @@ export function WorkspaceLayout() {
     updatePageContent,
     updatePageTags,
     saveFlashcards,
-    logStudySession,
   } = useWorkspace();
 
   const pageTagsValue = useMemo(
@@ -331,11 +330,7 @@ export function WorkspaceLayout() {
         />
       )}
 
-      <PomodoroTimer
-        onSessionComplete={(type, duration) =>
-          void logStudySession(type, duration, activePage?.id)
-        }
-      />
+      <AIChatWidget content={activePage?.content || ""} />
 
       {showExportMenu && (
         <div

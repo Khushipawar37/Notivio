@@ -1,11 +1,22 @@
 ﻿"use client";
 
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useCallback, useState } from "react";
 import {
-  Sparkles, FileText, Brain, Target, Zap, Lightbulb,
-  BookOpen, MessageSquare, GraduationCap,
-  Loader2, ChevronDown, ChevronUp, Send,
-  Copy, Check, Puzzle, ClipboardCheck,
+  Sparkles,
+  FileText,
+  Brain,
+  Target,
+  Zap,
+  Lightbulb,
+  BookOpen,
+  GraduationCap,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Check,
+  Puzzle,
+  ClipboardCheck,
 } from "lucide-react";
 
 interface AIFeaturesPanelProps {
@@ -13,11 +24,6 @@ interface AIFeaturesPanelProps {
   selectedText: string;
   onSaveFlashcards?: (cards: Flashcard[]) => void;
   onInsertToNotebook?: (text: string) => void;
-}
-
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
 }
 
 interface Flashcard {
@@ -46,8 +52,16 @@ interface FeynmanEvalResult {
   guidance: string;
 }
 
-type FeatureId = "summarize" | "explain" | "flashcards" | "quiz" | "enhance" |
-  "gap_fill" | "feynman" | "story" | "exam_predict" | "chat";
+type FeatureId =
+  | "summarize"
+  | "explain"
+  | "flashcards"
+  | "quiz"
+  | "enhance"
+  | "gap_fill"
+  | "feynman"
+  | "story"
+  | "exam_predict";
 
 async function callAI(feature: string, content: string, extra: Record<string, string> = {}) {
   const res = await fetch("/api/ai-study", {
@@ -58,34 +72,6 @@ async function callAI(feature: string, content: string, extra: Record<string, st
   if (!res.ok) throw new Error("AI request failed");
   const data = await res.json();
   return data.result;
-}
-
-async function streamChat(
-  content: string,
-  userMessage: string,
-  onChunk: (chunk: string) => void
-) {
-  const res = await fetch("/api/ai-study", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      feature: "chat",
-      content,
-      userMessage,
-      stream: true,
-    }),
-  });
-  if (!res.ok || !res.body) throw new Error("AI chat stream failed");
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const chunk = decoder.decode(value, { stream: true });
-    if (chunk) onChunk(chunk);
-  }
 }
 
 function parseJSON(text: string) {
@@ -100,13 +86,17 @@ function parseJSON(text: string) {
   }
 }
 
-export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onInsertToNotebook }: AIFeaturesPanelProps) {
+export function AIFeaturesPanel({
+  content,
+  selectedText,
+  onSaveFlashcards,
+  onInsertToNotebook,
+}: AIFeaturesPanelProps) {
   const [activeFeature, setActiveFeature] = useState<FeatureId | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string>("");
   const [copied, setCopied] = useState(false);
 
-  // Feature-specific state
   const [summaryMode, setSummaryMode] = useState<"key_points" | "narrative">("key_points");
   const [explainLevel, setExplainLevel] = useState<"simple" | "standard" | "deep">("standard");
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -123,13 +113,6 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
   const [feynmanConcept, setFeynmanConcept] = useState<{ concept: string; prompt: string } | null>(null);
   const [feynmanExplanation, setFeynmanExplanation] = useState("");
   const [feynmanEval, setFeynmanEval] = useState<FeynmanEvalResult | null>(null);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [chatInput, setChatInput] = useState("");
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
 
   const textToUse = selectedText || content;
   const hasContent = textToUse.trim().length > 0;
@@ -140,10 +123,13 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
     setTimeout(() => setCopied(false), 2000);
   }, []);
 
-  const pushToNotebook = useCallback((heading: string, body: string) => {
-    if (!onInsertToNotebook || !body.trim()) return;
-    onInsertToNotebook(`\n\n${heading}\n${body}\n`);
-  }, [onInsertToNotebook]);
+  const pushToNotebook = useCallback(
+    (heading: string, body: string) => {
+      if (!onInsertToNotebook || !body.trim()) return;
+      onInsertToNotebook(`\n\n${heading}\n${body}\n`);
+    },
+    [onInsertToNotebook]
+  );
 
   const resetFeature = () => {
     setResult("");
@@ -161,8 +147,6 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
     setFeynmanEval(null);
   };
 
-  // === Feature handlers ===
-
   const handleSummarize = async () => {
     if (!hasContent) return;
     setLoading(true);
@@ -171,7 +155,9 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       const res = await callAI(`summarize_${summaryMode}`, textToUse);
       setResult(res);
       pushToNotebook("Summary", res);
-    } catch { setResult("Error generating summary. Please try again."); }
+    } catch {
+      setResult("Error generating summary. Please try again.");
+    }
     setLoading(false);
   };
 
@@ -183,7 +169,9 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       const res = await callAI(`explain_${explainLevel}`, textToUse);
       setResult(res);
       pushToNotebook("Explanation", res);
-    } catch { setResult("Error generating explanation. Please try again."); }
+    } catch {
+      setResult("Error generating explanation. Please try again.");
+    }
     setLoading(false);
   };
 
@@ -197,13 +185,14 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       if (cards && Array.isArray(cards)) {
         setFlashcards(cards);
         onSaveFlashcards?.(cards);
-        const asText = cards
-          .map((card, index) => `${index + 1}. Q: ${card.question}\nA: ${card.answer}`)
-          .join("\n\n");
+        const asText = cards.map((card, index) => `${index + 1}. Q: ${card.question}\nA: ${card.answer}`).join("\n\n");
         pushToNotebook("Flashcards", asText);
+      } else {
+        setResult("Failed to parse flashcards. Raw response:\n" + res);
       }
-      else setResult("Failed to parse flashcards. Raw response:\n" + res);
-    } catch { setResult("Error generating flashcards."); }
+    } catch {
+      setResult("Error generating flashcards.");
+    }
     setLoading(false);
   };
 
@@ -217,20 +206,29 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       if (parsed && Array.isArray(parsed)) {
         if (quizType === "mcq") {
           setMcqQuestions(parsed);
-          const asText = parsed.map((q: MCQQuestion, i: number) => `${i + 1}. ${q.question}\nA) ${q.options[0]}\nB) ${q.options[1]}\nC) ${q.options[2]}\nD) ${q.options[3]}\nAnswer: ${String.fromCharCode(65 + q.correct)}\nWhy: ${q.explanation}`).join("\n\n");
+          const asText = parsed
+            .map(
+              (q: MCQQuestion, i: number) =>
+                `${i + 1}. ${q.question}\nA) ${q.options[0]}\nB) ${q.options[1]}\nC) ${q.options[2]}\nD) ${q.options[3]}\nAnswer: ${String.fromCharCode(65 + q.correct)}\nWhy: ${q.explanation}`
+            )
+            .join("\n\n");
           pushToNotebook("Quiz (MCQ)", asText);
-        }
-        else if (quizType === "truefalse") {
+        } else if (quizType === "truefalse") {
           setTfQuestions(parsed);
-          const asText = parsed.map((q: TFQuestion, i: number) => `${i + 1}. ${q.statement}\nAnswer: ${q.answer ? "True" : "False"}\nWhy: ${q.explanation}`).join("\n\n");
+          const asText = parsed
+            .map((q: TFQuestion, i: number) => `${i + 1}. ${q.statement}\nAnswer: ${q.answer ? "True" : "False"}\nWhy: ${q.explanation}`)
+            .join("\n\n");
           pushToNotebook("Quiz (True/False)", asText);
-        }
-        else {
+        } else {
           setResult(res);
           pushToNotebook("Quiz (Short Answer)", res);
         }
-      } else { setResult("Failed to parse quiz. Raw:\n" + res); }
-    } catch { setResult("Error generating quiz."); }
+      } else {
+        setResult("Failed to parse quiz. Raw:\n" + res);
+      }
+    } catch {
+      setResult("Error generating quiz.");
+    }
     setLoading(false);
   };
 
@@ -242,7 +240,9 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       const res = await callAI("enhance", textToUse);
       setResult(res);
       pushToNotebook("Enhanced Text", res);
-    } catch { setResult("Error enhancing text."); }
+    } catch {
+      setResult("Error enhancing text.");
+    }
     setLoading(false);
   };
 
@@ -257,9 +257,12 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
         setGapFillResult(parsed);
         const asText = `${parsed.text_with_blanks}\n\nAnswers: ${parsed.answers.join(", ")}`;
         pushToNotebook("Gap Fill Exercise", asText);
+      } else {
+        setResult(res);
       }
-      else setResult(res);
-    } catch { setResult("Error generating gap fill."); }
+    } catch {
+      setResult("Error generating gap fill.");
+    }
     setLoading(false);
   };
 
@@ -272,7 +275,9 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       const parsed = parseJSON(res);
       if (parsed) setFeynmanConcept(parsed);
       else setResult(res);
-    } catch { setResult("Error starting Feynman test."); }
+    } catch {
+      setResult("Error starting Feynman test.");
+    }
     setLoading(false);
   };
 
@@ -286,9 +291,12 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
         setFeynmanEval(parsed);
         const asText = `Score: ${parsed.score}/10\nCorrect: ${(parsed.correct_points || []).join("; ")}\nVague: ${(parsed.vague_points || []).join("; ")}\nMissing: ${(parsed.missing_points || []).join("; ")}\nGuidance: ${parsed.guidance || ""}`;
         pushToNotebook("Feynman Feedback", asText);
+      } else {
+        setResult(res);
       }
-      else setResult(res);
-    } catch { setResult("Error evaluating explanation."); }
+    } catch {
+      setResult("Error evaluating explanation.");
+    }
     setLoading(false);
   };
 
@@ -300,7 +308,9 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       const res = await callAI("story_mode", textToUse);
       setResult(res);
       pushToNotebook("Story Mode", res);
-    } catch { setResult("Error generating story."); }
+    } catch {
+      setResult("Error generating story.");
+    }
     setLoading(false);
   };
 
@@ -312,41 +322,8 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       const res = await callAI("exam_predictor", textToUse);
       setResult(res);
       pushToNotebook("Predicted Exam Questions", res);
-    } catch { setResult("Error predicting exam questions."); }
-    setLoading(false);
-  };
-
-  const handleChat = async () => {
-    if (!chatInput.trim()) return;
-    const userMsg = chatInput;
-    setChatInput("");
-    setChatMessages((prev) => [...prev, { role: "user", content: userMsg }]);
-    setLoading(true);
-    try {
-      setChatMessages((prev) => [...prev, { role: "assistant", content: "" }]);
-      await streamChat(content, userMsg, (chunk) => {
-        setChatMessages((prev) => {
-          const next = [...prev];
-          const last = next[next.length - 1];
-          if (last?.role === "assistant") {
-            next[next.length - 1] = { ...last, content: `${last.content}${chunk}` };
-          }
-          return next;
-        });
-      });
     } catch {
-      setChatMessages((prev) => {
-        const next = [...prev];
-        const last = next[next.length - 1];
-        if (last?.role === "assistant" && !last.content) {
-          next[next.length - 1] = {
-            role: "assistant",
-            content: "Sorry, I encountered an error. Please try again.",
-          };
-          return next;
-        }
-        return [...next, { role: "assistant", content: "Sorry, I encountered an error. Please try again." }];
-      });
+      setResult("Error predicting exam questions.");
     }
     setLoading(false);
   };
@@ -363,13 +340,12 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
     { id: "exam_predict" as FeatureId, label: "Exam Predictor", icon: ClipboardCheck, desc: "Predict likely exam questions" },
   ];
 
-  const renderFeatureContent = () => {
-    if (!activeFeature) return null;
+  const renderFeatureContent = (featureId: FeatureId) => {
+    if (activeFeature !== featureId) return null;
 
-    // Summarize
-    if (activeFeature === "summarize") {
+    if (featureId === "summarize") {
       return (
-        <div className="space-y-3">
+        <div className="space-y-3 p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
           <div className="flex gap-1.5">
             <button onClick={() => setSummaryMode("key_points")} className={`flex-1 px-3 py-1.5 text-xs rounded-lg transition-colors ${summaryMode === "key_points" ? "bg-[#e7d6c2] text-[#6f5b43] border border-[#cfb899]" : "text-[#8a7559] border border-[#d8c6b2] hover:border-[#c9b39a]"}`}>Key Points</button>
             <button onClick={() => setSummaryMode("narrative")} className={`flex-1 px-3 py-1.5 text-xs rounded-lg transition-colors ${summaryMode === "narrative" ? "bg-[#e7d6c2] text-[#6f5b43] border border-[#cfb899]" : "text-[#8a7559] border border-[#d8c6b2] hover:border-[#c9b39a]"}`}>Narrative</button>
@@ -382,17 +358,12 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       );
     }
 
-    // Explain
-    if (activeFeature === "explain") {
+    if (featureId === "explain") {
       return (
-        <div className="space-y-3">
+        <div className="space-y-3 p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
           <p className="text-xs text-[#8a7559]">Select text in editor first, or uses full content</p>
           <div className="flex gap-1.5">
-            {[
-              { k: "simple", l: "Like I'm 12" },
-              { k: "standard", l: "Standard" },
-              { k: "deep", l: "Deep Dive" },
-            ].map((lv) => (
+            {[{ k: "simple", l: "Like I'm 12" }, { k: "standard", l: "Standard" }, { k: "deep", l: "Deep Dive" }].map((lv) => (
               <button key={lv.k} onClick={() => setExplainLevel(lv.k as typeof explainLevel)} className={`flex-1 px-2 py-1.5 text-xs rounded-lg transition-colors ${explainLevel === lv.k ? "bg-[#e7d6c2] text-[#6f5b43] border border-[#cfb899]" : "text-[#8a7559] border border-[#d8c6b2] hover:border-[#c9b39a]"}`}>
                 {lv.l}
               </button>
@@ -406,21 +377,16 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       );
     }
 
-    // Flashcards
-    if (activeFeature === "flashcards") {
+    if (featureId === "flashcards") {
       return (
-        <div className="space-y-3">
+        <div className="space-y-3 p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
           <button onClick={handleFlashcards} disabled={loading || !hasContent} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />} Generate Flashcards
           </button>
           {flashcards.length > 0 && (
             <div className="space-y-2">
               {flashcards.map((card, i) => (
-                <div key={i} onClick={() => {
-                  const next = new Set(flippedCards);
-                  if (next.has(i)) next.delete(i); else next.add(i);
-                  setFlippedCards(next);
-                }} className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8] cursor-pointer hover:bg-[#e8d9c5] transition-colors">
+                <div key={i} onClick={() => { const next = new Set(flippedCards); if (next.has(i)) next.delete(i); else next.add(i); setFlippedCards(next); }} className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8] cursor-pointer hover:bg-[#e8d9c5] transition-colors">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] font-medium text-[#6f5b43] uppercase tracking-wider">{flippedCards.has(i) ? "Answer" : "Question"}</span>
                     <span className="text-[10px] text-[#9c8871]">tap to flip</span>
@@ -435,16 +401,11 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       );
     }
 
-    // Quiz
-    if (activeFeature === "quiz") {
+    if (featureId === "quiz") {
       return (
-        <div className="space-y-3">
+        <div className="space-y-3 p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
           <div className="flex gap-1.5">
-            {[
-              { k: "mcq", l: "MCQ" },
-              { k: "truefalse", l: "True/False" },
-              { k: "short", l: "Short Ans" },
-            ].map((t) => (
+            {[{ k: "mcq", l: "MCQ" }, { k: "truefalse", l: "True/False" }, { k: "short", l: "Short Ans" }].map((t) => (
               <button key={t.k} onClick={() => setQuizType(t.k as typeof quizType)} className={`flex-1 px-2 py-1.5 text-xs rounded-lg transition-colors ${quizType === t.k ? "bg-[#e7d6c2] text-[#6f5b43] border border-[#cfb899]" : "text-[#8a7559] border border-[#d8c6b2] hover:border-[#c9b39a]"}`}>
                 {t.l}
               </button>
@@ -458,8 +419,6 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
           <button onClick={handleQuiz} disabled={loading || !hasContent} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Target className="w-4 h-4" />} Generate Quiz
           </button>
-
-          {/* MCQ rendering */}
           {mcqQuestions.length > 0 && (
             <div className="space-y-3">
               {mcqQuestions.map((q, qi) => (
@@ -467,19 +426,7 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
                   <p className="text-sm text-[#6f5b43] mb-2 font-medium">{qi + 1}. {q.question}</p>
                   <div className="space-y-1.5">
                     {q.options.map((opt, oi) => (
-                      <button key={oi} onClick={() => !quizSubmitted && setQuizAnswers((p) => ({ ...p, [qi]: oi }))}
-                        className={`w-full text-left px-3 py-1.5 rounded text-xs transition-colors ${
-                          quizSubmitted
-                            ? oi === q.correct
-                              ? "bg-[#e7d6c2] text-[#6f5b43] border border-[#cfb899]"
-                              : quizAnswers[qi] === oi
-                              ? "bg-red-500/20 text-red-300 border border-red-500/30"
-                              : "border border-[#e4d7c8] text-[#8a7559]"
-                            : quizAnswers[qi] === oi
-                            ? "bg-[#e7d6c2] text-[#6f5b43] border border-[#cfb899]"
-                            : "border border-[#d8c6b2] text-[#8a7559] hover:border-[#c9b39a]"
-                        }`}
-                      >
+                      <button key={oi} onClick={() => !quizSubmitted && setQuizAnswers((p) => ({ ...p, [qi]: oi }))} className={`w-full text-left px-3 py-1.5 rounded text-xs transition-colors ${quizSubmitted ? oi === q.correct ? "bg-[#e7d6c2] text-[#6f5b43] border border-[#cfb899]" : quizAnswers[qi] === oi ? "bg-red-500/20 text-red-300 border border-red-500/30" : "border border-[#e4d7c8] text-[#8a7559]" : quizAnswers[qi] === oi ? "bg-[#e7d6c2] text-[#6f5b43] border border-[#cfb899]" : "border border-[#d8c6b2] text-[#8a7559] hover:border-[#c9b39a]"}`}>
                         {String.fromCharCode(65 + oi)}. {opt}
                       </button>
                     ))}
@@ -487,20 +434,8 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
                   {quizSubmitted && <p className="text-xs text-[#8a7559] mt-2 italic">{q.explanation}</p>}
                 </div>
               ))}
-              {!quizSubmitted && (
-                <button onClick={() => setQuizSubmitted(true)} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors">
-                  Submit Answers
-                </button>
-              )}
-              {quizSubmitted && (
-                <div className="text-center p-3 rounded-lg bg-[#f2e6d8] border border-[#d8c6b2]">
-                  <p className="text-sm text-[#7b664d]">Score: {mcqQuestions.filter((q, i) => quizAnswers[i] === q.correct).length}/{mcqQuestions.length}</p>
-                </div>
-              )}
             </div>
           )}
-
-          {/* TF rendering */}
           {tfQuestions.length > 0 && (
             <div className="space-y-3">
               {tfQuestions.map((q, qi) => (
@@ -508,19 +443,7 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
                   <p className="text-sm text-[#6f5b43] mb-2">{qi + 1}. {q.statement}</p>
                   <div className="flex gap-2">
                     {[true, false].map((val) => (
-                      <button key={String(val)} onClick={() => !quizSubmitted && setQuizAnswers((p) => ({ ...p, [qi]: val }))}
-                        className={`flex-1 px-3 py-1.5 rounded text-xs transition-colors ${
-                          quizSubmitted
-                            ? val === q.answer
-                              ? "bg-[#e7d6c2] text-[#6f5b43] border border-[#cfb899]"
-                              : quizAnswers[qi] === val
-                              ? "bg-red-500/20 text-red-300 border border-red-500/30"
-                              : "border border-[#e4d7c8] text-[#8a7559]"
-                            : quizAnswers[qi] === val
-                            ? "bg-[#e7d6c2] text-[#6f5b43] border border-[#cfb899]"
-                            : "border border-[#d8c6b2] text-[#8a7559] hover:border-[#c9b39a]"
-                        }`}
-                      >
+                      <button key={String(val)} onClick={() => !quizSubmitted && setQuizAnswers((p) => ({ ...p, [qi]: val }))} className={`flex-1 px-3 py-1.5 rounded text-xs transition-colors ${quizSubmitted ? val === q.answer ? "bg-[#e7d6c2] text-[#6f5b43] border border-[#cfb899]" : quizAnswers[qi] === val ? "bg-red-500/20 text-red-300 border border-red-500/30" : "border border-[#e4d7c8] text-[#8a7559]" : quizAnswers[qi] === val ? "bg-[#e7d6c2] text-[#6f5b43] border border-[#cfb899]" : "border border-[#d8c6b2] text-[#8a7559] hover:border-[#c9b39a]"}`}>
                         {val ? "True" : "False"}
                       </button>
                     ))}
@@ -528,20 +451,19 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
                   {quizSubmitted && <p className="text-xs text-[#8a7559] mt-2 italic">{q.explanation}</p>}
                 </div>
               ))}
-              {!quizSubmitted && (
-                <button onClick={() => setQuizSubmitted(true)} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium">Submit</button>
-              )}
             </div>
+          )}
+          {!quizSubmitted && (mcqQuestions.length > 0 || tfQuestions.length > 0) && (
+            <button onClick={() => setQuizSubmitted(true)} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium">Submit</button>
           )}
           {result && <ResultBox text={result} onCopy={() => handleCopy(result)} copied={copied} />}
         </div>
       );
     }
 
-    // Enhance
-    if (activeFeature === "enhance") {
+    if (featureId === "enhance") {
       return (
-        <div className="space-y-3">
+        <div className="space-y-3 p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
           <p className="text-xs text-[#8a7559]">Improves clarity, flow, and academic quality</p>
           <button onClick={handleEnhance} disabled={loading || !hasContent} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />} Enhance Text
@@ -551,10 +473,9 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       );
     }
 
-    // Gap Fill
-    if (activeFeature === "gap_fill") {
+    if (featureId === "gap_fill") {
       return (
-        <div className="space-y-3">
+        <div className="space-y-3 p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
           <button onClick={handleGapFill} disabled={loading || !hasContent} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Puzzle className="w-4 h-4" />} Generate Gap Fill
           </button>
@@ -567,35 +488,26 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
                 {gapFillResult.answers.map((_, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <span className="text-xs text-[#8a7559] w-8">#{i + 1}</span>
-                    <input
-                      type="text"
-                      value={gapFillUserAnswers[i] || ""}
-                      onChange={(e) => setGapFillUserAnswers((p) => ({ ...p, [i]: e.target.value }))}
-                      className="flex-1 px-2 py-1 bg-[#f2e6d8] border border-[#d8c6b2] rounded text-sm text-[#6f5b43] outline-none focus:border-[#a68b5b]"
-                      placeholder="Your answer..."
-                      disabled={gapFillChecked}
-                    />
+                    <input type="text" value={gapFillUserAnswers[i] || ""} onChange={(e) => setGapFillUserAnswers((p) => ({ ...p, [i]: e.target.value }))} className="flex-1 px-2 py-1 bg-[#f2e6d8] border border-[#d8c6b2] rounded text-sm text-[#6f5b43] outline-none focus:border-[#a68b5b]" placeholder="Your answer..." disabled={gapFillChecked} />
                     {gapFillChecked && (
                       <span className={`text-xs ${gapFillUserAnswers[i]?.toLowerCase().trim() === gapFillResult.answers[i].toLowerCase().trim() ? "text-emerald-400" : "text-red-400"}`}>
-                        {gapFillUserAnswers[i]?.toLowerCase().trim() === gapFillResult.answers[i].toLowerCase().trim() ? "âœ“" : gapFillResult.answers[i]}
+                        {gapFillUserAnswers[i]?.toLowerCase().trim() === gapFillResult.answers[i].toLowerCase().trim() ? "✓" : gapFillResult.answers[i]}
                       </span>
                     )}
                   </div>
                 ))}
               </div>
-              {!gapFillChecked && (
-                <button onClick={() => setGapFillChecked(true)} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium">Check Answers</button>
-              )}
+              {!gapFillChecked && <button onClick={() => setGapFillChecked(true)} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium">Check Answers</button>}
             </div>
           )}
+          {result && <ResultBox text={result} onCopy={() => handleCopy(result)} copied={copied} />}
         </div>
       );
     }
 
-    // Feynman
-    if (activeFeature === "feynman") {
+    if (featureId === "feynman") {
       return (
-        <div className="space-y-3">
+        <div className="space-y-3 p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
           {!feynmanConcept && (
             <button onClick={handleFeynmanStart} disabled={loading || !hasContent} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GraduationCap className="w-4 h-4" />} Start Feynman Test
@@ -608,14 +520,9 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
                 <p className="text-sm text-[#6f5b43] font-medium">{feynmanConcept.concept}</p>
                 <p className="text-xs text-[#8a7559] mt-1">{feynmanConcept.prompt}</p>
               </div>
-              <textarea
-                value={feynmanExplanation}
-                onChange={(e) => setFeynmanExplanation(e.target.value)}
-                placeholder="Explain in your own words..."
-                className="w-full h-32 px-3 py-2 bg-[#f2e6d8] border border-[#d8c6b2] rounded-lg text-sm text-[#6f5b43] outline-none focus:border-[#a68b5b] resize-none"
-              />
+              <textarea value={feynmanExplanation} onChange={(e) => setFeynmanExplanation(e.target.value)} placeholder="Explain in your own words..." className="w-full h-32 px-3 py-2 bg-[#f2e6d8] border border-[#d8c6b2] rounded-lg text-sm text-[#6f5b43] outline-none focus:border-[#a68b5b] resize-none" />
               <button onClick={handleFeynmanSubmit} disabled={loading || !feynmanExplanation.trim()} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Submit Explanation
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GraduationCap className="w-4 h-4" />} Submit Explanation
               </button>
             </div>
           )}
@@ -625,42 +532,16 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
                 <span className="text-sm text-[#8a7559]">Score</span>
                 <span className="text-lg font-bold text-[#6f5b43]">{feynmanEval.score}/10</span>
               </div>
-              {feynmanEval.correct_points?.length > 0 && (
-                <div className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8]">
-                  <div className="text-[10px] font-medium text-[#6f5b43] uppercase tracking-wider mb-1">Correct</div>
-                  {feynmanEval.correct_points.map((p, i) => <p key={i} className="text-xs text-[#8a7559]">â€¢ {p}</p>)}
-                </div>
-              )}
-              {feynmanEval.vague_points?.length > 0 && (
-                <div className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8]">
-                  <div className="text-[10px] font-medium text-[#6f5b43] uppercase tracking-wider mb-1">Vague</div>
-                  {feynmanEval.vague_points.map((p, i) => <p key={i} className="text-xs text-[#8a7559]">â€¢ {p}</p>)}
-                </div>
-              )}
-              {feynmanEval.missing_points?.length > 0 && (
-                <div className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8]">
-                  <div className="text-[10px] font-medium text-red-300 uppercase tracking-wider mb-1">Missing</div>
-                  {feynmanEval.missing_points.map((p, i) => <p key={i} className="text-xs text-[#8a7559]">â€¢ {p}</p>)}
-                </div>
-              )}
-              {feynmanEval.guidance && (
-                <div className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8]">
-                  <div className="text-[10px] font-medium text-[#6f5b43] uppercase tracking-wider mb-1">Guidance</div>
-                  <p className="text-xs text-[#8a7559]">{feynmanEval.guidance}</p>
-                </div>
-              )}
-              <button onClick={() => { setFeynmanEval(null); setFeynmanExplanation(""); }} className="w-full py-1.5 text-xs text-[#8a7559] hover:text-[#8a7559] transition-colors">Try Again</button>
             </div>
           )}
+          {result && <ResultBox text={result} onCopy={() => handleCopy(result)} copied={copied} />}
         </div>
       );
     }
 
-    // Story
-    if (activeFeature === "story") {
+    if (featureId === "story") {
       return (
-        <div className="space-y-3">
-          <p className="text-xs text-[#8a7559]">Converts content into an engaging narrative story</p>
+        <div className="space-y-3 p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
           <button onClick={handleStory} disabled={loading || !hasContent} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <BookOpen className="w-4 h-4" />} Generate Story
           </button>
@@ -669,11 +550,9 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
       );
     }
 
-    // Exam Predictor
-    if (activeFeature === "exam_predict") {
+    if (featureId === "exam_predict") {
       return (
-        <div className="space-y-3">
-          <p className="text-xs text-[#8a7559]">AI predicts likely exam questions from your material</p>
+        <div className="space-y-3 p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
           <button onClick={handleExamPredict} disabled={loading || !hasContent} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardCheck className="w-4 h-4" />} Predict Questions
           </button>
@@ -687,7 +566,6 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
 
   return (
     <div className="flex flex-col h-full bg-[#f8f1e7]">
-      {/* Header */}
       <div className="px-4 py-3 border-b border-[#e4d7c8]">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-[#8a7559]" />
@@ -698,13 +576,15 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
         )}
       </div>
 
-      {/* Feature selector + content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-3 space-y-1.5">
-          {features.map((f) => (
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {features.map((f) => (
+          <div key={f.id} className="space-y-2">
             <button
-              key={f.id}
-              onClick={() => { setActiveFeature(activeFeature === f.id ? null : f.id); resetFeature(); }}
+              onClick={() => {
+                const isSame = activeFeature === f.id;
+                setActiveFeature(isSame ? null : f.id);
+                resetFeature();
+              }}
               className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-150 flex items-center gap-2.5 group ${
                 activeFeature === f.id
                   ? "bg-[#f2e6d8] border border-[#d8c6b2]"
@@ -718,50 +598,9 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onIns
               </div>
               {activeFeature === f.id ? <ChevronUp className="w-3.5 h-3.5 text-[#9c8871]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#a0896f]" />}
             </button>
-          ))}
-        </div>
-
-        {/* Active feature content */}
-        {activeFeature && (
-          <div className="px-3 pb-3">
-            <div className="p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
-              {renderFeatureContent()}
-            </div>
+            {renderFeatureContent(f.id)}
           </div>
-        )}
-      </div>
-
-      {/* AI Chat - always at bottom */}
-      <div className="border-t border-[#e4d7c8] bg-[#f3e9db]">
-        <div className="px-3 py-2">
-          <div className="flex items-center gap-2 mb-2">
-            <MessageSquare className="w-3.5 h-3.5 text-[#8a7559]" />
-            <span className="text-xs font-medium text-[#8a7559]">AI Chat</span>
-          </div>
-          {chatMessages.length > 0 && (
-            <div className="max-h-48 overflow-y-auto space-y-2 mb-2">
-              {chatMessages.map((msg, i) => (
-                <div key={i} className={`text-xs p-2 rounded-lg ${msg.role === "user" ? "bg-[#efe2d2] text-[#6f5b43] ml-4" : "bg-[#f2e6d8] text-[#7b664d] mr-4"}`}>
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
-                </div>
-              ))}
-              <div ref={chatEndRef} />
-            </div>
-          )}
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleChat()}
-              placeholder="Ask about your notes..."
-              className="flex-1 px-3 py-1.5 bg-[#f2e6d8] border border-[#d8c6b2] rounded-lg text-sm text-[#6f5b43] outline-none focus:border-[#cfb899] placeholder:text-[#a0896f]"
-            />
-            <button onClick={handleChat} disabled={loading || !chatInput.trim()} className="px-3 py-1.5 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg transition-colors disabled:opacity-40">
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
@@ -777,5 +616,3 @@ function ResultBox({ text, onCopy, copied }: { text: string; onCopy: () => void;
     </div>
   );
 }
-
-
