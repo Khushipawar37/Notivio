@@ -17,6 +17,14 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
 export const auth = getAuth(app)
 export const db = getFirestore(app)
 
+export const FIRESTORE_COLLECTIONS = {
+  notebooks: "notebooks",
+  sections: "sections",
+  pages: "pages",
+  flashcards: "flashcards",
+  studySessions: "studySessions",
+} as const
+
 // Types for our data
 export interface Note {
   id: string
@@ -55,4 +63,59 @@ export interface UserProfile {
   phoneNumber?: string
   createdAt: Date
   updatedAt: Date
+}
+
+export interface WorkspaceNotebook {
+  id: string
+  userId: string
+  title: string
+  emoji: string
+  isExpanded: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface WorkspaceSection {
+  id: string
+  userId: string
+  notebookId: string
+  title: string
+  isExpanded: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface WorkspacePage {
+  id: string
+  userId: string
+  notebookId: string
+  sectionId: string
+  title: string
+  content: string
+  tags: string[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface WorkspaceFlashcard {
+  id: string
+  userId: string
+  pageId?: string
+  question: string
+  answer: string
+  intervalDays: number
+  easeFactor: number
+  repetitions: number
+  dueDate: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface StudySessionLog {
+  id: string
+  userId: string
+  type: "study" | "break"
+  durationSeconds: number
+  completedAt: Date
+  pageId?: string
 }

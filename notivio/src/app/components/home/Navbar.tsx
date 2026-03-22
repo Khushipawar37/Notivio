@@ -93,6 +93,10 @@ export default function Navbar() {
     { href: "/dashboard", icon: <FlashCard size={24} />, label: "Dashboard" },
   ];
 
+  if (pathname === "/notes") {
+    return null;
+  }
+
   // Set active tab based on current path
   useEffect(() => {
     const index = navItems.findIndex((item) => item.href === pathname);

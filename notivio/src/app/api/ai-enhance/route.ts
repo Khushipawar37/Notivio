@@ -1,5 +1,5 @@
 import { groq } from "@ai-sdk/groq";
-import { generateText, generateObject } from "ai";
+import { generateText, generateObject, type LanguageModel } from "ai";
 import { z } from "zod";
 
 export const maxDuration = 30;
@@ -27,6 +27,9 @@ const structureSchema = z.object({
   outline: z.string().describe("A structured outline of the content"),
 });
 
+// Cast groq model to satisfy ai-sdk type requirements
+const model = groq("llama-3.3-70b-versatile") as unknown as LanguageModel;
+
 export async function POST(req: Request) {
   try {
     const { action, content, selectedText } = await req.json();
@@ -40,7 +43,7 @@ export async function POST(req: Request) {
     switch (action) {
       case "summarize":
         const { object: summaryResult } = await generateObject({
-          model: groq("llama-3.3-70b-versatile"),
+          model,
           schema: summarySchema,
           prompt: `Please provide a concise summary and key points for the following text. Focus on the main concepts and important information that a student would need to remember:\n\n${textToProcess}`,
         });
@@ -48,7 +51,7 @@ export async function POST(req: Request) {
 
       case "flashcards":
         const { object: flashcardResult } = await generateObject({
-          model: groq("llama-3.3-70b-versatile"),
+          model,
           schema: flashcardSchema,
           prompt: `Generate study flashcards from the following text. Create questions that test understanding of key concepts, definitions, and important details. Make sure the questions are clear and the answers are comprehensive but concise:\n\n${textToProcess}`,
         });
@@ -56,7 +59,7 @@ export async function POST(req: Request) {
 
       case "structure":
         const { object: structureResult } = await generateObject({
-          model: groq("llama-3.3-70b-versatile"),
+          model,
           schema: structureSchema,
           prompt: `Analyze the following text and suggest a logical structure with headings and subheadings. Provide suggestions for organizing the content in a way that would be most helpful for studying and understanding:\n\n${textToProcess}`,
         });
@@ -64,7 +67,7 @@ export async function POST(req: Request) {
 
       case "questions":
         const { text: questionsResult } = await generateText({
-          model: groq("llama-3.3-70b-versatile"),
+          model,
           prompt: `Generate review questions based on the following text. Create a mix of question types including multiple choice, short answer, and essay questions that would help a student review and test their understanding:\n\n${textToProcess}`,
         });
         return Response.json({ questions: questionsResult });
