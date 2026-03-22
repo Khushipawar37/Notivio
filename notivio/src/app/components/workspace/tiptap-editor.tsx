@@ -62,6 +62,10 @@ interface TipTapEditorProps {
   onChange: (content: string) => void;
   onTextSelect?: (text: string) => void;
   placeholder?: string;
+  onEditorReady?: (api: {
+    insertTextAtCursor: (text: string) => void;
+    insertHTMLAtCursor: (html: string) => void;
+  }) => void;
 }
 
 const HIGHLIGHT_COLORS = [
@@ -143,6 +147,7 @@ export function TipTapEditor({
   onChange,
   onTextSelect,
   placeholder = "Start writing your notes...",
+  onEditorReady,
 }: TipTapEditorProps) {
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashMenuPos, setSlashMenuPos] = useState({ top: 0, left: 0 });
@@ -303,6 +308,18 @@ export function TipTapEditor({
       editor.commands.setContent(content, { emitUpdate: false });
     }
   }, [content, editor]);
+
+  useEffect(() => {
+    if (!editor || !onEditorReady) return;
+    onEditorReady({
+      insertTextAtCursor: (text: string) => {
+        editor.chain().focus().insertContent(text).run();
+      },
+      insertHTMLAtCursor: (html: string) => {
+        editor.chain().focus().insertContent(html).run();
+      },
+    });
+  }, [editor, onEditorReady]);
 
   if (!editor) return null;
 

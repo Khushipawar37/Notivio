@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   Sparkles, FileText, Brain, Target, Zap, Lightbulb,
-  BookOpen, Music, MessageSquare, GraduationCap,
+  BookOpen, MessageSquare, GraduationCap,
   Loader2, ChevronDown, ChevronUp, Send,
   Copy, Check, Puzzle, ClipboardCheck,
 } from "lucide-react";
@@ -12,6 +12,7 @@ interface AIFeaturesPanelProps {
   content: string;
   selectedText: string;
   onSaveFlashcards?: (cards: Flashcard[]) => void;
+  onInsertToNotebook?: (text: string) => void;
 }
 
 interface ChatMessage {
@@ -46,7 +47,7 @@ interface FeynmanEvalResult {
 }
 
 type FeatureId = "summarize" | "explain" | "flashcards" | "quiz" | "enhance" |
-  "mnemonics" | "gap_fill" | "feynman" | "story" | "exam_predict" | "chat";
+  "gap_fill" | "feynman" | "story" | "exam_predict" | "chat";
 
 async function callAI(feature: string, content: string, extra: Record<string, string> = {}) {
   const res = await fetch("/api/ai-study", {
@@ -99,7 +100,7 @@ function parseJSON(text: string) {
   }
 }
 
-export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIFeaturesPanelProps) {
+export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards, onInsertToNotebook }: AIFeaturesPanelProps) {
   const [activeFeature, setActiveFeature] = useState<FeatureId | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string>("");
@@ -116,7 +117,6 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
   const [tfQuestions, setTfQuestions] = useState<TFQuestion[]>([]);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, number | boolean | string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
-  const [mnemonicsResult, setMnemonicsResult] = useState<Record<string, string> | null>(null);
   const [gapFillResult, setGapFillResult] = useState<{ text_with_blanks: string; answers: string[] } | null>(null);
   const [gapFillUserAnswers, setGapFillUserAnswers] = useState<Record<number, string>>({});
   const [gapFillChecked, setGapFillChecked] = useState(false);
@@ -140,6 +140,11 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
     setTimeout(() => setCopied(false), 2000);
   }, []);
 
+  const pushToNotebook = useCallback((heading: string, body: string) => {
+    if (!onInsertToNotebook || !body.trim()) return;
+    onInsertToNotebook(`\n\n${heading}\n${body}\n`);
+  }, [onInsertToNotebook]);
+
   const resetFeature = () => {
     setResult("");
     setFlashcards([]);
@@ -148,7 +153,6 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
     setTfQuestions([]);
     setQuizAnswers({});
     setQuizSubmitted(false);
-    setMnemonicsResult(null);
     setGapFillResult(null);
     setGapFillUserAnswers({});
     setGapFillChecked(false);
@@ -166,6 +170,7 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
     try {
       const res = await callAI(`summarize_${summaryMode}`, textToUse);
       setResult(res);
+      pushToNotebook("Summary", res);
     } catch { setResult("Error generating summary. Please try again."); }
     setLoading(false);
   };
@@ -177,6 +182,7 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
     try {
       const res = await callAI(`explain_${explainLevel}`, textToUse);
       setResult(res);
+      pushToNotebook("Explanation", res);
     } catch { setResult("Error generating explanation. Please try again."); }
     setLoading(false);
   };
@@ -191,6 +197,10 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
       if (cards && Array.isArray(cards)) {
         setFlashcards(cards);
         onSaveFlashcards?.(cards);
+        const asText = cards
+          .map((card, index) => `${index + 1}. Q: ${card.question}\nA: ${card.answer}`)
+          .join("\n\n");
+        pushToNotebook("Flashcards", asText);
       }
       else setResult("Failed to parse flashcards. Raw response:\n" + res);
     } catch { setResult("Error generating flashcards."); }
@@ -205,9 +215,20 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
       const res = await callAI(`quiz_${quizType}`, textToUse, { difficulty: quizDifficulty });
       const parsed = parseJSON(res);
       if (parsed && Array.isArray(parsed)) {
-        if (quizType === "mcq") setMcqQuestions(parsed);
-        else if (quizType === "truefalse") setTfQuestions(parsed);
-        else setResult(res);
+        if (quizType === "mcq") {
+          setMcqQuestions(parsed);
+          const asText = parsed.map((q: MCQQuestion, i: number) => `${i + 1}. ${q.question}\nA) ${q.options[0]}\nB) ${q.options[1]}\nC) ${q.options[2]}\nD) ${q.options[3]}\nAnswer: ${String.fromCharCode(65 + q.correct)}\nWhy: ${q.explanation}`).join("\n\n");
+          pushToNotebook("Quiz (MCQ)", asText);
+        }
+        else if (quizType === "truefalse") {
+          setTfQuestions(parsed);
+          const asText = parsed.map((q: TFQuestion, i: number) => `${i + 1}. ${q.statement}\nAnswer: ${q.answer ? "True" : "False"}\nWhy: ${q.explanation}`).join("\n\n");
+          pushToNotebook("Quiz (True/False)", asText);
+        }
+        else {
+          setResult(res);
+          pushToNotebook("Quiz (Short Answer)", res);
+        }
       } else { setResult("Failed to parse quiz. Raw:\n" + res); }
     } catch { setResult("Error generating quiz."); }
     setLoading(false);
@@ -220,20 +241,8 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
     try {
       const res = await callAI("enhance", textToUse);
       setResult(res);
+      pushToNotebook("Enhanced Text", res);
     } catch { setResult("Error enhancing text."); }
-    setLoading(false);
-  };
-
-  const handleMnemonics = async () => {
-    if (!hasContent) return;
-    setLoading(true);
-    resetFeature();
-    try {
-      const res = await callAI("mnemonics", textToUse);
-      const parsed = parseJSON(res);
-      if (parsed) setMnemonicsResult(parsed);
-      else setResult(res);
-    } catch { setResult("Error generating mnemonics."); }
     setLoading(false);
   };
 
@@ -244,7 +253,11 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
     try {
       const res = await callAI("gap_fill", textToUse);
       const parsed = parseJSON(res);
-      if (parsed && parsed.text_with_blanks) setGapFillResult(parsed);
+      if (parsed && parsed.text_with_blanks) {
+        setGapFillResult(parsed);
+        const asText = `${parsed.text_with_blanks}\n\nAnswers: ${parsed.answers.join(", ")}`;
+        pushToNotebook("Gap Fill Exercise", asText);
+      }
       else setResult(res);
     } catch { setResult("Error generating gap fill."); }
     setLoading(false);
@@ -269,7 +282,11 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
     try {
       const res = await callAI("feynman_evaluate", textToUse, { userMessage: feynmanExplanation });
       const parsed = parseJSON(res);
-      if (parsed) setFeynmanEval(parsed);
+      if (parsed) {
+        setFeynmanEval(parsed);
+        const asText = `Score: ${parsed.score}/10\nCorrect: ${(parsed.correct_points || []).join("; ")}\nVague: ${(parsed.vague_points || []).join("; ")}\nMissing: ${(parsed.missing_points || []).join("; ")}\nGuidance: ${parsed.guidance || ""}`;
+        pushToNotebook("Feynman Feedback", asText);
+      }
       else setResult(res);
     } catch { setResult("Error evaluating explanation."); }
     setLoading(false);
@@ -282,6 +299,7 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
     try {
       const res = await callAI("story_mode", textToUse);
       setResult(res);
+      pushToNotebook("Story Mode", res);
     } catch { setResult("Error generating story."); }
     setLoading(false);
   };
@@ -293,6 +311,7 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
     try {
       const res = await callAI("exam_predictor", textToUse);
       setResult(res);
+      pushToNotebook("Predicted Exam Questions", res);
     } catch { setResult("Error predicting exam questions."); }
     setLoading(false);
   };
@@ -338,7 +357,6 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
     { id: "flashcards" as FeatureId, label: "Flashcards", icon: Brain, desc: "Auto-generate study cards" },
     { id: "quiz" as FeatureId, label: "Quiz", icon: Target, desc: "MCQ, True/False, Short answer" },
     { id: "enhance" as FeatureId, label: "Enhance", icon: Zap, desc: "Improve clarity and readability" },
-    { id: "mnemonics" as FeatureId, label: "Mnemonics", icon: Music, desc: "Memory aids and tricks" },
     { id: "gap_fill" as FeatureId, label: "Gap Fill", icon: Puzzle, desc: "Fill-in-the-blank exercises" },
     { id: "feynman" as FeatureId, label: "Feynman Test", icon: GraduationCap, desc: "Explain it back to learn" },
     { id: "story" as FeatureId, label: "Story Mode", icon: BookOpen, desc: "Content as a narrative" },
@@ -528,28 +546,6 @@ export function AIFeaturesPanel({ content, selectedText, onSaveFlashcards }: AIF
           <button onClick={handleEnhance} disabled={loading || !hasContent} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />} Enhance Text
           </button>
-          {result && <ResultBox text={result} onCopy={() => handleCopy(result)} copied={copied} />}
-        </div>
-      );
-    }
-
-    // Mnemonics
-    if (activeFeature === "mnemonics") {
-      return (
-        <div className="space-y-3">
-          <button onClick={handleMnemonics} disabled={loading || !hasContent} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Music className="w-4 h-4" />} Generate Memory Aids
-          </button>
-          {mnemonicsResult && (
-            <div className="space-y-2">
-              {Object.entries(mnemonicsResult).map(([key, val]) => (
-                <div key={key} className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8]">
-                  <div className="text-[10px] font-medium text-[#6f5b43] uppercase tracking-wider mb-1">{key.replace(/_/g, " ")}</div>
-                  <p className="text-sm text-[#7b664d]">{val}</p>
-                </div>
-              ))}
-            </div>
-          )}
           {result && <ResultBox text={result} onCopy={() => handleCopy(result)} copied={copied} />}
         </div>
       );

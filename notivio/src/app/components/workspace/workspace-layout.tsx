@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ChevronDown,
@@ -26,6 +26,10 @@ export function WorkspaceLayout() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [selectedText, setSelectedText] = useState("");
+  const editorApiRef = useRef<{
+    insertTextAtCursor: (text: string) => void;
+    insertHTMLAtCursor: (html: string) => void;
+  } | null>(null);
 
   const {
     filteredNotebooks,
@@ -246,6 +250,9 @@ export function WorkspaceLayout() {
                 onChange={(content) => updatePageContent(activePage.id, content)}
                 onTextSelect={setSelectedText}
                 placeholder="Start writing your notes... Type '/' for commands"
+                onEditorReady={(api) => {
+                  editorApiRef.current = api;
+                }}
               />
             </div>
           </>
@@ -299,6 +306,9 @@ export function WorkspaceLayout() {
                 content={activePage?.content || ""}
                 selectedText={selectedText}
                 onSaveFlashcards={(cards) => void saveFlashcards(cards, activePage?.id)}
+                onInsertToNotebook={(text) => {
+                  editorApiRef.current?.insertTextAtCursor(text);
+                }}
               />
             ) : (
               <div className="h-full flex items-center justify-center px-6">
