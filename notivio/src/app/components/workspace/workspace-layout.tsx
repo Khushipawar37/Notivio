@@ -157,7 +157,7 @@ export function WorkspaceLayout() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f5f0e8] text-[#6f5b43] flex flex-col">
+    <div className="min-h-screen pt-24 sm:pt-28 bg-[#f5f0e8] text-[#6f5b43] flex flex-col">
       <div className="flex-1 min-h-0 flex overflow-hidden">
         <NotebookSidebar
         notebooks={filteredNotebooks}
