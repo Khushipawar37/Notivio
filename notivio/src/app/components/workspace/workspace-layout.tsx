@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ChevronDown,
@@ -15,7 +15,8 @@ import { NotebookSidebar } from "./notebook-sidebar";
 import { TipTapEditor } from "./tiptap-editor";
 import { AIFeaturesPanel } from "./ai-features-panel";
 import { AIChatWidget } from "./ai-chat-widget";
-import { SourcesPanel } from "./sources-panel";
+import { SourcesPanel, type StudySource } from "./sources-panel";
+import { MainSourceWorkspace } from "./main-source-workspace";
 import { NoteTemplates } from "./note-templates";
 import { exportToMarkdown, exportToPDF } from "../../lib/export-utils";
 import { useWorkspace } from "../../hooks/use-workspace";
@@ -27,6 +28,8 @@ export function WorkspaceLayout() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [selectedText, setSelectedText] = useState("");
+  const [activeSource, setActiveSource] = useState<StudySource | null>(null);
+  const [workspaceView, setWorkspaceView] = useState<"notes" | "source">("notes");
   const editorApiRef = useRef<{
     insertTextAtCursor: (text: string) => void;
     insertHTMLAtCursor: (html: string) => void;
@@ -115,6 +118,45 @@ export function WorkspaceLayout() {
 
   const saveLabel =
     saveStatus === "saved" ? "Saved" : saveStatus === "saving" ? "Saving..." : "Unsaved";
+
+  useEffect(() => {
+    setActiveSource(null);
+    setWorkspaceView("notes");
+  }, [activePageId]);
+
+  const escapeHtml = useCallback((value: string) => {
+    return value
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }, []);
+
+  const insertTextToNotes = useCallback(
+    (text: string) => {
+      if (!text?.trim() || !activePage) return;
+      if (workspaceView === "notes" && editorApiRef.current) {
+        editorApiRef.current.insertTextAtCursor(text);
+        return;
+      }
+      const block = `<p>${escapeHtml(text).replace(/\n/g, "<br/>")}</p>`;
+      updatePageContent(activePage.id, `${activePage.content}${block}`);
+    },
+    [activePage, escapeHtml, updatePageContent, workspaceView]
+  );
+
+  const insertHtmlToNotes = useCallback(
+    (html: string) => {
+      if (!html?.trim() || !activePage) return;
+      if (workspaceView === "notes" && editorApiRef.current) {
+        editorApiRef.current.insertHTMLAtCursor(html);
+        return;
+      }
+      updatePageContent(activePage.id, `${activePage.content}${html}`);
+    },
+    [activePage, updatePageContent, workspaceView]
+  );
 
   return (
     <div className="min-h-screen lg:h-screen flex bg-[#f5f0e8] text-[#6f5b43] overflow-hidden">
@@ -245,15 +287,29 @@ export function WorkspaceLayout() {
             </header>
 
             <div className="flex-1 overflow-hidden">
-              <TipTapEditor
-                content={activePage.content}
-                onChange={(content) => updatePageContent(activePage.id, content)}
-                onTextSelect={setSelectedText}
-                placeholder="Start writing your notes... Type '/' for commands"
-                onEditorReady={(api) => {
-                  editorApiRef.current = api;
-                }}
-              />
+              <div className="h-full flex flex-col">
+                {workspaceView === "source" ? (
+                  <MainSourceWorkspace
+                    source={activeSource}
+                    onBackToNotes={() => setWorkspaceView("notes")}
+                    onSourceChange={setActiveSource}
+                    onInsertToNotes={insertTextToNotes}
+                    onInsertToNotesHtml={insertHtmlToNotes}
+                  />
+                ) : (
+                  <div className="flex-1 overflow-hidden">
+                    <TipTapEditor
+                      content={activePage.content}
+                      onChange={(content) => updatePageContent(activePage.id, content)}
+                      onTextSelect={setSelectedText}
+                      placeholder="Start writing your notes... Type '/' for commands"
+                      onEditorReady={(api) => {
+                        editorApiRef.current = api;
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </>
         ) : (
@@ -313,11 +369,11 @@ export function WorkspaceLayout() {
             ) : (
               <SourcesPanel
                 workspaceKey={activePage?.id || "global"}
-                onInsertCitation={(html) => {
-                  editorApiRef.current?.insertHTMLAtCursor(html);
-                }}
-                onInsertPlain={(text) => {
-                  editorApiRef.current?.insertTextAtCursor(text);
+                onInsertToNotes={insertTextToNotes}
+                onInsertToNotesHtml={insertHtmlToNotes}
+                onSelectSource={(source) => {
+                  setActiveSource(source);
+                  if (source) setWorkspaceView("source");
                 }}
               />
             )}
