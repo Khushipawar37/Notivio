@@ -98,7 +98,7 @@ export function AIChatWidget({ content }: AIChatWidgetProps) {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed bottom-14 right-4 z-50">
       {isOpen ? (
         <div className="w-[calc(100vw-2rem)] sm:w-[360px] h-[480px] rounded-2xl border border-[#d8c6b2] bg-[#fff8ee] shadow-2xl flex flex-col overflow-hidden">
           <div className="px-3 py-2 border-b border-[#e4d7c8] bg-[#f5eadc] flex items-center justify-between">
@@ -160,4 +160,3 @@ export function AIChatWidget({ content }: AIChatWidgetProps) {
     </div>
   );
 }
-

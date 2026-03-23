@@ -85,7 +85,6 @@ export default function Navbar() {
   const [activeTab, setActiveTab] = useState(0);
   const [indicatorPosition, setIndicatorPosition] = useState(0);
   const navRef = useRef<HTMLDivElement>(null);
-  const shouldHideNavbar = pathname === "/notes";
 
   const navItems = [
     { href: "/", icon: <Home size={24} />, label: "Home" },
@@ -96,13 +95,12 @@ export default function Navbar() {
 
   // Set active tab based on current path
   useEffect(() => {
-    if (shouldHideNavbar) return;
     const index = navItems.findIndex((item) => item.href === pathname);
     if (index !== -1) {
       setActiveTab(index);
       updateIndicatorPosition(index);
     }
-  }, [pathname, shouldHideNavbar]);
+  }, [pathname]);
 
   const updateIndicatorPosition = (index: number) => {
     if (!navRef.current) return;
@@ -117,10 +115,6 @@ export default function Navbar() {
     setActiveTab(index);
     updateIndicatorPosition(index);
   };
-
-  if (shouldHideNavbar) {
-    return null;
-  }
 
   return (
     <div className="fixed sm:top-8 w-full px-6 z-50 bottom-8 sm:bottom-auto">

@@ -49,7 +49,6 @@ export interface FlashcardInput {
   answer: string;
 }
 
-const EMOJIS = ["📚", "🧪", "🔬", "📐", "🎨", "💻", "🌍", "📖", "🧬", "⚡"];
 
 function toDate(value: unknown): Date {
   if (value instanceof Date) return value;
@@ -199,7 +198,7 @@ export function useWorkspace() {
         return {
           id: raw.id,
           title: String(raw.title || "New Notebook"),
-          emoji: String(raw.emoji || "📚"),
+          emoji: String(raw.emoji || ""),
           isExpanded: Boolean(raw.isExpanded ?? true),
           createdAt: toDate(raw.createdAt),
           updatedAt: toDate(raw.updatedAt),
@@ -277,7 +276,7 @@ export function useWorkspace() {
         {
           id: notebookId,
           title: "New Notebook",
-          emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
+          emoji: "",
           isExpanded: true,
           createdAt: now,
           updatedAt: now,
@@ -315,7 +314,7 @@ export function useWorkspace() {
       const notebookRef = await addDoc(collection(db, FIRESTORE_COLLECTIONS.notebooks), {
         userId: uid,
         title: "New Notebook",
-        emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
+        emoji: "",
         isExpanded: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),

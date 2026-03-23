@@ -121,10 +121,10 @@ export function NotebookSidebar({
           <button
             key={notebook.id}
             onClick={() => onToggleNotebook(notebook.id)}
-            className="p-1.5 rounded-lg hover:bg-[#ede1d1] transition-colors text-sm"
+            className="p-1.5 rounded-lg hover:bg-[#ede1d1] transition-all duration-200 text-sm hover:shadow-sm"
             title={notebook.title}
           >
-            {notebook.emoji}
+            <BookOpen className="w-4 h-4 text-[#8a7559]" />
           </button>
         ))}
       </aside>
@@ -153,7 +153,7 @@ export function NotebookSidebar({
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Search all notes..."
-            className="w-full pl-8 pr-3 py-1.5 bg-[#f2e6d8] border border-[#d8c6b2] rounded-lg text-xs text-[#7b664d] outline-none focus:border-indigo-500/40 placeholder:text-[#8a7559]"
+            className="w-full pl-8 pr-3 py-1.5 bg-[#f2e6d8] border border-[#d8c6b2] rounded-lg text-xs text-[#7b664d] outline-none focus:border-[#b79c79] placeholder:text-[#8a7559] transition-all duration-200 hover:bg-[#efe2d2]"
           />
         </div>
       </div>
@@ -168,12 +168,11 @@ export function NotebookSidebar({
             >
               <button
                 onClick={() => onToggleNotebook(notebook.id)}
-                className="p-0.5 text-[#8a7559]"
+                className="p-0.5 text-[#8a7559] hover:text-[#6f5b43] transition-colors"
                 title="Toggle Notebook"
               >
                 {notebook.isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
               </button>
-              <span className="text-sm mr-1">{notebook.emoji}</span>
 
               {editingId === notebook.id ? (
                 <input
@@ -315,10 +314,10 @@ export function NotebookSidebar({
                       <div
                         key={page.id}
                         onClick={() => onPageSelect(notebook.id, section.id, page.id)}
-                        className={`group px-2 py-1 mx-1 ml-5 rounded-md cursor-pointer border transition-colors ${
+                className={`group px-2 py-1 mx-1 ml-5 rounded-md cursor-pointer border transition-colors ${
                           activePageId === page.id
-                            ? "bg-[#e7d6c2] border-[#cfb899]"
-                            : "hover:bg-[#ede1d1] border-transparent"
+                            ? "bg-[#e7d6c2] border-[#cfb899] shadow-sm"
+                            : "hover:bg-[#ede1d1] hover:shadow-sm border-transparent"
                         }`}
                       >
                         <div className="flex items-center gap-1.5">

@@ -24,6 +24,7 @@ interface AIFeaturesPanelProps {
   selectedText: string;
   onSaveFlashcards?: (cards: Flashcard[]) => void;
   onInsertToNotebook?: (text: string) => void;
+  onInsertToNotebookHtml?: (html: string) => void;
 }
 
 interface Flashcard {
@@ -91,6 +92,7 @@ export function AIFeaturesPanel({
   selectedText,
   onSaveFlashcards,
   onInsertToNotebook,
+  onInsertToNotebookHtml,
 }: AIFeaturesPanelProps) {
   const [activeFeature, setActiveFeature] = useState<FeatureId | null>(null);
   const [loading, setLoading] = useState(false);
@@ -123,12 +125,58 @@ export function AIFeaturesPanel({
     setTimeout(() => setCopied(false), 2000);
   }, []);
 
+  const escapeHtml = useCallback((value: string) => {
+    return value
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }, []);
+
+  const bodyToHtml = useCallback(
+    (body: string) => {
+      const blocks = body
+        .replace(/\r\n/g, "\n")
+        .split(/\n\s*\n/)
+        .map((b) => b.trim())
+        .filter(Boolean);
+      return blocks
+        .map((block) => {
+          const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
+          const isOrdered = lines.length > 1 && lines.every((line) => /^\d+[\).]\s+/.test(line));
+          const isBullet = lines.length > 1 && lines.every((line) => /^[-*]\s+/.test(line));
+          if (isOrdered) {
+            const items = lines
+              .map((line) => `<li>${escapeHtml(line.replace(/^\d+[\).]\s+/, ""))}</li>`)
+              .join("");
+            return `<ol>${items}</ol>`;
+          }
+          if (isBullet) {
+            const items = lines
+              .map((line) => `<li>${escapeHtml(line.replace(/^[-*]\s+/, ""))}</li>`)
+              .join("");
+            return `<ul>${items}</ul>`;
+          }
+          return `<p>${escapeHtml(block).replace(/\n/g, "<br/>")}</p>`;
+        })
+        .join("");
+    },
+    [escapeHtml]
+  );
+
   const pushToNotebook = useCallback(
     (heading: string, body: string) => {
-      if (!onInsertToNotebook || !body.trim()) return;
+      if (!body.trim()) return;
+      if (onInsertToNotebookHtml) {
+        const html = `<h2>${escapeHtml(heading)}</h2>${bodyToHtml(body)}`;
+        onInsertToNotebookHtml(html);
+        return;
+      }
+      if (!onInsertToNotebook) return;
       onInsertToNotebook(`\n\n${heading}\n${body}\n`);
     },
-    [onInsertToNotebook]
+    [bodyToHtml, escapeHtml, onInsertToNotebook, onInsertToNotebookHtml]
   );
 
   const resetFeature = () => {
@@ -587,8 +635,8 @@ export function AIFeaturesPanel({
               }}
               className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-150 flex items-center gap-2.5 group ${
                 activeFeature === f.id
-                  ? "bg-[#f2e6d8] border border-[#d8c6b2]"
-                  : "hover:bg-[#f2e6d8] border border-transparent"
+                  ? "bg-[#f2e6d8] border border-[#d8c6b2] shadow-sm"
+                  : "hover:bg-[#f2e6d8] hover:shadow-sm hover:-translate-y-[1px] border border-transparent"
               }`}
             >
               <f.icon className={`w-4 h-4 ${activeFeature === f.id ? "text-[#8a7559]" : "text-[#9c8871] group-hover:text-[#8a7559]"}`} />

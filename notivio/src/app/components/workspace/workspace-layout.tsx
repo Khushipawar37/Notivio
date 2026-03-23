@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle,
   ChevronDown,
   Download,
   FileText,
@@ -45,7 +44,6 @@ export function WorkspaceLayout() {
     wordCount,
     saveStatus,
     loading,
-    firestoreEnabled,
     createNotebook,
     createSection,
     createPage,
@@ -159,8 +157,9 @@ export function WorkspaceLayout() {
   );
 
   return (
-    <div className="min-h-screen lg:h-screen flex bg-[#f5f0e8] text-[#6f5b43] overflow-hidden">
-      <NotebookSidebar
+    <div className="min-h-screen bg-[#f5f0e8] text-[#6f5b43] flex flex-col sm:pt-28 pb-24 sm:pb-0">
+      <div className="flex-1 min-h-0 flex overflow-hidden">
+        <NotebookSidebar
         notebooks={filteredNotebooks}
         activePageId={activePageId}
         searchQuery={searchQuery}
@@ -189,13 +188,6 @@ export function WorkspaceLayout() {
       />
 
       <main className="flex-1 min-w-0 flex flex-col bg-[#fffaf3]">
-        {!firestoreEnabled && (
-          <div className="px-4 py-2 border-b border-[#e4d7c8] bg-[#fdf2de] text-[#7a6143] text-xs flex items-center gap-2">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            Firestore permissions are unavailable, so this workspace is running in local mode.
-          </div>
-        )}
-
         {activePage ? (
           <>
             <header className="px-4 py-2 border-b border-[#e4d7c8] bg-[#f8f1e7]">
@@ -365,6 +357,9 @@ export function WorkspaceLayout() {
                 onInsertToNotebook={(text) => {
                   editorApiRef.current?.insertTextAtCursor(text);
                 }}
+                onInsertToNotebookHtml={(html) => {
+                  editorApiRef.current?.insertHTMLAtCursor(html);
+                }}
               />
             ) : (
               <SourcesPanel
@@ -380,6 +375,7 @@ export function WorkspaceLayout() {
           </div>
         </aside>
       )}
+      </div>
 
       {showTemplates && (
         <NoteTemplates
@@ -389,6 +385,11 @@ export function WorkspaceLayout() {
       )}
 
       <AIChatWidget content={activePage?.content || ""} />
+
+      <footer className="h-10 px-4 border-t border-[#e4d7c8] bg-[#fbf6ee] flex items-center justify-between text-[11px] text-[#9b876e]">
+        <span>Notivio</span>
+        <span>Built for focused study notes and sources</span>
+      </footer>
 
       {showExportMenu && (
         <div
