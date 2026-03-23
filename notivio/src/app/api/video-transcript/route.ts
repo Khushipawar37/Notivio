@@ -41,7 +41,7 @@ function extractVideoId(input: string): string | null {
 async function fetchWithTimeout(
   url: string,
   options: RequestInit = {},
-  timeoutMs = 20000
+  timeoutMs = 20000,
 ): Promise<Response> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
@@ -72,7 +72,7 @@ async function fetchViaRapidAPI(videoId: string): Promise<string> {
         "x-rapidapi-host": "youtube-transcript3.p.rapidapi.com",
       },
     },
-    15000
+    15000,
   );
 
   if (!response.ok) {
@@ -115,7 +115,7 @@ async function fetchViaSupadata(videoId: string): Promise<string> {
         Accept: "application/json",
       },
     },
-    15000
+    15000,
   );
 
   if (!response.ok) {
@@ -129,8 +129,8 @@ async function fetchViaSupadata(videoId: string): Promise<string> {
     typeof data?.content === "string"
       ? data.content
       : typeof data?.transcript === "string"
-      ? data.transcript
-      : null;
+        ? data.transcript
+        : null;
 
   if (!transcript || transcript.length < 50) {
     throw new Error("Supadata returned empty transcript");
@@ -141,7 +141,7 @@ async function fetchViaSupadata(videoId: string): Promise<string> {
 
 // ─── Orchestrator ─────────────────────────────────────────────────────────────
 async function fetchTranscriptWithFallbacks(
-  videoId: string
+  videoId: string,
 ): Promise<{ transcript: string; method: string }> {
   const methods = [
     { name: "RapidAPI", fn: () => fetchViaRapidAPI(videoId) },
@@ -157,7 +157,7 @@ async function fetchTranscriptWithFallbacks(
 
   if (configured.length === 0) {
     throw new Error(
-      "No API keys configured. Add RAPIDAPI_KEY or SUPADATA_API_KEY to .env.local"
+      "No API keys configured. Add RAPIDAPI_KEY or SUPADATA_API_KEY to .env.local",
     );
   }
 
@@ -182,7 +182,7 @@ async function getVideoMetadata(videoId: string) {
     const res = await fetchWithTimeout(
       `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
       { headers: { Accept: "application/json" } },
-      8000
+      8000,
     );
     if (res.ok) {
       const data = await res.json();
@@ -202,7 +202,7 @@ export async function GET(request: NextRequest) {
   if (!videoParam) {
     return NextResponse.json(
       { error: "Video ID or URL is required", example: "?videoId=dQw4w9WgXcQ" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -210,7 +210,7 @@ export async function GET(request: NextRequest) {
   if (!videoId) {
     return NextResponse.json(
       { error: "Invalid YouTube video ID or URL", received: videoParam },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -237,7 +237,9 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error("=== API Error ===", error.message);
 
-    const isConfig = error.message.includes("not configured") || error.message.includes("No API keys");
+    const isConfig =
+      error.message.includes("not configured") ||
+      error.message.includes("No API keys");
     const isNoCaption =
       error.message.toLowerCase().includes("caption") ||
       error.message.toLowerCase().includes("transcript");
@@ -247,8 +249,8 @@ export async function GET(request: NextRequest) {
         error: isConfig
           ? "API key not configured"
           : isNoCaption
-          ? "No captions found for this video"
-          : "Failed to fetch video transcript",
+            ? "No captions found for this video"
+            : "Failed to fetch video transcript",
         details: error.message,
         videoId,
         suggestions: isConfig
@@ -262,7 +264,7 @@ export async function GET(request: NextRequest) {
               "Try a different video with confirmed captions",
             ],
       },
-      { status: isConfig ? 500 : 404 }
+      { status: isConfig ? 500 : 404 },
     );
   }
 }
