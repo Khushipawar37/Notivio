@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   // Content Security Policy
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' *.googleapis.com *.gstatic.com; style-src 'self' 'unsafe-inline' *.googleapis.com; font-src 'self' data: *.gstatic.com; img-src 'self' data: blob: *.googleapis.com; connect-src 'self' *.googleapis.com *.google.com *.facebook.com;",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' *.googleapis.com *.gstatic.com; style-src 'self' 'unsafe-inline' *.googleapis.com; font-src 'self' data: *.gstatic.com; img-src 'self' data: blob: *.googleapis.com https://*.stack-auth.com; connect-src 'self' *.googleapis.com *.google.com *.facebook.com https://*.stack-auth.com;",
   )
 
   // XSS Protection

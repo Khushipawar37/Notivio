@@ -68,6 +68,7 @@ export function MainSourceWorkspace({
   const [viewTab, setViewTab] = useState<"preview" | "text">("preview");
   const [editableText, setEditableText] = useState(source?.extractedText || "");
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setEditableText(source?.extractedText || "");
@@ -76,6 +77,25 @@ export function MainSourceWorkspace({
     setViewTab(source?.type === "pdf" ? "preview" : "text");
     setPdfPage(1);
   }, [source?.id, source?.type, source?.extractedText]);
+
+  useEffect(() => {
+    if (!source?.id) return;
+    if (editableText === (source.extractedText || "")) return;
+    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+
+    syncTimeoutRef.current = setTimeout(() => {
+      void fetch(`/api/workspace/sources/${source.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ extractedText: editableText }),
+      });
+      onSourceChange?.({ ...source, extractedText: editableText });
+    }, 800);
+
+    return () => {
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    };
+  }, [editableText, onSourceChange, source]);
 
   const visibleText = useMemo(() => {
     if (!editableText.trim()) return "";
@@ -123,6 +143,11 @@ export function MainSourceWorkspace({
       }
       setEditableText(extractedText);
       onSourceChange?.({ ...source, extractedText });
+      await fetch(`/api/workspace/sources/${source.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ extractedText }),
+      });
       setViewTab("text");
       setStatus("PDF text extracted. You can edit/highlight it here.");
       const formatted = sourceTextToHtml(`Extracted from PDF: ${source.title}`, extractedText);
@@ -241,9 +266,14 @@ export function MainSourceWorkspace({
             suppressContentEditableWarning
             onInput={(event) => setEditableText(event.currentTarget.innerText)}
             className="flex-1 min-h-0 overflow-y-auto rounded border border-[#d8c6b2] bg-white p-3 text-sm text-[#6f5b43] whitespace-pre-wrap leading-relaxed outline-none"
-          >
-            {visibleText || editableText || source.extractedText || "No source text available yet. For PDFs click Extract Text."}
-          </div>
+            dangerouslySetInnerHTML={{
+              __html: (visibleText || editableText || source.extractedText || "No source text available yet. For PDFs click Extract Text.")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\n/g, "<br/>"),
+            }}
+          />
         </div>
       )}
     </div>

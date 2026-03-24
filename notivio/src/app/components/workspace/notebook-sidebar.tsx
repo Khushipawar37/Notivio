@@ -161,6 +161,12 @@ export function NotebookSidebar({
       <div className="flex-1 overflow-y-auto py-2">
         {notebooks.map((notebook) => (
           <div key={notebook.id}>
+            {(() => {
+              const pageCount = notebook.sections.reduce(
+                (count, section) => count + section.pages.length,
+                0
+              );
+              return (
             <div
               className={`group flex items-center gap-1 px-2 py-1 mx-1 rounded-md cursor-pointer transition-colors ${
                 contextMenuId === notebook.id ? "bg-[#f2e6d8]" : "hover:bg-[#ede1d1]"
@@ -191,6 +197,7 @@ export function NotebookSidebar({
               ) : (
                 <span onClick={() => onToggleNotebook(notebook.id)} className="flex-1 text-xs font-medium text-[#8a7559] truncate">
                   {notebook.title}
+                  <span className="ml-1 text-[10px] text-[#a0896f]">({pageCount})</span>
                 </span>
               )}
 
@@ -218,6 +225,8 @@ export function NotebookSidebar({
                 </button>
               </div>
             </div>
+              );
+            })()}
 
             {contextMenuId === notebook.id && (
               <div className="mx-3 my-1 p-1 bg-[#fff8ee] border border-[#d8c6b2] rounded-lg shadow-xl text-xs">
@@ -273,14 +282,19 @@ export function NotebookSidebar({
                         className="flex-1 text-xs text-[#8a7559] truncate"
                         onClick={() => {
                           if (section.pages.length > 0) {
-                            const firstPage = section.pages[0];
-                            onPageSelect(notebook.id, section.id, firstPage.id);
+                            const recentPage = [...section.pages].sort(
+                              (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+                            )[0];
+                            if (recentPage) onPageSelect(notebook.id, section.id, recentPage.id);
                           } else {
                             onCreatePage(notebook.id, section.id);
                           }
                         }}
                       >
                         {section.title}
+                        <span className="ml-1 text-[10px] text-[#a0896f]">
+                          {section.pages.length}
+                        </span>
                       </span>
                     )}
 

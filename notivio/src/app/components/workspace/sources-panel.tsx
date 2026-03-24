@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FileText, Globe, Import, Search, Upload } from "lucide-react";
 import { normalizeSourceText, sourceTextToHtml } from "../../lib/source-text-utils";
 
@@ -23,10 +23,17 @@ interface SourcesPanelProps {
   onInsertToNotesHtml?: (html: string) => void;
 }
 
-const STORAGE_PREFIX = "studyspace-simple-sources";
-
-function makeId() {
-  return `${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
+async function fileToBase64(file: File) {
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      const base64 = result.split(",")[1] || "";
+      resolve(base64);
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 export function SourcesPanel({
@@ -35,14 +42,12 @@ export function SourcesPanel({
   onInsertToNotes,
   onInsertToNotesHtml,
 }: SourcesPanelProps) {
-  const storageKey = `${STORAGE_PREFIX}:${workspaceKey}`;
   const [sources, setSources] = useState<StudySource[]>([]);
   const [search, setSearch] = useState("");
   const [importOpen, setImportOpen] = useState(false);
   const [urlInput, setUrlInput] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const onSelectSourceRef = useRef(onSelectSource);
 
@@ -50,24 +55,23 @@ export function SourcesPanel({
     onSelectSourceRef.current = onSelectSource;
   }, [onSelectSource]);
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as StudySource[];
-      setSources(parsed);
-      if (parsed[0]) onSelectSourceRef.current?.(parsed[0]);
-    } catch {
+  const loadSources = useCallback(async () => {
+    const response = await fetch(
+      `/api/workspace/sources?workspaceKey=${encodeURIComponent(workspaceKey)}`,
+      { cache: "no-store" }
+    );
+    if (!response.ok) {
       setSources([]);
-    } finally {
-      setHydrated(true);
+      return;
     }
-  }, [storageKey]);
+    const data = (await response.json()) as StudySource[];
+    setSources(data);
+    onSelectSourceRef.current?.(data[0] || null);
+  }, [workspaceKey]);
 
   useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem(storageKey, JSON.stringify(sources));
-  }, [hydrated, sources, storageKey]);
+    void loadSources();
+  }, [loadSources]);
 
   const filteredSources = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -80,23 +84,35 @@ export function SourcesPanel({
     setLoading(true);
     setStatus(`Importing ${files.length} PDF file(s)...`);
 
-    const next: StudySource[] = [];
+    let added = 0;
     for (const file of Array.from(files)) {
       const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
       if (!isPdf) continue;
-      next.push({
-        id: makeId(),
-        title: file.name.replace(/\.pdf$/i, ""),
-        type: "pdf",
-        fileUrl: URL.createObjectURL(file),
-        createdAt: new Date().toISOString(),
+
+      const base64 = await fileToBase64(file);
+      const response = await fetch("/api/workspace/sources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workspaceKey,
+          title: file.name.replace(/\.pdf$/i, ""),
+          type: "pdf",
+          fileName: file.name,
+          mimeType: file.type || "application/pdf",
+          fileBase64: base64,
+        }),
       });
+
+      if (response.ok) {
+        const source = (await response.json()) as StudySource;
+        setSources((prev) => [source, ...prev]);
+        onSelectSource?.(source);
+        added += 1;
+      }
     }
 
-    if (next.length) {
-      setSources((prev) => [...next, ...prev]);
-      onSelectSource?.(next[0]);
-      setStatus(`${next.length} PDF source(s) added.`);
+    if (added) {
+      setStatus(`${added} PDF source(s) added.`);
     } else {
       setStatus("No valid PDF file selected.");
     }
@@ -111,25 +127,30 @@ export function SourcesPanel({
     setLoading(true);
     setStatus("Extracting text from URL...");
     try {
-      const response = await fetch("/api/source-extract-url", {
+      const extractionResponse = await fetch("/api/source-extract-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       });
-      if (!response.ok) throw new Error("URL extraction failed");
-      const data = await response.json();
+      if (!extractionResponse.ok) throw new Error("URL extraction failed");
+      const data = await extractionResponse.json();
       const title = String(data.title || "Web Source");
       const text = normalizeSourceText(String(data.text || ""));
 
-      const source: StudySource = {
-        id: makeId(),
-        title,
-        type: "url",
-        originalUrl: url,
-        extractedText: text,
-        createdAt: new Date().toISOString(),
-      };
+      const saveResponse = await fetch("/api/workspace/sources", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workspaceKey,
+          title,
+          type: "url",
+          originalUrl: url,
+          extractedText: text,
+        }),
+      });
+      if (!saveResponse.ok) throw new Error("Could not save source");
 
+      const source = (await saveResponse.json()) as StudySource;
       setSources((prev) => [source, ...prev]);
       onSelectSource?.(source);
       const formatted = sourceTextToHtml(`Source Imported: ${title}`, text);
@@ -147,7 +168,8 @@ export function SourcesPanel({
     }
   };
 
-  const removeSource = (sourceId: string) => {
+  const removeSource = async (sourceId: string) => {
+    await fetch(`/api/workspace/sources/${sourceId}`, { method: "DELETE" });
     setSources((prev) => {
       const next = prev.filter((source) => source.id !== sourceId);
       onSelectSource?.(next[0] || null);
@@ -226,10 +248,7 @@ export function SourcesPanel({
       <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
         {filteredSources.map((source) => (
           <div key={source.id} className="p-2 rounded-lg border border-[#d8c6b2] bg-[#fff8ee]">
-            <button
-              onClick={() => onSelectSource?.(source)}
-              className="w-full text-left"
-            >
+            <button onClick={() => onSelectSource?.(source)} className="w-full text-left">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-medium text-[#6f5b43] truncate">{source.title}</p>
                 <span className="text-[10px] uppercase text-[#9c8871]">{source.type}</span>
@@ -244,7 +263,9 @@ export function SourcesPanel({
                 View In Workspace
               </button>
               <button
-                onClick={() => removeSource(source.id)}
+                onClick={() => {
+                  void removeSource(source.id);
+                }}
                 className="text-[10px] px-2 py-0.5 rounded border border-[#d8c6b2] text-[#7a6143] hover:bg-[#f2e6d8]"
               >
                 Remove

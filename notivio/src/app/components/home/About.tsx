@@ -19,6 +19,7 @@ import {
 const FeatureCarousel = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [autoRotate, setAutoRotate] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(containerRef, { once: false, amount: 0.3 });
 
@@ -84,6 +85,10 @@ const FeatureCarousel = () => {
     return () => clearInterval(interval);
   }, [isInView, autoRotate, features.length]);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const nextSlide = () => {
     setAutoRotate(false);
     setActiveIndex((prev) => (prev + 1) % features.length);
@@ -123,6 +128,34 @@ const FeatureCarousel = () => {
       zIndex: Math.round(opacity * 10),
     };
   };
+
+  if (!mounted) {
+    const FirstIcon = features[0].icon;
+    return (
+      <div ref={containerRef} className="relative w-full h-[600px] overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-full max-w-xl">
+            <div className="relative bg-black border border-[#c6ac8f] rounded-xl p-8 shadow-xl">
+              <div
+                className={`absolute inset-0 rounded-xl bg-gradient-to-br ${features[0].bgGradient} opacity-30`}
+              />
+              <div className="relative z-10">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 rounded-lg bg-[#c6ac8f] border border-[#c6ac8f]/30 text-[#8a7559]">
+                    <FirstIcon className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-white font-semibold text-2xl">
+                    {features[0].title}
+                  </h3>
+                </div>
+                <p className="text-gray-200 text-lg">{features[0].description}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

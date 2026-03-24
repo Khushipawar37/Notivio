@@ -36,7 +36,6 @@ export function WorkspaceLayout() {
 
   const {
     filteredNotebooks,
-    notebooks,
     searchQuery,
     setSearchQuery,
     activePageId,
@@ -77,28 +76,16 @@ export function WorkspaceLayout() {
 
   const handleDeleteNotebook = useCallback(
     (notebookId: string) => {
-      const notebook = notebooks.find((nb) => nb.id === notebookId);
-      if (!notebook) return;
-      const sectionIds = notebook.sections.map((section) => section.id);
-      const pageIds = notebook.sections.flatMap((section) =>
-        section.pages.map((page) => page.id)
-      );
-      void deleteNotebook(notebookId, sectionIds, pageIds);
+      void deleteNotebook(notebookId);
     },
-    [deleteNotebook, notebooks]
+    [deleteNotebook]
   );
 
   const handleDeleteSection = useCallback(
-    (notebookId: string, sectionId: string) => {
-      const notebook = notebooks.find((nb) => nb.id === notebookId);
-      const section = notebook?.sections.find((sec) => sec.id === sectionId);
-      if (!section) return;
-      void deleteSection(
-        sectionId,
-        section.pages.map((page) => page.id)
-      );
+    (_notebookId: string, sectionId: string) => {
+      void deleteSection(sectionId);
     },
-    [deleteSection, notebooks]
+    [deleteSection]
   );
 
   const handleExport = useCallback(

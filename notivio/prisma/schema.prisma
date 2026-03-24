@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SourceType {
+  PDF
+  URL
+}
+
+enum StudySessionType {
+  STUDY
+  BREAK
+}
+
+model UserProfile {
+  id          String   @id
+  email       String?
+  displayName String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  notebooks      Notebook[]
+  sections       Section[]
+  pages          Page[]
+  sources        StudySource[]
+  flashcards     Flashcard[]
+  studySessions  StudySession[]
+  workspaceState WorkspaceState[]
+}
+
+model Notebook {
+  id         String   @id @default(cuid())
+  userId     String
+  title      String
+  emoji      String   @default("")
+  isExpanded Boolean  @default(true)
+  sortOrder  Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sections Section[]
+  pages    Page[]
+
+  @@index([userId, sortOrder])
+}
+
+model Section {
+  id         String   @id @default(cuid())
+  userId     String
+  notebookId String
+  title      String
+  isExpanded Boolean  @default(true)
+  sortOrder  Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notebook Notebook    @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  pages    Page[]
+
+  @@index([userId, notebookId, sortOrder])
+}
+
+model Page {
+  id         String   @id @default(cuid())
+  userId     String
+  notebookId String
+  sectionId  String
+  title      String
+  content    String   @db.Text
+  tags       String[] @default([])
+  sortOrder  Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notebook Notebook    @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  section  Section     @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  sources  StudySource[]
+
+  @@index([userId, notebookId, sectionId, sortOrder])
+}
+
+model StudySource {
+  id           String     @id @default(cuid())
+  userId       String
+  pageId       String?
+  workspaceKey String
+  title        String
+  type         SourceType
+  fileName     String?
+  mimeType     String?
+  fileData     Bytes?
+  originalUrl  String?
+  extractedText String?   @db.Text
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  page Page?       @relation(fields: [pageId], references: [id], onDelete: SetNull)
+
+  @@index([userId, workspaceKey, createdAt])
+  @@index([userId, pageId])
+}
+
+model Flashcard {
+  id              String   @id @default(cuid())
+  userId          String
+  pageId          String?
+  question        String   @db.Text
+  answer          String   @db.Text
+  intervalDays    Int      @default(1)
+  easeFactor      Float    @default(2.5)
+  repetitions     Int      @default(0)
+  dueDate         DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, dueDate])
+  @@index([userId, pageId])
+}
+
+model StudySession {
+  id              String           @id @default(cuid())
+  userId          String
+  type            StudySessionType
+  durationSeconds Int
+  pageId          String?
+  completedAt     DateTime         @default(now())
+
+  user UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, completedAt])
+  @@index([userId, pageId])
+}
+
+model WorkspaceState {
+  id              String   @id @default(cuid())
+  userId          String
+  key             String
+  activeNotebookId String?
+  activeSectionId  String?
+  activePageId     String?
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  user UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([userId, updatedAt])
+}
