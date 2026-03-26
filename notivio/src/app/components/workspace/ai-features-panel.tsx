@@ -633,11 +633,10 @@ export function AIFeaturesPanel({
                 setActiveFeature(isSame ? null : f.id);
                 resetFeature();
               }}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-150 flex items-center gap-2.5 group ${
-                activeFeature === f.id
+              className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-150 flex items-center gap-2.5 group ${activeFeature === f.id
                   ? "bg-[#f2e6d8] border border-[#d8c6b2] shadow-sm"
                   : "hover:bg-[#f2e6d8] hover:shadow-sm hover:-translate-y-[1px] border border-transparent"
-              }`}
+                }`}
             >
               <f.icon className={`w-4 h-4 ${activeFeature === f.id ? "text-[#8a7559]" : "text-[#9c8871] group-hover:text-[#8a7559]"}`} />
               <div className="flex-1 min-w-0">
