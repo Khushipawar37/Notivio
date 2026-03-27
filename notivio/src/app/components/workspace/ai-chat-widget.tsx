@@ -119,11 +119,10 @@ export function AIChatWidget({ content }: AIChatWidgetProps) {
             {messages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}
-                className={`max-w-[88%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
-                  message.role === "user"
+                className={`max-w-[88%] rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${message.role === "user"
                     ? "ml-auto bg-[#e7d6c2] text-[#5d4a34]"
                     : "mr-auto bg-[#f2e6d8] text-[#6f5b43] border border-[#e4d7c8]"
-                }`}
+                  }`}
               >
                 {message.text || (loading && index === messages.length - 1 ? "..." : "")}
               </div>
