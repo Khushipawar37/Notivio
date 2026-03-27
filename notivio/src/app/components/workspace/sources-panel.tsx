@@ -48,6 +48,7 @@ export function SourcesPanel({
   const [urlInput, setUrlInput] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sourcesLoading, setSourcesLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const onSelectSourceRef = useRef(onSelectSource);
 
@@ -56,17 +57,20 @@ export function SourcesPanel({
   }, [onSelectSource]);
 
   const loadSources = useCallback(async () => {
+    setSourcesLoading(true);
     const response = await fetch(
       `/api/workspace/sources?workspaceKey=${encodeURIComponent(workspaceKey)}`,
       { cache: "no-store" }
     );
     if (!response.ok) {
       setSources([]);
+      setSourcesLoading(false);
       return;
     }
     const data = (await response.json()) as StudySource[];
     setSources(data);
     onSelectSourceRef.current?.(data[0] || null);
+    setSourcesLoading(false);
   }, [workspaceKey]);
 
   useEffect(() => {
@@ -246,7 +250,14 @@ export function SourcesPanel({
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
-        {filteredSources.map((source) => (
+        {sourcesLoading ? (
+          <div className="space-y-2 animate-pulse">
+            <div className="h-16 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8]" />
+            <div className="h-16 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8]" />
+            <p className="text-xs text-[#8a7559]">Loading sources...</p>
+          </div>
+        ) : (
+          filteredSources.map((source) => (
           <div key={source.id} className="p-2 rounded-lg border border-[#d8c6b2] bg-[#fff8ee]">
             <button onClick={() => onSelectSource?.(source)} className="w-full text-left">
               <div className="flex items-center justify-between gap-2">
@@ -272,8 +283,9 @@ export function SourcesPanel({
               </button>
             </div>
           </div>
-        ))}
-        {!filteredSources.length && (
+          ))
+        )}
+        {!sourcesLoading && !filteredSources.length && (
           <p className="text-xs text-[#8a7559]">No sources yet. Import a PDF or URL.</p>
         )}
       </div>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useRef, useState } from "react";
 import {
@@ -47,6 +47,7 @@ export interface Notebook {
 
 interface NotebookSidebarProps {
   notebooks: Notebook[];
+  loading?: boolean;
   activePageId: string | null;
   searchQuery: string;
   onSearchChange: (value: string) => void;
@@ -69,6 +70,7 @@ interface NotebookSidebarProps {
 
 export function NotebookSidebar({
   notebooks,
+  loading = false,
   activePageId,
   searchQuery,
   onSearchChange,
@@ -159,6 +161,16 @@ export function NotebookSidebar({
       </div>
 
       <div className="flex-1 overflow-y-auto py-2">
+        {loading ? (
+          <div className="px-4 py-6 space-y-3 animate-pulse">
+            <div className="h-3 w-24 rounded bg-[#e7d6c2]" />
+            <div className="h-8 w-full rounded bg-[#efe2d2]" />
+            <div className="h-8 w-11/12 rounded bg-[#efe2d2]" />
+            <div className="h-8 w-10/12 rounded bg-[#efe2d2]" />
+            <p className="text-xs text-[#8a7559]">Loading notebooks...</p>
+          </div>
+        ) : (
+          <>
         {notebooks.map((notebook) => (
           <div key={notebook.id}>
             {(() => {
@@ -413,6 +425,8 @@ export function NotebookSidebar({
               Create Notebook
             </button>
           </div>
+        )}
+          </>
         )}
       </div>
 

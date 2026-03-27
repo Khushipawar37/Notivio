@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -170,12 +170,22 @@ export function WorkspaceLayout() {
         }
         onToggleNotebook={(notebookId) => void toggleNotebook(notebookId)}
         onToggleSection={(_notebookId, sectionId) => void toggleSection(sectionId)}
+        loading={loading}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
       />
 
       <main className="flex-1 min-w-0 flex flex-col bg-[#fffaf3]">
-        {activePage ? (
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center px-6">
+            <div className="text-center max-w-lg animate-pulse">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-[#e7d6c2]" />
+              <div className="h-6 w-48 mx-auto rounded bg-[#efe2d2]" />
+              <div className="h-4 w-72 mt-3 mx-auto rounded bg-[#efe2d2]" />
+              <p className="mt-4 text-xs text-[#8e775e]">Loading your notes workspace...</p>
+            </div>
+          </div>
+        ) : activePage ? (
           <>
             <header className="px-4 py-2 border-b border-[#e4d7c8] bg-[#f8f1e7]">
               <div className="flex items-center justify-between gap-3">
@@ -304,7 +314,6 @@ export function WorkspaceLayout() {
                 Click the page icon next to any notebook to create/open a note, then type in the center editor.
                 Use the top toolbar for headings, colors, highlights, tables, images, symbols, and formatting.
               </p>
-              {loading && <p className="mt-4 text-xs text-[#8e775e]">Loading your workspace...</p>}
             </div>
           </div>
         )}

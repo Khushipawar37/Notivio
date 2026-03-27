@@ -9,6 +9,7 @@ import { Input } from "../../components/ui/input";
 import { Progress } from "../../components/ui/progress";
 import StatsRow from "./StatsRow";
 import MissionList from "./MissionList";
+import { stackClientApp } from "@/stack/client";
 
 interface ProfileSectionProps {
   darkMode?: boolean;
@@ -166,6 +167,15 @@ export default function ProfileSection({ darkMode = false }: ProfileSectionProps
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await stackClientApp.signOut();
+      window.location.href = "/auth/login";
+    } catch {
+      window.location.href = "/auth/login";
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[320px] items-center justify-center">
@@ -285,6 +295,9 @@ export default function ProfileSection({ darkMode = false }: ProfileSectionProps
             </Button>
             <Button asChild variant="outline">
               <Link href="/">Join Study Circle</Link>
+            </Button>
+            <Button onClick={handleLogout} variant="destructive">
+              Log out
             </Button>
           </div>
 

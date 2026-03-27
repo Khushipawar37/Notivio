@@ -38,7 +38,7 @@ export default async function NotesPage() {
   ];
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#f8f4ec] via-[#f5f0e8] to-[#f2eadf] px-4 py-10">
+    <main className="min-h-screen bg-gradient-to-b from-[#f8f4ec] via-[#f5f0e8] to-[#f2eadf] px-4 pb-10 pt-32">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="rounded-2xl border-[#c6ac8f]/30 shadow-lg transition-all duration-300 hover:shadow-xl">
@@ -76,7 +76,7 @@ export default async function NotesPage() {
             </CardContent>
           </Card>
 
-          <YouTubeQuickNotes />
+          <YouTubeQuickNotes disabledForGuests />
         </div>
 
         <section className="space-y-4">

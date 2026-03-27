@@ -17,6 +17,9 @@ interface TranscriptResponse {
   error?: string;
   details?: string;
 }
+interface YouTubeQuickNotesProps {
+  disabledForGuests?: boolean;
+}
 
 function buildDraftNote(
   title: string,
@@ -51,7 +54,7 @@ function buildDraftNote(
   ].join("\n");
 }
 
-export default function YouTubeQuickNotes() {
+export default function YouTubeQuickNotes({ disabledForGuests = false }: YouTubeQuickNotesProps) {
   const [videoUrl, setVideoUrl] = useState("");
   const [quality, setQuality] = useState<Quality>("balanced");
   const [draftNote, setDraftNote] = useState("");
@@ -132,6 +135,7 @@ export default function YouTubeQuickNotes() {
             placeholder="https://www.youtube.com/watch?v=..."
             value={videoUrl}
             onChange={(event) => setVideoUrl(event.target.value)}
+            disabled={disabledForGuests}
             className="border-[#c6ac8f]/40 focus-visible:ring-[#c6ac8f]/50"
           />
         </div>
@@ -144,6 +148,7 @@ export default function YouTubeQuickNotes() {
             id="quality"
             value={quality}
             onChange={(event) => setQuality(event.target.value as Quality)}
+            disabled={disabledForGuests}
             className="h-10 w-full rounded-md border border-[#c6ac8f]/40 bg-white px-3 text-sm outline-none ring-offset-background transition focus:ring-2 focus:ring-[#c6ac8f]/50"
           >
             <option value="quick">Quick</option>
@@ -154,7 +159,7 @@ export default function YouTubeQuickNotes() {
 
         <Button
           onClick={handleGenerate}
-          disabled={loading || !videoUrl.trim()}
+          disabled={disabledForGuests || loading || !videoUrl.trim()}
           className="w-full bg-[#8a7559] text-white hover:bg-[#7a664f]"
         >
           {loading ? (
@@ -166,6 +171,30 @@ export default function YouTubeQuickNotes() {
             "Generate Notes"
           )}
         </Button>
+
+        {disabledForGuests ? (
+          <div className="rounded-lg border border-[#c6ac8f]/30 bg-[#fffaf2] px-4 py-3 text-sm text-[#6f5b43]">
+            <p className="font-medium">
+              Login to access premium note-taking workspace with AI features.
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              If you only want YouTube-to-notes conversion, use the Convert section.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button asChild size="sm" className="bg-[#8a7559] text-white hover:bg-[#7a664f]">
+                <Link href="/auth/login">Login for workspace</Link>
+              </Button>
+              <Button
+                asChild
+                size="sm"
+                variant="outline"
+                className="border-[#c6ac8f]/40 text-[#6f5b43]"
+              >
+                <Link href="/convert">Go to Convert</Link>
+              </Button>
+            </div>
+          </div>
+        ) : null}
 
         {message ? (
           <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 animate-in fade-in duration-300">

@@ -5,6 +5,7 @@ import "./globals.css";
 import Navbar from "./components/home/Navbar";
 import { ToastWrapper } from "./components/ui/use-toast";
 import { AppProviders } from "./providers";
+import { stackServerApp } from "@/stack/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,18 +22,22 @@ export const metadata: Metadata = {
   description: "Notivio - Notes that Ace Exams",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await stackServerApp.getUser({ or: "return-null" });
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AppProviders>
-          <Navbar />
+          <Suspense fallback={null}>
+            <Navbar isAuthenticated={!!user} />
+          </Suspense>
           <Suspense fallback={null}>
             <ToastWrapper>{children}</ToastWrapper>
           </Suspense>
