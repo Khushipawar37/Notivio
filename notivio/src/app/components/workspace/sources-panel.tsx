@@ -258,31 +258,31 @@ export function SourcesPanel({
           </div>
         ) : (
           filteredSources.map((source) => (
-          <div key={source.id} className="p-2 rounded-lg border border-[#d8c6b2] bg-[#fff8ee]">
-            <button onClick={() => onSelectSource?.(source)} className="w-full text-left">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-[#6f5b43] truncate">{source.title}</p>
-                <span className="text-[10px] uppercase text-[#9c8871]">{source.type}</span>
+            <div key={source.id} className="p-2 rounded-lg border border-[#d8c6b2] bg-[#fff8ee]">
+              <button onClick={() => onSelectSource?.(source)} className="w-full text-left">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-[#6f5b43] truncate">{source.title}</p>
+                  <span className="text-[10px] uppercase text-[#9c8871]">{source.type}</span>
+                </div>
+              </button>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <button
+                  onClick={() => onSelectSource?.(source)}
+                  className="text-[10px] px-2 py-0.5 rounded border border-[#d8c6b2] text-[#7a6143] hover:bg-[#f2e6d8] inline-flex items-center gap-1"
+                >
+                  <FileText className="w-3 h-3" />
+                  View In Workspace
+                </button>
+                <button
+                  onClick={() => {
+                    void removeSource(source.id);
+                  }}
+                  className="text-[10px] px-2 py-0.5 rounded border border-[#d8c6b2] text-[#7a6143] hover:bg-[#f2e6d8]"
+                >
+                  Remove
+                </button>
               </div>
-            </button>
-            <div className="mt-2 flex items-center justify-between gap-2">
-              <button
-                onClick={() => onSelectSource?.(source)}
-                className="text-[10px] px-2 py-0.5 rounded border border-[#d8c6b2] text-[#7a6143] hover:bg-[#f2e6d8] inline-flex items-center gap-1"
-              >
-                <FileText className="w-3 h-3" />
-                View In Workspace
-              </button>
-              <button
-                onClick={() => {
-                  void removeSource(source.id);
-                }}
-                className="text-[10px] px-2 py-0.5 rounded border border-[#d8c6b2] text-[#7a6143] hover:bg-[#f2e6d8]"
-              >
-                Remove
-              </button>
             </div>
-          </div>
           ))
         )}
         {!sourcesLoading && !filteredSources.length && (
