@@ -689,10 +689,10 @@ export default function VideoNotesPage() {
                       <Badge
                         variant="secondary"
                         className={`text-xs ${notes.difficulty === "beginner"
-                            ? "bg-green-100 text-green-700"
-                            : notes.difficulty === "intermediate"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-red-100 text-red-700"
+                          ? "bg-green-100 text-green-700"
+                          : notes.difficulty === "intermediate"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
                           }`}
                       >
                         {notes.difficulty.charAt(0).toUpperCase() + notes.difficulty.slice(1)}
