@@ -38,10 +38,18 @@ export function sourceTextToHtml(title: string, text: string) {
     if (headingMatch) {
       return `<h3>${escapeHtml(headingMatch[1])}</h3>`;
     }
-    const listLines = block.split("\n").filter((line) => /^[-*]\s+/.test(line.trim()));
-    if (listLines.length >= 2 && listLines.length === block.split("\n").length) {
+    const listLines = block
+      .split("\n")
+      .filter((line) => /^[-*]\s+/.test(line.trim()));
+    if (
+      listLines.length >= 2 &&
+      listLines.length === block.split("\n").length
+    ) {
       const items = listLines
-        .map((line) => `<li>${escapeHtml(line.replace(/^[-*]\s+/, "").trim())}</li>`)
+        .map(
+          (line) =>
+            `<li>${escapeHtml(line.replace(/^[-*]\s+/, "").trim())}</li>`,
+        )
         .join("");
       return `<ul>${items}</ul>`;
     }
@@ -59,4 +67,3 @@ export function looksLikeGibberish(text: string) {
   const longWords = (t.match(/[A-Za-z0-9]{25,}/g) || []).length;
   return ratio > 0.18 || longWords > 12;
 }
-
