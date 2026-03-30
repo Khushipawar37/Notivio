@@ -1,8 +1,17 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { getCurrentUserProfile } from "@/server/auth";
-import { detectTone, formatTutorStylePrefix, PERSONAL_TUTOR_SYSTEM_PROMPT } from "@/app/lib/personal-tutor";
-import { getOrCreateTutorProfile, listConceptMetrics, logTutorEvent, updateConceptMetric } from "@/server/tutor";
+import {
+  detectTone,
+  formatTutorStylePrefix,
+  PERSONAL_TUTOR_SYSTEM_PROMPT,
+} from "@/app/lib/personal-tutor";
+import {
+  getOrCreateTutorProfile,
+  listConceptMetrics,
+  logTutorEvent,
+  updateConceptMetric,
+} from "@/server/tutor";
 import { callGroqJson } from "@/server/groq-json";
 
 const schema = z.object({
@@ -16,13 +25,18 @@ const schema = z.object({
 });
 
 function fallbackConceptId(text: string) {
-  const words = text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean);
+  const words = text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
   return words.slice(0, 3).join("_") || "general_concept";
 }
 
 export async function POST(request: Request) {
   const user = await getCurrentUserProfile();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = (await request.json()) as {
     submission?: string;
@@ -33,7 +47,10 @@ export async function POST(request: Request) {
 
   const submission = String(body.submission ?? "").trim();
   if (!submission) {
-    return NextResponse.json({ error: "submission is required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "submission is required" },
+      { status: 400 },
+    );
   }
 
   const [profile, metrics] = await Promise.all([
@@ -43,8 +60,11 @@ export async function POST(request: Request) {
 
   const recentCorrectRate =
     metrics.length > 0
-      ? metrics.reduce((sum, metric) => sum + (metric.attempts > 0 ? metric.correct / metric.attempts : 0), 0) /
-        metrics.length
+      ? metrics.reduce(
+          (sum, metric) =>
+            sum + (metric.attempts > 0 ? metric.correct / metric.attempts : 0),
+          0,
+        ) / metrics.length
       : 0.6;
 
   const tone = detectTone({
@@ -55,7 +75,7 @@ export async function POST(request: Request) {
 
   const stylePrefix = formatTutorStylePrefix(
     tone,
-    (profile.preferredPersona as "strict" | "patient" | "neutral") ?? "patient"
+    (profile.preferredPersona as "strict" | "patient" | "neutral") ?? "patient",
   );
 
   let result: z.infer<typeof schema>;
@@ -73,7 +93,7 @@ Blank-page submission:
 ${submission}
 
 Return tailored promptFrame + suggestions + conceptId + confidence + correctness + reasoningSummary + nextSteps.`,
-      schema
+      schema,
     );
     result = object;
   } catch {
@@ -116,7 +136,10 @@ Return tailored promptFrame + suggestions + conceptId + confidence + correctness
       userId: user.id,
       actor: "tutor",
       type: "prompt",
-      payload: { promptFrame: result.promptFrame, suggestions: result.suggestions },
+      payload: {
+        promptFrame: result.promptFrame,
+        suggestions: result.suggestions,
+      },
       reasoningSummary: result.reasoningSummary,
       confidence: result.confidence,
       suggestedNextSteps: result.nextSteps,
