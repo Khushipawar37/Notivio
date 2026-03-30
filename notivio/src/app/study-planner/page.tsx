@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function TemplatePage() {
+export default function LegacyStudyPlannerRedirect() {
   redirect("/dashboard/tutor");
 }

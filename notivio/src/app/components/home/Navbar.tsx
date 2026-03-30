@@ -92,7 +92,7 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
     { href: "/", icon: <Home size={24} />, label: "Home" },
     { href: "/notes", icon: <FileText size={24} />, label: "Notes" },
     { href: "/convert", icon: <Video size={24} />, label: "Convert" },
-    { href: "/template", icon: <FlashCard size={24} />, label: "Template" },
+    { href: "/dashboard/tutor", icon: <FlashCard size={24} />, label: "Tutor" },
   ];
 
   useEffect(() => {

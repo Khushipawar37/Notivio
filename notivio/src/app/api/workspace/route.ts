@@ -7,11 +7,49 @@ export const dynamic = "force-dynamic";
 
 const WORKSPACE_STATE_KEY = "default";
 
+type WorkspaceStateShape = {
+  activeNotebookId: string | null;
+  activeSectionId: string | null;
+  activePageId: string | null;
+};
+
+type ShareAccess = {
+  mode: "share";
+  token: string;
+  role: "viewer" | "editor";
+  note: {
+    id: string;
+    title: string;
+    content: string;
+    tags: string[];
+    createdAt: Date;
+    updatedAt: Date;
+    notebookId: string;
+    sectionId: string;
+    notebookTitle: string;
+    sectionTitle: string;
+  };
+};
+
+type UserAccess = {
+  mode: "user";
+  userId: string;
+};
+
+type AccessContext = ShareAccess | UserAccess;
+
 function unauthorized() {
   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 }
 
-function mapBootstrap(notebooks: Awaited<ReturnType<typeof loadNotebooks>>, state: { activeNotebookId: string | null; activeSectionId: string | null; activePageId: string | null } | null) {
+function forbidden() {
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+}
+
+function mapBootstrap(
+  notebooks: Awaited<ReturnType<typeof loadNotebooks>>,
+  state: WorkspaceStateShape | null
+) {
   return {
     notebooks: notebooks.map((notebook) => ({
       id: notebook.id,
@@ -40,6 +78,101 @@ function mapBootstrap(notebooks: Awaited<ReturnType<typeof loadNotebooks>>, stat
       activeNotebookId: null,
       activeSectionId: null,
       activePageId: null,
+    },
+  };
+}
+
+function mapShareBootstrap(access: ShareAccess) {
+  const note = access.note;
+  return {
+    notebooks: [
+      {
+        id: note.notebookId,
+        title: `${note.notebookTitle} (Shared)`,
+        emoji: "",
+        isExpanded: true,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+        sections: [
+          {
+            id: note.sectionId,
+            title: note.sectionTitle,
+            isExpanded: true,
+            createdAt: note.createdAt,
+            updatedAt: note.updatedAt,
+            pages: [
+              {
+                id: note.id,
+                title: note.title,
+                content: note.content,
+                tags: note.tags,
+                createdAt: note.createdAt,
+                updatedAt: note.updatedAt,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    state: {
+      activeNotebookId: note.notebookId,
+      activeSectionId: note.sectionId,
+      activePageId: note.id,
+    },
+  };
+}
+
+async function resolveAccess(request: Request): Promise<AccessContext | null> {
+  const user = await getCurrentUserProfile();
+  if (user) {
+    return { mode: "user", userId: user.id };
+  }
+
+  const token = request.headers.get("x-share-token");
+  if (!token) return null;
+
+  const link = await prisma.sharedLink.findUnique({
+    where: { token },
+    include: {
+      note: {
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          tags: true,
+          createdAt: true,
+          updatedAt: true,
+          notebookId: true,
+          sectionId: true,
+          notebook: {
+            select: { title: true },
+          },
+          section: {
+            select: { title: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (!link || link.revokedAt) return null;
+  if (link.expiresAt && link.expiresAt.getTime() < Date.now()) return null;
+
+  return {
+    mode: "share",
+    token,
+    role: link.role === "editor" ? "editor" : "viewer",
+    note: {
+      id: link.note.id,
+      title: link.note.title,
+      content: link.note.content,
+      tags: link.note.tags,
+      createdAt: link.note.createdAt,
+      updatedAt: link.note.updatedAt,
+      notebookId: link.note.notebookId,
+      sectionId: link.note.sectionId,
+      notebookTitle: link.note.notebook.title,
+      sectionTitle: link.note.section.title,
     },
   };
 }
@@ -85,15 +218,19 @@ async function getPageMaxSortOrder(userId: string, sectionId: string) {
   return (result._max.sortOrder ?? -1) + 1;
 }
 
-export async function GET() {
-  const user = await getCurrentUserProfile();
-  if (!user) return unauthorized();
+export async function GET(request: Request) {
+  const access = await resolveAccess(request);
+  if (!access) return unauthorized();
+
+  if (access.mode === "share") {
+    return NextResponse.json(mapShareBootstrap(access));
+  }
 
   const [notebooks, state] = await Promise.all([
-    loadNotebooks(user.id),
+    loadNotebooks(access.userId),
     prisma.workspaceState.findUnique({
       where: {
-        userId_key: { userId: user.id, key: WORKSPACE_STATE_KEY },
+        userId_key: { userId: access.userId, key: WORKSPACE_STATE_KEY },
       },
       select: {
         activeNotebookId: true,
@@ -107,8 +244,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const user = await getCurrentUserProfile();
-  if (!user) return unauthorized();
+  const access = await resolveAccess(request);
+  if (!access) return unauthorized();
 
   const { action, payload } = (await request.json()) as {
     action: string;
@@ -116,13 +253,55 @@ export async function POST(request: Request) {
   };
 
   try {
+    if (access.mode === "share") {
+      const pageId = String(payload?.pageId ?? payload?.activePageId ?? "");
+      if (pageId && pageId !== access.note.id) return forbidden();
+
+      if (action === "setActivePage") {
+        return NextResponse.json({ ok: true });
+      }
+
+      if (access.role !== "editor") {
+        return forbidden();
+      }
+
+      switch (action) {
+        case "updatePageContent": {
+          await prisma.page.update({
+            where: { id: access.note.id },
+            data: { content: String(payload?.content ?? "") },
+          });
+          return NextResponse.json({ ok: true });
+        }
+        case "renamePage": {
+          await prisma.page.update({
+            where: { id: access.note.id },
+            data: { title: String(payload?.title ?? "Untitled Page") },
+          });
+          return NextResponse.json({ ok: true });
+        }
+        case "updatePageTags": {
+          const tags = Array.isArray(payload?.tags) ? payload.tags.map(String) : [];
+          await prisma.page.update({
+            where: { id: access.note.id },
+            data: { tags },
+          });
+          return NextResponse.json({ ok: true });
+        }
+        default:
+          return forbidden();
+      }
+    }
+
+    const userId = access.userId;
+
     switch (action) {
       case "createNotebook": {
         const created = await prisma.$transaction(async (tx) => {
-          const notebookSortOrder = await getNotebookMaxSortOrder(user.id);
+          const notebookSortOrder = await getNotebookMaxSortOrder(userId);
           const notebook = await tx.notebook.create({
             data: {
-              userId: user.id,
+              userId,
               title: "New Notebook",
               emoji: "",
               isExpanded: true,
@@ -132,7 +311,7 @@ export async function POST(request: Request) {
 
           const section = await tx.section.create({
             data: {
-              userId: user.id,
+              userId,
               notebookId: notebook.id,
               title: "General",
               isExpanded: true,
@@ -142,7 +321,7 @@ export async function POST(request: Request) {
 
           const page = await tx.page.create({
             data: {
-              userId: user.id,
+              userId,
               notebookId: notebook.id,
               sectionId: section.id,
               title: "Untitled Page",
@@ -153,9 +332,9 @@ export async function POST(request: Request) {
           });
 
           await tx.workspaceState.upsert({
-            where: { userId_key: { userId: user.id, key: WORKSPACE_STATE_KEY } },
+            where: { userId_key: { userId, key: WORKSPACE_STATE_KEY } },
             create: {
-              userId: user.id,
+              userId,
               key: WORKSPACE_STATE_KEY,
               activeNotebookId: notebook.id,
               activeSectionId: section.id,
@@ -178,10 +357,10 @@ export async function POST(request: Request) {
         const notebookId = String(payload?.notebookId ?? "");
         if (!notebookId) return NextResponse.json({ error: "Invalid notebookId" }, { status: 400 });
 
-        const sectionSortOrder = await getSectionMaxSortOrder(user.id, notebookId);
+        const sectionSortOrder = await getSectionMaxSortOrder(userId, notebookId);
         const section = await prisma.section.create({
           data: {
-            userId: user.id,
+            userId,
             notebookId,
             title: "New Section",
             isExpanded: true,
@@ -189,7 +368,7 @@ export async function POST(request: Request) {
           },
         });
         await prisma.notebook.updateMany({
-          where: { id: notebookId, userId: user.id },
+          where: { id: notebookId, userId },
           data: { isExpanded: true },
         });
         return NextResponse.json({ sectionId: section.id });
@@ -202,10 +381,10 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: "Invalid notebookId/sectionId" }, { status: 400 });
         }
 
-        const pageSortOrder = await getPageMaxSortOrder(user.id, sectionId);
+        const pageSortOrder = await getPageMaxSortOrder(userId, sectionId);
         const page = await prisma.page.create({
           data: {
-            userId: user.id,
+            userId,
             notebookId,
             sectionId,
             title: "Untitled Page",
@@ -216,14 +395,14 @@ export async function POST(request: Request) {
         });
 
         await prisma.section.updateMany({
-          where: { id: sectionId, userId: user.id },
+          where: { id: sectionId, userId },
           data: { isExpanded: true },
         });
 
         await prisma.workspaceState.upsert({
-          where: { userId_key: { userId: user.id, key: WORKSPACE_STATE_KEY } },
+          where: { userId_key: { userId, key: WORKSPACE_STATE_KEY } },
           create: {
-            userId: user.id,
+            userId,
             key: WORKSPACE_STATE_KEY,
             activeNotebookId: notebookId,
             activeSectionId: sectionId,
@@ -244,7 +423,7 @@ export async function POST(request: Request) {
         if (!notebookId) return NextResponse.json({ error: "Invalid notebookId" }, { status: 400 });
 
         const firstSection = await prisma.section.findFirst({
-          where: { userId: user.id, notebookId },
+          where: { userId, notebookId },
           orderBy: { sortOrder: "asc" },
           select: { id: true },
         });
@@ -253,7 +432,7 @@ export async function POST(request: Request) {
         if (!sectionId) {
           const section = await prisma.section.create({
             data: {
-              userId: user.id,
+              userId,
               notebookId,
               title: "General",
               isExpanded: true,
@@ -263,10 +442,10 @@ export async function POST(request: Request) {
           sectionId = section.id;
         }
 
-        const pageSortOrder = await getPageMaxSortOrder(user.id, sectionId);
+        const pageSortOrder = await getPageMaxSortOrder(userId, sectionId);
         const page = await prisma.page.create({
           data: {
-            userId: user.id,
+            userId,
             notebookId,
             sectionId,
             title: "Untitled Page",
@@ -277,9 +456,9 @@ export async function POST(request: Request) {
         });
 
         await prisma.workspaceState.upsert({
-          where: { userId_key: { userId: user.id, key: WORKSPACE_STATE_KEY } },
+          where: { userId_key: { userId, key: WORKSPACE_STATE_KEY } },
           create: {
-            userId: user.id,
+            userId,
             key: WORKSPACE_STATE_KEY,
             activeNotebookId: notebookId,
             activeSectionId: sectionId,
@@ -297,7 +476,7 @@ export async function POST(request: Request) {
 
       case "renameNotebook": {
         await prisma.notebook.updateMany({
-          where: { id: String(payload?.notebookId ?? ""), userId: user.id },
+          where: { id: String(payload?.notebookId ?? ""), userId },
           data: { title: String(payload?.title ?? "New Notebook") },
         });
         return NextResponse.json({ ok: true });
@@ -305,7 +484,7 @@ export async function POST(request: Request) {
 
       case "renameSection": {
         await prisma.section.updateMany({
-          where: { id: String(payload?.sectionId ?? ""), userId: user.id },
+          where: { id: String(payload?.sectionId ?? ""), userId },
           data: { title: String(payload?.title ?? "New Section") },
         });
         return NextResponse.json({ ok: true });
@@ -313,7 +492,7 @@ export async function POST(request: Request) {
 
       case "renamePage": {
         await prisma.page.updateMany({
-          where: { id: String(payload?.pageId ?? ""), userId: user.id },
+          where: { id: String(payload?.pageId ?? ""), userId },
           data: { title: String(payload?.title ?? "Untitled Page") },
         });
         return NextResponse.json({ ok: true });
@@ -321,7 +500,7 @@ export async function POST(request: Request) {
 
       case "toggleNotebook": {
         await prisma.notebook.updateMany({
-          where: { id: String(payload?.notebookId ?? ""), userId: user.id },
+          where: { id: String(payload?.notebookId ?? ""), userId },
           data: { isExpanded: Boolean(payload?.isExpanded) },
         });
         return NextResponse.json({ ok: true });
@@ -329,7 +508,7 @@ export async function POST(request: Request) {
 
       case "toggleSection": {
         await prisma.section.updateMany({
-          where: { id: String(payload?.sectionId ?? ""), userId: user.id },
+          where: { id: String(payload?.sectionId ?? ""), userId },
           data: { isExpanded: Boolean(payload?.isExpanded) },
         });
         return NextResponse.json({ ok: true });
@@ -337,30 +516,30 @@ export async function POST(request: Request) {
 
       case "deleteNotebook": {
         await prisma.notebook.deleteMany({
-          where: { id: String(payload?.notebookId ?? ""), userId: user.id },
+          where: { id: String(payload?.notebookId ?? ""), userId },
         });
         return NextResponse.json({ ok: true });
       }
 
       case "deleteSection": {
         await prisma.section.deleteMany({
-          where: { id: String(payload?.sectionId ?? ""), userId: user.id },
+          where: { id: String(payload?.sectionId ?? ""), userId },
         });
         return NextResponse.json({ ok: true });
       }
 
       case "deletePage": {
         await prisma.page.deleteMany({
-          where: { id: String(payload?.pageId ?? ""), userId: user.id },
+          where: { id: String(payload?.pageId ?? ""), userId },
         });
         return NextResponse.json({ ok: true });
       }
 
       case "setActivePage": {
         await prisma.workspaceState.upsert({
-          where: { userId_key: { userId: user.id, key: WORKSPACE_STATE_KEY } },
+          where: { userId_key: { userId, key: WORKSPACE_STATE_KEY } },
           create: {
-            userId: user.id,
+            userId,
             key: WORKSPACE_STATE_KEY,
             activeNotebookId: String(payload?.notebookId ?? ""),
             activeSectionId: String(payload?.sectionId ?? ""),
@@ -377,16 +556,16 @@ export async function POST(request: Request) {
 
       case "updatePageContent": {
         await prisma.page.updateMany({
-          where: { id: String(payload?.pageId ?? ""), userId: user.id },
+          where: { id: String(payload?.pageId ?? ""), userId },
           data: { content: String(payload?.content ?? "") },
         });
         return NextResponse.json({ ok: true });
       }
 
       case "updatePageTags": {
-        const tags = Array.isArray(payload?.tags) ? payload?.tags.map(String) : [];
+        const tags = Array.isArray(payload?.tags) ? payload.tags.map(String) : [];
         await prisma.page.updateMany({
-          where: { id: String(payload?.pageId ?? ""), userId: user.id },
+          where: { id: String(payload?.pageId ?? ""), userId },
           data: { tags },
         });
         return NextResponse.json({ ok: true });
@@ -394,7 +573,7 @@ export async function POST(request: Request) {
 
       case "saveFlashcards": {
         const cards = Array.isArray(payload?.cards)
-          ? (payload?.cards as Array<{ question?: string; answer?: string }>)
+          ? (payload.cards as Array<{ question?: string; answer?: string }>)
           : [];
         const pageId = payload?.pageId ? String(payload.pageId) : null;
         const dueDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -405,7 +584,7 @@ export async function POST(request: Request) {
           data: cards
             .filter((card) => String(card.question ?? "").trim() && String(card.answer ?? "").trim())
             .map((card) => ({
-              userId: user.id,
+              userId,
               pageId,
               question: String(card.question ?? ""),
               answer: String(card.answer ?? ""),
@@ -423,7 +602,7 @@ export async function POST(request: Request) {
         const type = rawType === "BREAK" ? StudySessionType.BREAK : StudySessionType.STUDY;
         await prisma.studySession.create({
           data: {
-            userId: user.id,
+            userId,
             type,
             durationSeconds: Number(payload?.durationSeconds ?? 0),
             pageId: payload?.pageId ? String(payload.pageId) : null,

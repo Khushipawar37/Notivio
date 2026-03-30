@@ -32,6 +32,12 @@ model UserProfile {
   flashcards     Flashcard[]
   studySessions  StudySession[]
   workspaceState WorkspaceState[]
+  noteCollaborations NoteCollaborator[]
+  noteShares      SharedLink[] @relation("SharedLinkCreator")
+  noteInvites     NoteCollaborator[] @relation("NoteInviteCreator")
+  tutorProfile    TutorProfile?
+  conceptMetrics  ConceptMetric[]
+  tutorEvents     TutorEventLog[]
 }
 
 model Notebook {
@@ -84,6 +90,9 @@ model Page {
   notebook Notebook    @relation(fields: [notebookId], references: [id], onDelete: Cascade)
   section  Section     @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   sources  StudySource[]
+  collaborators  NoteCollaborator[]
+  sharedLinks    SharedLink[]
+  revisions      NoteRevision[]
 
   @@index([userId, notebookId, sectionId, sortOrder])
 }
@@ -157,4 +166,99 @@ model WorkspaceState {
 
   @@unique([userId, key])
   @@index([userId, updatedAt])
+}
+
+model NoteCollaborator {
+  id          String   @id @default(uuid())
+  noteId       String
+  userId       String
+  role         String
+  invitedById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  note       Page        @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user       UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitedBy  UserProfile? @relation("NoteInviteCreator", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@unique([noteId, userId])
+  @@index([userId])
+}
+
+model SharedLink {
+  id          String    @id @default(uuid())
+  noteId      String
+  token       String    @unique
+  role        String
+  expiresAt   DateTime?
+  createdById String
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  note      Page        @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  createdBy UserProfile @relation("SharedLinkCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([noteId, createdAt])
+}
+
+model NoteRevision {
+  id        String   @id @default(uuid())
+  noteId    String
+  userId    String?
+  snapshot  Json
+  createdAt DateTime @default(now())
+
+  note Page @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId, createdAt])
+}
+
+model TutorProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  preferredTone   String   @default("encouraging")
+  preferredPersona String  @default("patient")
+  memoryEnabled   Boolean  @default(true)
+  studyPatterns   Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ConceptMetric {
+  id            String   @id @default(uuid())
+  userId        String
+  conceptId     String
+  attempts      Int      @default(0)
+  correct       Int      @default(0)
+  confusions    String[] @default([])
+  lastAttempt   DateTime?
+  lastWrongExamples String[] @default([])
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  user UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, conceptId])
+  @@index([userId, updatedAt])
+}
+
+model TutorEventLog {
+  id              String   @id @default(uuid())
+  userId          String
+  actor           String
+  type            String
+  payload         Json
+  reasoningSummary String?
+  confidence      Float?
+  suggestedNextSteps String[]
+  snapshotPointer String?
+  redacted        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  user UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }

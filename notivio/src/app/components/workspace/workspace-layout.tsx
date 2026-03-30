@@ -17,10 +17,17 @@ import { AIChatWidget } from "./ai-chat-widget";
 import { SourcesPanel, type StudySource } from "./sources-panel";
 import { MainSourceWorkspace } from "./main-source-workspace";
 import { NoteTemplates } from "./note-templates";
+import { ShareDialog } from "../notes/share-dialog";
 import { exportToMarkdown, exportToPDF } from "../../lib/export-utils";
 import { useWorkspace } from "../../hooks/use-workspace";
 
-export function WorkspaceLayout() {
+interface WorkspaceLayoutProps {
+  shareToken?: string | null;
+  shareRole?: "viewer" | "editor" | null;
+}
+
+export function WorkspaceLayout({ shareToken = null, shareRole = null }: WorkspaceLayoutProps) {
+  const readOnly = shareRole === "viewer";
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [rightTab, setRightTab] = useState<"ai" | "sources">("ai");
@@ -59,7 +66,7 @@ export function WorkspaceLayout() {
     updatePageContent,
     updatePageTags,
     saveFlashcards,
-  } = useWorkspace();
+  } = useWorkspace({ shareToken });
 
   const pageTagsValue = useMemo(
     () => (activePage?.tags?.length ? activePage.tags.join(", ") : ""),
@@ -197,8 +204,10 @@ export function WorkspaceLayout() {
                   </div>
 
                   <div className="flex items-center gap-1.5">
+                    {activePage && !shareToken && <ShareDialog noteId={activePage.id} />}
                     <button
                       onClick={() => setShowTemplates(true)}
+                      disabled={readOnly}
                       className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[#7c6a53] hover:text-[#5d4a34] hover:bg-[#ede1d1] rounded-lg transition-colors"
                     >
                       <LayoutTemplate className="w-3.5 h-3.5" />
@@ -254,6 +263,7 @@ export function WorkspaceLayout() {
                     onChange={(event) =>
                       void renamePage(activePage.id, event.target.value || "Untitled Page")
                     }
+                    disabled={readOnly}
                     className="flex-1 min-w-[220px] px-3 py-1.5 rounded-lg bg-white border border-[#d8c6b2] text-sm text-[#6f5b43] outline-none focus:border-[#a68b5b]"
                     placeholder="Page Title"
                   />
@@ -269,6 +279,7 @@ export function WorkspaceLayout() {
                           .filter(Boolean)
                       )
                     }
+                    disabled={readOnly}
                     className="w-full sm:w-[240px] px-3 py-1.5 rounded-lg bg-white border border-[#d8c6b2] text-sm text-[#6f5b43] outline-none focus:border-[#a68b5b]"
                     placeholder="Tags (comma separated)"
                   />
@@ -292,6 +303,7 @@ export function WorkspaceLayout() {
                         onChange={(content) => updatePageContent(activePage.id, content)}
                         onTextSelect={setSelectedText}
                         placeholder="Start writing your notes... Type '/' for commands"
+                        readOnly={readOnly}
                         onEditorReady={(api) => {
                           editorApiRef.current = api;
                         }}
@@ -349,9 +361,11 @@ export function WorkspaceLayout() {
                   selectedText={selectedText}
                   onSaveFlashcards={(cards) => void saveFlashcards(cards, activePage?.id)}
                   onInsertToNotebook={(text) => {
+                    if (readOnly) return;
                     editorApiRef.current?.insertTextAtCursor(text);
                   }}
                   onInsertToNotebookHtml={(html) => {
+                    if (readOnly) return;
                     editorApiRef.current?.insertHTMLAtCursor(html);
                   }}
                 />

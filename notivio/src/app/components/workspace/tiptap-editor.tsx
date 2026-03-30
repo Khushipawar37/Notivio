@@ -62,6 +62,7 @@ interface TipTapEditorProps {
   onChange: (content: string) => void;
   onTextSelect?: (text: string) => void;
   placeholder?: string;
+  readOnly?: boolean;
   onEditorReady?: (api: {
     insertTextAtCursor: (text: string) => void;
     insertHTMLAtCursor: (html: string) => void;
@@ -147,6 +148,7 @@ export function TipTapEditor({
   onChange,
   onTextSelect,
   placeholder = "Start writing your notes...",
+  readOnly = false,
   onEditorReady,
 }: TipTapEditorProps) {
   const [showSlashMenu, setShowSlashMenu] = useState(false);
@@ -161,6 +163,7 @@ export function TipTapEditor({
 
   const editor = useEditor({
     immediatelyRender: false,
+    editable: !readOnly,
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3, 4] },
@@ -246,6 +249,7 @@ export function TipTapEditor({
       },
     },
     onUpdate: ({ editor }) => {
+      if (readOnly) return;
       onChange(editor.getHTML());
     },
     onSelectionUpdate: ({ editor }) => {
@@ -350,6 +354,7 @@ export function TipTapEditor({
   return (
     <div className="tiptap-editor-wrapper flex flex-col h-full">
       {/* Toolbar */}
+      {!readOnly && (
       <div className="tiptap-toolbar flex items-center gap-0.5 gap-y-1 px-3 py-2 bg-[#f8f1e7] border-b border-[#e4d7c8] flex-wrap">
         <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} title="Undo">
           <Undo className="w-4 h-4" />
@@ -572,9 +577,10 @@ export function TipTapEditor({
           <Minus className="w-4 h-4" />
         </ToolbarBtn>
       </div>
+      )}
 
       {/* Bubble Menu for inline formatting on selection */}
-      {editor && (
+      {editor && !readOnly && (
         <BubbleMenu editor={editor} className="bubble-menu bg-[#fff8ee] border border-[#d8c6b2] rounded-lg shadow-xl flex items-center gap-0.5 px-1.5 py-1">
           <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive("bold")} title="Bold">
             <Bold className="w-3.5 h-3.5" />

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { WorkspaceLayout } from "../components/workspace/workspace-layout";
 import { stackServerApp } from "@/stack/server";
+import { prisma } from "@/server/prisma";
 import {
   LogIn,
   Sparkles,
@@ -22,8 +23,29 @@ const features = [
   { icon: Bot, label: "AI Chat" },
 ];
 
-export default async function NotesPage() {
+interface NotesPageProps {
+  searchParams?: Promise<{ share?: string }>;
+}
+
+export default async function NotesPage({ searchParams }: NotesPageProps) {
+  const params = searchParams ? await searchParams : undefined;
+  const shareToken = params?.share;
   const user = await stackServerApp.getUser({ or: "return-null" });
+  if (shareToken) {
+    const link = await prisma.sharedLink.findUnique({
+      where: { token: shareToken },
+      select: {
+        role: true,
+        expiresAt: true,
+        revokedAt: true,
+      },
+    });
+
+    if (link && !link.revokedAt && (!link.expiresAt || link.expiresAt.getTime() > Date.now())) {
+      const shareRole = link.role === "editor" ? "editor" : "viewer";
+      return <WorkspaceLayout shareToken={shareToken} shareRole={shareRole} />;
+    }
+  }
   if (user) return <WorkspaceLayout />;
 
   return (
