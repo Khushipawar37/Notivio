@@ -73,7 +73,7 @@ interface UseWorkspaceOptions {
 }
 
 function toWorkspaceNotebooks(
-  notebooks: WorkspaceBootstrapResponse["notebooks"]
+  notebooks: WorkspaceBootstrapResponse["notebooks"],
 ): WorkspaceNotebook[] {
   return notebooks.map((notebook) => ({
     id: notebook.id,
@@ -109,7 +109,7 @@ function workspaceHeaders(shareToken?: string | null) {
 async function postWorkspaceAction(
   action: string,
   payload?: Record<string, unknown>,
-  shareToken?: string | null
+  shareToken?: string | null,
 ) {
   const response = await fetch("/api/workspace", {
     method: "POST",
@@ -202,7 +202,7 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
         .find((nb) => nb.id === activeNotebookId)
         ?.sections.find((sec) => sec.id === activeSectionId)
         ?.pages.find((pg) => pg.id === activePageId),
-    [notebooks, activeNotebookId, activeSectionId, activePageId]
+    [notebooks, activeNotebookId, activeSectionId, activePageId],
   );
 
   const filteredNotebooks = useMemo(() => {
@@ -229,7 +229,10 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
           .filter(Boolean) as WorkspaceSection[];
 
         if (notebookMatch || sections.length) {
-          return { ...notebook, sections: notebookMatch ? notebook.sections : sections };
+          return {
+            ...notebook,
+            sections: notebookMatch ? notebook.sections : sections,
+          };
         }
 
         return null;
@@ -241,7 +244,7 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
     (updater: (previous: WorkspaceNotebook[]) => WorkspaceNotebook[]) => {
       setNotebooks((previous) => updater(previous));
     },
-    []
+    [],
   );
 
   const createNotebook = useCallback(async () => {
@@ -254,35 +257,47 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
       await postWorkspaceAction("createSection", { notebookId }, shareToken);
       await refreshWorkspace();
     },
-    [refreshWorkspace, shareToken]
+    [refreshWorkspace, shareToken],
   );
 
   const createPage = useCallback(
     async (notebookId: string, sectionId: string) => {
-      await postWorkspaceAction("createPage", { notebookId, sectionId }, shareToken);
+      await postWorkspaceAction(
+        "createPage",
+        { notebookId, sectionId },
+        shareToken,
+      );
       await refreshWorkspace();
     },
-    [refreshWorkspace, shareToken]
+    [refreshWorkspace, shareToken],
   );
 
   const createPageInNotebook = useCallback(
     async (notebookId: string) => {
-      await postWorkspaceAction("createPageInNotebook", { notebookId }, shareToken);
+      await postWorkspaceAction(
+        "createPageInNotebook",
+        { notebookId },
+        shareToken,
+      );
       await refreshWorkspace();
     },
-    [refreshWorkspace, shareToken]
+    [refreshWorkspace, shareToken],
   );
 
   const renameNotebook = useCallback(
     async (notebookId: string, title: string) => {
       mutateLocal((previous) =>
         previous.map((notebook) =>
-          notebook.id === notebookId ? { ...notebook, title } : notebook
-        )
+          notebook.id === notebookId ? { ...notebook, title } : notebook,
+        ),
       );
-      await postWorkspaceAction("renameNotebook", { notebookId, title }, shareToken);
+      await postWorkspaceAction(
+        "renameNotebook",
+        { notebookId, title },
+        shareToken,
+      );
     },
-    [mutateLocal, shareToken]
+    [mutateLocal, shareToken],
   );
 
   const renameSection = useCallback(
@@ -291,13 +306,17 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
         previous.map((notebook) => ({
           ...notebook,
           sections: notebook.sections.map((section) =>
-            section.id === sectionId ? { ...section, title } : section
+            section.id === sectionId ? { ...section, title } : section,
           ),
-        }))
+        })),
       );
-      await postWorkspaceAction("renameSection", { sectionId, title }, shareToken);
+      await postWorkspaceAction(
+        "renameSection",
+        { sectionId, title },
+        shareToken,
+      );
     },
-    [mutateLocal, shareToken]
+    [mutateLocal, shareToken],
   );
 
   const renamePage = useCallback(
@@ -308,14 +327,14 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
           sections: notebook.sections.map((section) => ({
             ...section,
             pages: section.pages.map((page) =>
-              page.id === pageId ? { ...page, title } : page
+              page.id === pageId ? { ...page, title } : page,
             ),
           })),
-        }))
+        })),
       );
       await postWorkspaceAction("renamePage", { pageId, title }, shareToken);
     },
-    [mutateLocal, shareToken]
+    [mutateLocal, shareToken],
   );
 
   const deleteNotebook = useCallback(
@@ -323,7 +342,7 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
       await postWorkspaceAction("deleteNotebook", { notebookId }, shareToken);
       await refreshWorkspace();
     },
-    [refreshWorkspace, shareToken]
+    [refreshWorkspace, shareToken],
   );
 
   const deleteSection = useCallback(
@@ -331,7 +350,7 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
       await postWorkspaceAction("deleteSection", { sectionId }, shareToken);
       await refreshWorkspace();
     },
-    [refreshWorkspace, shareToken]
+    [refreshWorkspace, shareToken],
   );
 
   const deletePage = useCallback(
@@ -339,7 +358,7 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
       await postWorkspaceAction("deletePage", { pageId }, shareToken);
       await refreshWorkspace();
     },
-    [refreshWorkspace, shareToken]
+    [refreshWorkspace, shareToken],
   );
 
   const toggleNotebook = useCallback(
@@ -349,12 +368,16 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
       const isExpanded = !notebook.isExpanded;
       mutateLocal((previous) =>
         previous.map((item) =>
-          item.id === notebookId ? { ...item, isExpanded } : item
-        )
+          item.id === notebookId ? { ...item, isExpanded } : item,
+        ),
       );
-      await postWorkspaceAction("toggleNotebook", { notebookId, isExpanded }, shareToken);
+      await postWorkspaceAction(
+        "toggleNotebook",
+        { notebookId, isExpanded },
+        shareToken,
+      );
     },
-    [mutateLocal, notebooks, shareToken]
+    [mutateLocal, notebooks, shareToken],
   );
 
   const toggleSection = useCallback(
@@ -368,13 +391,17 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
         previous.map((notebook) => ({
           ...notebook,
           sections: notebook.sections.map((item) =>
-            item.id === sectionId ? { ...item, isExpanded } : item
+            item.id === sectionId ? { ...item, isExpanded } : item,
           ),
-        }))
+        })),
       );
-      await postWorkspaceAction("toggleSection", { sectionId, isExpanded }, shareToken);
+      await postWorkspaceAction(
+        "toggleSection",
+        { sectionId, isExpanded },
+        shareToken,
+      );
     },
-    [mutateLocal, notebooks, shareToken]
+    [mutateLocal, notebooks, shareToken],
   );
 
   const setActivePage = useCallback(
@@ -382,9 +409,13 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
       setActiveNotebookId(notebookId);
       setActiveSectionId(sectionId);
       setActivePageId(pageId);
-      void postWorkspaceAction("setActivePage", { notebookId, sectionId, pageId }, shareToken);
+      void postWorkspaceAction(
+        "setActivePage",
+        { notebookId, sectionId, pageId },
+        shareToken,
+      );
     },
-    [shareToken]
+    [shareToken],
   );
 
   const updatePageContent = useCallback(
@@ -395,24 +426,30 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
           sections: notebook.sections.map((section) => ({
             ...section,
             pages: section.pages.map((page) =>
-              page.id === pageId ? { ...page, content, updatedAt: new Date() } : page
+              page.id === pageId
+                ? { ...page, content, updatedAt: new Date() }
+                : page,
             ),
           })),
-        }))
+        })),
       );
 
       setSaveStatus("saving");
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = setTimeout(async () => {
         try {
-          await postWorkspaceAction("updatePageContent", { pageId, content }, shareToken);
+          await postWorkspaceAction(
+            "updatePageContent",
+            { pageId, content },
+            shareToken,
+          );
           setSaveStatus("saved");
         } catch {
           setSaveStatus("unsaved");
         }
       }, 1200);
     },
-    [mutateLocal, shareToken]
+    [mutateLocal, shareToken],
   );
 
   const updatePageTags = useCallback(
@@ -422,13 +459,15 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
           ...notebook,
           sections: notebook.sections.map((section) => ({
             ...section,
-            pages: section.pages.map((page) => (page.id === pageId ? { ...page, tags } : page)),
+            pages: section.pages.map((page) =>
+              page.id === pageId ? { ...page, tags } : page,
+            ),
           })),
-        }))
+        })),
       );
       await postWorkspaceAction("updatePageTags", { pageId, tags }, shareToken);
     },
-    [mutateLocal, shareToken]
+    [mutateLocal, shareToken],
   );
 
   const saveFlashcards = useCallback(
@@ -436,14 +475,18 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
       await postWorkspaceAction(
         "saveFlashcards",
         { cards: flashcards, pageId: pageId ?? null },
-        shareToken
+        shareToken,
       );
     },
-    [shareToken]
+    [shareToken],
   );
 
   const logStudySession = useCallback(
-    async (type: "study" | "break", durationSeconds: number, pageId?: string) => {
+    async (
+      type: "study" | "break",
+      durationSeconds: number,
+      pageId?: string,
+    ) => {
       await postWorkspaceAction(
         "logStudySession",
         {
@@ -451,15 +494,16 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
           durationSeconds,
           pageId: pageId ?? null,
         },
-        shareToken
+        shareToken,
       );
     },
-    [shareToken]
+    [shareToken],
   );
 
   const wordCount = useMemo(() => {
     if (!activePage) return 0;
-    return (activePage.content.replace(/<[^>]*>/g, " ").match(/\S+/g) || []).length;
+    return (activePage.content.replace(/<[^>]*>/g, " ").match(/\S+/g) || [])
+      .length;
   }, [activePage]);
 
   useEffect(() => {
