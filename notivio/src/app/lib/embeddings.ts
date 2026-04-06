@@ -16,10 +16,14 @@ async function getPipeline(): Promise<EmbeddingPipeline> {
   if (pipelineInstance) return pipelineInstance;
 
   const { pipeline } = await import("@xenova/transformers");
-  const createdPipeline = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2", {
-    // Quantized model for faster loading (~23MB)
-    quantized: true,
-  });
+  const createdPipeline = await pipeline(
+    "feature-extraction",
+    "Xenova/all-MiniLM-L6-v2",
+    {
+      // Quantized model for faster loading (~23MB)
+      quantized: true,
+    },
+  );
   pipelineInstance = createdPipeline as unknown as EmbeddingPipeline;
   return pipelineInstance;
 }
@@ -45,7 +49,10 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
     for (const text of batch) {
-      const output = await extractor(text, { pooling: "mean", normalize: true });
+      const output = await extractor(text, {
+        pooling: "mean",
+        normalize: true,
+      });
       results.push(Array.from(output.data).slice(0, 384));
     }
   }
@@ -91,7 +98,11 @@ export function stripHtml(html: string): string {
  * Chunk plain text into overlapping passages of ~maxWords words.
  * Used for indexing page content for semantic search.
  */
-export function chunkTextForEmbedding(text: string, maxWords = 300, overlapWords = 50): string[] {
+export function chunkTextForEmbedding(
+  text: string,
+  maxWords = 300,
+  overlapWords = 50,
+): string[] {
   const words = text.split(/\s+/).filter(Boolean);
   if (words.length <= maxWords) {
     return words.length > 0 ? [words.join(" ")] : [];
