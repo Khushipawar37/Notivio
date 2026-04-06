@@ -89,14 +89,16 @@ function detectBoundaries(
       if (gapScores[j] < gapScores[i]) break;
     }
 
-    const depth = (leftPeak - gapScores[i]) + (rightPeak - gapScores[i]);
+    const depth = leftPeak - gapScores[i] + (rightPeak - gapScores[i]);
     depthScores.push(depth);
   }
 
   // Step 3: Select boundaries where depth score exceeds threshold
   // Also compute mean and std of depth scores for adaptive thresholding
   const mean = depthScores.reduce((sum, d) => sum + d, 0) / depthScores.length;
-  const variance = depthScores.reduce((sum, d) => sum + (d - mean) ** 2, 0) / depthScores.length;
+  const variance =
+    depthScores.reduce((sum, d) => sum + (d - mean) ** 2, 0) /
+    depthScores.length;
   const std = Math.sqrt(variance);
   const adaptiveThreshold = Math.max(threshold, mean - std * 0.5);
 
@@ -147,7 +149,10 @@ export async function segmentTopics(
   const embeddings = await embedTexts(sentences);
 
   // Adjust window size based on document length
-  const windowSize = Math.max(2, Math.min(5, Math.floor(sentences.length / 10)));
+  const windowSize = Math.max(
+    2,
+    Math.min(5, Math.floor(sentences.length / 10)),
+  );
 
   // Detect topic boundaries
   const boundaries = detectBoundaries(embeddings, windowSize);
