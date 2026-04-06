@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useCallback, useState } from "react";
 import {
@@ -17,6 +17,7 @@ import {
   Check,
   Puzzle,
   ClipboardCheck,
+  Layers,
 } from "lucide-react";
 
 interface AIFeaturesPanelProps {
@@ -62,7 +63,8 @@ type FeatureId =
   | "gap_fill"
   | "feynman"
   | "story"
-  | "exam_predict";
+  | "exam_predict"
+  | "topic_segment";
 
 async function callAI(feature: string, content: string, extra: Record<string, string> = {}) {
   const res = await fetch("/api/ai-study", {
@@ -115,6 +117,7 @@ export function AIFeaturesPanel({
   const [feynmanConcept, setFeynmanConcept] = useState<{ concept: string; prompt: string } | null>(null);
   const [feynmanExplanation, setFeynmanExplanation] = useState("");
   const [feynmanEval, setFeynmanEval] = useState<FeynmanEvalResult | null>(null);
+  const [topicChapters, setTopicChapters] = useState<{ title: string; content: string }[]>([]);
 
   const textToUse = selectedText || content;
   const hasContent = textToUse.trim().length > 0;
@@ -193,6 +196,7 @@ export function AIFeaturesPanel({
     setFeynmanConcept(null);
     setFeynmanExplanation("");
     setFeynmanEval(null);
+    setTopicChapters([]);
   };
 
   const handleSummarize = async () => {
@@ -386,6 +390,7 @@ export function AIFeaturesPanel({
     { id: "feynman" as FeatureId, label: "Feynman Test", icon: GraduationCap, desc: "Explain it back to learn" },
     { id: "story" as FeatureId, label: "Story Mode", icon: BookOpen, desc: "Content as a narrative" },
     { id: "exam_predict" as FeatureId, label: "Exam Predictor", icon: ClipboardCheck, desc: "Predict likely exam questions" },
+    { id: "topic_segment" as FeatureId, label: "Topic Segments", icon: Layers, desc: "Auto-chapter long transcripts" },
   ];
 
   const renderFeatureContent = (featureId: FeatureId) => {
@@ -604,6 +609,64 @@ export function AIFeaturesPanel({
           <button onClick={handleExamPredict} disabled={loading || !hasContent} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardCheck className="w-4 h-4" />} Predict Questions
           </button>
+          {result && <ResultBox text={result} onCopy={() => handleCopy(result)} copied={copied} />}
+        </div>
+      );
+    }
+
+    if (featureId === "topic_segment") {
+      return (
+        <div className="space-y-3 p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
+          <p className="text-xs text-[#8a7559]">Uses ML-based TextTiling on sentence embeddings to detect topic shifts and split content into chapters automatically.</p>
+          <button
+            onClick={async () => {
+              if (!hasContent) return;
+              setLoading(true);
+              resetFeature();
+              try {
+                const plainText = textToUse.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+                const res = await fetch("/api/topic-segment", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ text: plainText }),
+                });
+                if (!res.ok) throw new Error("Segmentation failed");
+                const data = await res.json();
+                const chapters = data.chapters || [];
+                setTopicChapters(chapters);
+                if (chapters.length > 0 && onInsertToNotebookHtml) {
+                  const html = chapters
+                    .map((ch: { title: string; content: string }) =>
+                      `<h2>${escapeHtml(ch.title)}</h2><p>${escapeHtml(ch.content).replace(/\n/g, "<br/>")}</p>`
+                    )
+                    .join("");
+                  onInsertToNotebookHtml(html);
+                }
+              } catch {
+                setResult("Error segmenting topics. Make sure your content is long enough (requires 10+ sentences).");
+              }
+              setLoading(false);
+            }}
+            disabled={loading || !hasContent}
+            className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />} Segment into Chapters
+          </button>
+          {topicChapters.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[10px] font-medium text-[#6f5b43] uppercase tracking-wider">Found {topicChapters.length} chapters</p>
+              {topicChapters.map((ch, i) => (
+                <div key={i} className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8]">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-md bg-[#e7d6c2] text-[10px] font-bold text-[#6f5b43]">{i + 1}</span>
+                    <span className="text-sm font-medium text-[#6f5b43]">{ch.title}</span>
+                  </div>
+                  <p className="text-xs text-[#8a7559] line-clamp-3 leading-relaxed">{ch.content.slice(0, 200)}...</p>
+                </div>
+              ))}
+              <p className="text-[10px] text-[#8a7559] italic">Chapters have been inserted into your notes.</p>
+            </div>
+          )}
           {result && <ResultBox text={result} onCopy={() => handleCopy(result)} copied={copied} />}
         </div>
       );

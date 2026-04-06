@@ -20,6 +20,7 @@ import { NoteTemplates } from "./note-templates";
 import { ShareDialog } from "../notes/share-dialog";
 import { exportToMarkdown, exportToPDF } from "../../lib/export-utils";
 import { useWorkspace } from "../../hooks/use-workspace";
+import { SemanticSearchModal } from "./semantic-search-modal";
 
 interface WorkspaceLayoutProps {
   shareToken?: string | null;
@@ -36,6 +37,9 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
   const [selectedText, setSelectedText] = useState("");
   const [activeSource, setActiveSource] = useState<StudySource | null>(null);
   const [workspaceView, setWorkspaceView] = useState<"notes" | "source">("notes");
+  const [showSemanticSearch, setShowSemanticSearch] = useState(false);
+  const [searchMode, setSearchMode] = useState<"keyword" | "semantic">("keyword");
+  const [semanticQuery, setSemanticQuery] = useState("");
   const editorApiRef = useRef<{
     insertTextAtCursor: (text: string) => void;
     insertHTMLAtCursor: (html: string) => void;
@@ -157,7 +161,24 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
           notebooks={filteredNotebooks}
           activePageId={activePageId}
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          semanticQuery={semanticQuery}
+          searchMode={searchMode}
+          onSearchChange={(value) => {
+            if (searchMode === "keyword") {
+              setSearchQuery(value);
+              return;
+            }
+            setSemanticQuery(value);
+            setShowSemanticSearch(true);
+          }}
+          onSearchModeChange={(mode) => {
+            setSearchMode(mode);
+            if (mode === "keyword") {
+              setSemanticQuery("");
+              return;
+            }
+            setSearchQuery("");
+          }}
           onPageSelect={setActivePage}
           onCreateNotebook={() => void createNotebook()}
           onCreateSection={(notebookId) => void createSection(notebookId)}
@@ -180,6 +201,7 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
           loading={loading}
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+          onOpenSemanticSearch={() => setShowSemanticSearch(true)}
         />
 
         <main className="flex-1 min-w-0 flex flex-col bg-[#fffaf3]">
@@ -393,6 +415,16 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
       )}
 
       <AIChatWidget content={activePage?.content || ""} />
+
+      <SemanticSearchModal
+        open={showSemanticSearch}
+        onClose={() => setShowSemanticSearch(false)}
+        initialQuery={semanticQuery}
+        onPageSelect={(notebookId, sectionId, pageId) => {
+          setActivePage(notebookId, sectionId, pageId);
+          setShowSemanticSearch(false);
+        }}
+      />
 
       <footer className="h-10 px-4 border-t border-[#e4d7c8] bg-[#fbf6ee] flex items-center justify-between text-[11px] text-[#9b876e]">
         <span>Notivio</span>

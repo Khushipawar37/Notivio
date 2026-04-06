@@ -158,41 +158,69 @@ async function processChunk(
   title: string,
   duration: string,
   contentType: string,
-  groqClient: any,
+  groqClient: Groq,
 ): Promise<ChunkedNoteResult> {
   const preparedContent = prepareChunkForProcessing(chunk)
 
-  const prompt = buildChunkedPrompt({
-    title,
-    duration,
-    transcript: preparedContent,
-    contentType,
-    chunkIndex,
-    totalChunks,
-    isFirstChunk: chunkIndex === 0,
-    isLastChunk: chunkIndex === totalChunks - 1,
-  })
+    const maxTokenAttempts = [1200, 900, 700, 500]
+  const contentRatios = [1, 0.85, 0.7, 0.55]
+  let completion: Awaited<ReturnType<Groq["chat"]["completions"]["create"]>> | null = null
+  let lastError: unknown = null
 
-  console.log(`🚀 Processing chunk ${chunkIndex + 1}/${totalChunks} with Groq API`)
+  for (let attempt = 0; attempt < maxTokenAttempts.length; attempt++) {
+    const maxTokens = maxTokenAttempts[attempt]
+    const ratio = contentRatios[attempt]
+    const transcriptForAttempt =
+      ratio >= 0.999 ? preparedContent : truncateTextByWords(preparedContent, ratio)
 
-  const completion = await groqClient.chat.completions.create({
-    model: GROQ_MODEL,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are an expert note-taking assistant. Generate high-quality, structured notes based on the provided transcript chunk. Follow the exact JSON schema format. Ensure ALL minimum requirements are met.",
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
-    ],
-    temperature: 0.3,
-    max_tokens: 3500, // Reduced for chunked processing
-    top_p: 0.9,
-    response_format: { type: "json_object" },
-  })
+    const prompt = buildChunkedPrompt({
+      title,
+      duration,
+      transcript: transcriptForAttempt,
+      contentType,
+      chunkIndex,
+      totalChunks,
+      isFirstChunk: chunkIndex === 0,
+      isLastChunk: chunkIndex === totalChunks - 1,
+    })
+
+    console.log(
+      `Processing chunk ${chunkIndex + 1}/${totalChunks} with Groq API (attempt ${attempt + 1}, max_tokens=${maxTokens}, ratio=${ratio})`,
+    )
+
+    try {
+      completion = await groqClient.chat.completions.create({
+        model: GROQ_MODEL,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an expert note-taking assistant. Generate high-quality, structured notes based on the provided transcript chunk. Follow the exact JSON schema format. Ensure ALL minimum requirements are met.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: maxTokens,
+        top_p: 0.9,
+        response_format: { type: "json_object" },
+      })
+      break
+    } catch (error: unknown) {
+      lastError = error
+      if (!isRequestTooLargeError(error) || attempt === maxTokenAttempts.length - 1) {
+        throw error
+      }
+      console.warn(`Chunk ${chunkIndex + 1} exceeded token budget. Retrying with smaller request...`)
+      await new Promise((resolve) => setTimeout(resolve, 300))
+    }
+  }
+
+  if (!completion) {
+    throw lastError ?? new Error(`Failed to process chunk ${chunkIndex + 1}`)
+  }
 
   const responseContent = completion.choices[0]?.message?.content
   if (!responseContent) {
@@ -232,6 +260,21 @@ async function processChunk(
     studyGuide: validatedNotes.studyGuide,
     quiz: validatedNotes.quiz,
   }
+}
+
+function truncateTextByWords(text: string, ratio: number): string {
+  const words = text.split(/\s+/).filter(Boolean)
+  if (words.length === 0) return text
+  const targetCount = Math.max(120, Math.floor(words.length * ratio))
+  return words.slice(0, targetCount).join(" ")
+}
+
+function isRequestTooLargeError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false
+  const maybe = error as { status?: number; message?: string }
+  if (maybe.status === 413) return true
+  const message = typeof maybe.message === "string" ? maybe.message.toLowerCase() : ""
+  return message.includes("request too large") || message.includes("tokens per minute")
 }
 
 function fixChunkedValidationIssues(notes: any): any {
@@ -388,7 +431,12 @@ function fixChunkedValidationIssues(notes: any): any {
   }
 
   Object.entries(studyGuideDefaults).forEach(([key, defaultValues]) => {
-    const minLength = key === "advancedTopics" ? 1 : 2
+    const minLength =
+      key === "reviewQuestions"
+        ? 3
+        : key === "advancedTopics"
+          ? 1
+          : 2
     const maxLength =
       key === "reviewQuestions"
         ? 12
@@ -400,8 +448,10 @@ function fixChunkedValidationIssues(notes: any): any {
               ? 6
               : 5
 
-    if (!fixed.studyGuide[key] || fixed.studyGuide[key].length < minLength) {
-      fixed.studyGuide[key] = fixed.studyGuide[key] || []
+    const current = Array.isArray(fixed.studyGuide[key]) ? fixed.studyGuide[key] : []
+    fixed.studyGuide[key] = current
+
+    if (fixed.studyGuide[key].length < minLength) {
       while (fixed.studyGuide[key].length < minLength) {
         const defaultIndex = fixed.studyGuide[key].length % defaultValues.length
         fixed.studyGuide[key].push(defaultValues[defaultIndex])
@@ -1087,13 +1137,23 @@ export async function POST(request: NextRequest) {
             chunkId: chunk.id,
             title: `Section ${i + 1}`,
             summary: "This section contains important information from the video.",
-            keyPoints: ["Key information from this section"],
+            keyPoints: [
+              "Key information from this section",
+              "Important supporting details are covered",
+              "Review this segment for core understanding",
+            ],
             sections: [
               {
                 title: `Content Section ${i + 1}`,
-                content: ["Important content from this part of the video"],
+                content: ["Important content from this part of the video", "Core ideas and explanations appear here"],
                 learningObjectives: ["Understand key concepts"],
                 keyInsights: ["Important insights"],
+              },
+              {
+                title: `Additional Notes ${i + 1}`,
+                content: ["Additional context from this part of the video", "Review for reinforcement"],
+                learningObjectives: ["Connect concepts with prior sections"],
+                keyInsights: ["This segment supports overall understanding"],
               },
             ],
             concepts: [
@@ -1107,10 +1167,14 @@ export async function POST(request: NextRequest) {
               },
             ],
             studyGuide: {
-              reviewQuestions: ["What are the main points?"],
-              practiceExercises: ["Review the content"],
-              memoryAids: ["Create connections"],
-              connections: ["Relates to other topics"],
+              reviewQuestions: [
+                "What are the main points?",
+                "How does this section connect to earlier ideas?",
+                "What should be reviewed again from this section?",
+              ],
+              practiceExercises: ["Review the content", "Summarize this section in your own words"],
+              memoryAids: ["Create connections", "Use brief recall prompts"],
+              connections: ["Relates to other topics", "Supports broader course themes"],
               advancedTopics: ["Further study"],
             },
             quiz: {
@@ -1120,6 +1184,13 @@ export async function POST(request: NextRequest) {
                   options: ["Main topic", "Other topic", "Another topic", "Yet another topic"],
                   correctAnswer: 0,
                   explanation: "This is the main focus",
+                  difficulty: "easy",
+                },
+                {
+                  question: "What is a useful next step after this section?",
+                  options: ["Summarize and review key ideas", "Skip all review", "Ignore examples", "Memorize without context"],
+                  correctAnswer: 0,
+                  explanation: "Summarizing and reviewing helps retention.",
                   difficulty: "easy",
                 },
               ],
@@ -1364,3 +1435,6 @@ function generateBasicApplications() {
     },
   ]
 }
+
+
+

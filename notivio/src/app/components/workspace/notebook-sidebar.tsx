@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import {
   BookOpen,
+  Brain,
   ChevronDown,
   ChevronRight,
   Edit3,
@@ -50,7 +51,10 @@ interface NotebookSidebarProps {
   loading?: boolean;
   activePageId: string | null;
   searchQuery: string;
+  semanticQuery: string;
+  searchMode: "keyword" | "semantic";
   onSearchChange: (value: string) => void;
+  onSearchModeChange: (mode: "keyword" | "semantic") => void;
   onPageSelect: (notebookId: string, sectionId: string, pageId: string) => void;
   onCreateNotebook: () => void;
   onCreateSection: (notebookId: string) => void;
@@ -66,6 +70,7 @@ interface NotebookSidebarProps {
   onToggleSection: (notebookId: string, sectionId: string) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  onOpenSemanticSearch?: () => void;
 }
 
 export function NotebookSidebar({
@@ -73,7 +78,10 @@ export function NotebookSidebar({
   loading = false,
   activePageId,
   searchQuery,
+  semanticQuery,
+  searchMode,
   onSearchChange,
+  onSearchModeChange,
   onPageSelect,
   onCreateNotebook,
   onCreateSection,
@@ -89,6 +97,7 @@ export function NotebookSidebar({
   onToggleSection,
   isCollapsed,
   onToggleCollapse,
+  onOpenSemanticSearch,
 }: NotebookSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -152,11 +161,54 @@ export function NotebookSidebar({
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#a0896f]" />
           <input
-            value={searchQuery}
+            value={searchMode === "keyword" ? searchQuery : semanticQuery}
             onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Search all notes..."
-            className="w-full pl-8 pr-3 py-1.5 bg-[#f2e6d8] border border-[#d8c6b2] rounded-lg text-xs text-[#7b664d] outline-none focus:border-[#b79c79] placeholder:text-[#8a7559] transition-all duration-200 hover:bg-[#efe2d2]"
+            onFocus={() => {
+              if (searchMode === "semantic") onOpenSemanticSearch?.();
+            }}
+            placeholder={
+              searchMode === "keyword"
+                ? "Search all notes..."
+                : "Search by meaning..."
+            }
+            className="w-full pl-8 pr-10 py-1.5 bg-[#f2e6d8] border border-[#d8c6b2] rounded-lg text-xs text-[#7b664d] outline-none focus:border-[#b79c79] placeholder:text-[#8a7559] transition-all duration-200 hover:bg-[#efe2d2]"
           />
+          {onOpenSemanticSearch && (
+            <button
+              onClick={onOpenSemanticSearch}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-[#e7d6c2] text-[#8a7559] hover:text-[#6f5b43] transition-colors"
+              title="Semantic Search (AI)"
+            >
+              <Brain className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+        <div className="mt-2 flex items-center gap-1 rounded-lg bg-[#f2e6d8] p-0.5 border border-[#d8c6b2]">
+          <button
+            onClick={() => onSearchModeChange("keyword")}
+            className={`flex-1 rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
+              searchMode === "keyword"
+                ? "bg-[#e7d6c2] text-[#6f5b43]"
+                : "text-[#8a7559] hover:bg-[#ede1d1]"
+            }`}
+            title="Keyword search"
+          >
+            Keyword
+          </button>
+          <button
+            onClick={() => {
+              onSearchModeChange("semantic");
+              onOpenSemanticSearch?.();
+            }}
+            className={`flex-1 rounded-md px-2 py-1 text-[10px] font-medium transition-colors ${
+              searchMode === "semantic"
+                ? "bg-[#e7d6c2] text-[#6f5b43]"
+                : "text-[#8a7559] hover:bg-[#ede1d1]"
+            }`}
+            title="Semantic search"
+          >
+            Semantic
+          </button>
         </div>
       </div>
 
@@ -442,4 +494,3 @@ export function NotebookSidebar({
     </aside>
   );
 }
-

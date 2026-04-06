@@ -38,6 +38,7 @@ model UserProfile {
   tutorProfile    TutorProfile?
   conceptMetrics  ConceptMetric[]
   tutorEvents     TutorEventLog[]
+  pageEmbeddings  PageEmbedding[]
 }
 
 model Notebook {
@@ -93,6 +94,7 @@ model Page {
   collaborators  NoteCollaborator[]
   sharedLinks    SharedLink[]
   revisions      NoteRevision[]
+  embeddings     PageEmbedding[]
 
   @@index([userId, notebookId, sectionId, sortOrder])
 }
@@ -261,4 +263,22 @@ model TutorEventLog {
   user UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model PageEmbedding {
+  id         String   @id @default(cuid())
+  pageId     String
+  userId     String
+  chunkIndex Int
+  chunkText  String   @db.Text
+  embedding  Float[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  page Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pageId, chunkIndex])
+  @@index([userId])
+  @@index([pageId])
 }

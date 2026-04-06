@@ -1,0 +1,540 @@
+﻿   Γû▓ Next.js 15.3.2
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ Γ£ô Compiled successfully in 59s
+   Linting and checking validity of types ...
+node.exe : 
+At line:1 char:1
++ & "C:\nvm4w\nodejs/node.
+exe" "C:\nvm4w\nodejs/node
+_modules/npm/bin/np ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (:  
+  String) [], RemoteExc   
+ eption
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+Failed to compile.
+
+./src/app/api/embeddings/r
+oute.ts
+78:19  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+
+./src/app/api/generate-not
+es/route.ts
+14:7  Error: 
+'MAX_TRANSCRIPT_LENGTH' 
+is assigned a value but 
+never used.  @typescript-e
+slint/no-unused-vars
+68:6  Error: 
+'ChunkedNotes' is defined 
+but never used.  @typescri
+pt-eslint/no-unused-vars
+161:15  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+219:12  Error: 
+'validationError' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+219:29  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+237:44  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+237:50  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+254:49  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+290:62  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+316:67  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+538:10  Error: 
+'buildEnhancedPrompt' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+622:10  Error: 
+'fixValidationIssues' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+622:37  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+622:43  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+667:45  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+667:50  Error: 'index' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+716:38  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+733:38  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+750:10  Error: 
+'ensureStringLimits' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+750:36  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+750:42  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+775:55  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+874:55  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+913:68  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+932:58  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+956:77  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+1160:21  Error: 
+Unexpected any. Specify a 
+different type.  @typescri
+pt-eslint/no-explicit-any
+1181:19  Error: 
+Unexpected any. Specify a 
+different type.  @typescri
+pt-eslint/no-explicit-any
+1338:10  Error: 
+'generateBasicMnemonics' 
+is defined but never 
+used.  @typescript-eslint/
+no-unused-vars
+1353:10  Error: 'generateB
+asicApplications' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+
+./src/app/api/generate-pdf
+/route.ts
+70:40  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+93:19  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+
+./src/app/api/semantic-sea
+rch/route.ts
+98:19  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+
+./src/app/api/topic-segmen
+t/route.ts
+61:19  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+
+./src/app/api/video-transc
+ript/route.ts
+52:17  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+88:16  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+171:19  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+191:12  Error: '_' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+237:19  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+
+./src/app/components/auth/
+auth-provider.tsx
+13:56  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+14:74  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+
+./src/app/components/auth/
+login-form.tsx
+45:21  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+
+./src/app/components/dashb
+oard/create-note.tsx
+41:32  Error: 'tags' is 
+assigned a value but 
+never used.  @typescript-e
+slint/no-unused-vars
+
+./src/app/components/dashb
+oard/create-tag.tsx
+7:43  Error: 'darkMode' 
+is defined but never 
+used.  @typescript-eslint/
+no-unused-vars
+
+./src/app/components/dashb
+oard/notes-grid.tsx
+159:14  Error: 'error' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+
+./src/app/components/dashb
+oard/profile-section.tsx
+114:16  Error: 'error' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+196:76  Error: `'` can be 
+escaped with `&apos;`, 
+`&lsquo;`, `&#39;`, 
+`&rsquo;`.  react/no-unesc
+aped-entities
+202:15  Warning: Using 
+`<img>` could result in 
+slower LCP and higher 
+bandwidth. Consider using 
+`<Image />` from 
+`next/image` or a custom 
+image loader to 
+automatically optimize 
+images. This may incur 
+additional usage or cost 
+from your provider. See: h
+ttps://nextjs.org/docs/mes
+sages/no-img-element  
+@next/next/no-img-element
+
+./src/app/components/dashb
+oard/recent-activity.tsx
+21:23  Error: 'notes' is 
+assigned a value but 
+never used.  @typescript-e
+slint/no-unused-vars
+57:14  Error: 'error' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+
+./src/app/components/home/
+About.tsx
+270:7  Error: 
+'TypingEffect' is 
+assigned a value but 
+never used.  @typescript-e
+slint/no-unused-vars
+492:26  Error: `'` can be 
+escaped with `&apos;`, 
+`&lsquo;`, `&#39;`, 
+`&rsquo;`.  react/no-unesc
+aped-entities
+
+./src/app/components/home/
+Contact.tsx
+17:8  Error: 'Image' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+
+./src/app/components/home/
+Faq.tsx
+22:9  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+197:7  Error: 
+'FloatingQuestionMark' is 
+assigned a value but 
+never used.  @typescript-e
+slint/no-unused-vars
+
+./src/app/components/home/
+Footer.tsx
+20:9  Error: 'opacity' is 
+assigned a value but 
+never used.  @typescript-e
+slint/no-unused-vars
+
+./src/app/components/home/
+Hero.tsx
+52:9  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+83:10  Error: 
+'writtenText' is assigned 
+a value but never used.  @
+typescript-eslint/no-unuse
+d-vars
+83:23  Error: 
+'setWrittenText' is 
+assigned a value but 
+never used.  @typescript-e
+slint/no-unused-vars
+
+./src/app/components/home/
+Navbar.tsx
+17:27  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+52:3  Error: 'index' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+53:3  Error: 'activeTab' 
+is defined but never 
+used.  @typescript-eslint/
+no-unused-vars
+104:6  Warning: React 
+Hook useEffect has a 
+missing dependency: 
+'navItems'. Either 
+include it or remove the 
+dependency array.  react-h
+ooks/exhaustive-deps
+
+./src/app/components/home/
+writingAnimation.tsx
+2:17  Error: 'useEffect' 
+is defined but never 
+used.  @typescript-eslint/
+no-unused-vars
+
+./src/app/components/ui/co
+mmand.tsx
+26:11  Error: An 
+interface declaring no 
+members is equivalent to 
+its supertype.  @typescrip
+t-eslint/no-empty-object-t
+ype
+
+./src/app/components/ui/in
+put.tsx
+5:18  Error: An interface 
+declaring no members is 
+equivalent to its 
+supertype.  @typescript-es
+lint/no-empty-object-type
+
+./src/app/components/ui/la
+bel.tsx
+3:18  Error: An interface 
+declaring no members is 
+equivalent to its 
+supertype.  @typescript-es
+lint/no-empty-object-type
+
+./src/app/components/ui/sl
+ider.tsx
+17:21  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+
+./src/app/components/ui/te
+xtarea.tsx
+5:18  Error: An interface 
+declaring no members is 
+equivalent to its 
+supertype.  @typescript-es
+lint/no-empty-object-type
+
+./src/app/components/works
+pace/advanced-rich-text-ed
+itor.tsx
+80:10  Error: 
+'selectedText' is 
+assigned a value but 
+never used.  @typescript-e
+slint/no-unused-vars
+146:16  Error: 'e' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+
+./src/app/components/works
+pace/ai-assistant-panel.ts
+x
+329:19  Error: `'` can be 
+escaped with `&apos;`, 
+`&lsquo;`, `&#39;`, 
+`&rsquo;`.  react/no-unesc
+aped-entities
+
+./src/app/components/works
+pace/chart-builder.tsx
+71:11  Error: 'chartId' 
+is assigned a value but 
+never used.  @typescript-e
+slint/no-unused-vars
+72:11  Error: 
+'dataString' is assigned 
+a value but never used.  @
+typescript-eslint/no-unuse
+d-vars
+216:57  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+
+./src/app/components/works
+pace/flowchart-builder.tsx
+155:106  Error: 
+Unexpected any. Specify a 
+different type.  @typescri
+pt-eslint/no-explicit-any
+
+./src/app/components/works
+pace/rich-text-editor.tsx
+45:10  Error: 
+'selectedText' is 
+assigned a value but 
+never used.  @typescript-e
+slint/no-unused-vars
+
+./src/app/convert/page.tsx
+306:19  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+336:19  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+
+./src/app/hooks/use-notes.
+ts
+52:42  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+200:6  Warning: React 
+Hook useEffect has a 
+missing dependency: 
+'fetchData'. Either 
+include it or remove the 
+dependency array.  react-h
+ooks/exhaustive-deps
+
+./src/app/lib/embeddings.t
+s
+7:23  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+
+./src/app/lib/notes-combin
+er.ts
+159:28  Error: 
+'chunkIndex' is defined 
+but never used.  @typescri
+pt-eslint/no-unused-vars
+413:11  Error: 
+'remainingMinutes' is 
+assigned a value but 
+never used.  @typescript-e
+slint/no-unused-vars
+421:31  Error: 'results' 
+is defined but never 
+used.  @typescript-eslint/
+no-unused-vars
+430:27  Error: 'results' 
+is defined but never 
+used.  @typescript-eslint/
+no-unused-vars
+
+./src/app/lib/pdf.tsx
+5:36  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+32:40  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+38:45  Error: Unexpected 
+any. Specify a different 
+type.  @typescript-eslint/
+no-explicit-any
+
+./src/app/middleware.ts
+4:28  Error: 'request' is 
+defined but never used.  @
+typescript-eslint/no-unuse
+d-vars
+
+info  - Need to disable 
+some ESLint rules? Learn 
+more here: https://nextjs.
+org/docs/app/api-reference
+/config/eslint#disabling-r
+ules

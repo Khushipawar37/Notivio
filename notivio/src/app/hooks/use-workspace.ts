@@ -444,6 +444,15 @@ export function useWorkspace(options: UseWorkspaceOptions = {}) {
             shareToken,
           );
           setSaveStatus("saved");
+
+          // Background: re-index page embeddings for semantic search
+          fetch("/api/embeddings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pageId }),
+          }).catch(() => {
+            // Silently ignore embedding errors — non-critical
+          });
         } catch {
           setSaveStatus("unsaved");
         }
