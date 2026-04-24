@@ -1,92 +1,58 @@
-import { z } from "zod";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getCurrentUserProfile } from "@/server/auth";
-import { detectTone, formatTutorStylePrefix, PERSONAL_TUTOR_SYSTEM_PROMPT } from "@/app/lib/personal-tutor";
-import { getOrCreateTutorProfile, listConceptMetrics, logTutorEvent } from "@/server/tutor";
-import { callGroqJson } from "@/server/groq-json";
+import { logTutorEvent } from "@/server/tutor";
+import { evaluateAttemptAgainstEvidence, minimalHint, provenancePointers, retrieveTutorEvidence } from "@/server/tutorService";
 
-const schema = z.object({
-  hint: z.string(),
-  nextState: z.object({
-    attempts: z.number().int().min(0),
-    escalate: z.boolean(),
-  }),
-  confidence: z.number().min(0).max(1),
-  reasoningSummary: z.string(),
-  nextSteps: z.array(z.string()).min(1).max(3),
+const bodySchema = z.object({
+  conceptId: z.string().optional(),
+  attempt: z.string().optional(),
+  context: z.record(z.unknown()).optional(),
 });
 
 export async function POST(request: Request) {
   const user = await getCurrentUserProfile();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await request.json()) as {
-    question?: string;
-    studentAttempt?: string;
-    state?: { attempts?: number };
-    confidence?: number;
-    sensitive?: boolean;
-  };
+  const body = bodySchema.safeParse(await request.json());
+  if (!body.success) return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
 
-  const question = String(body.question ?? "").trim();
-  const studentAttempt = String(body.studentAttempt ?? "").trim();
-  if (!question) {
-    return NextResponse.json({ error: "question is required" }, { status: 400 });
+  const attempt = (body.data.attempt ?? "").trim();
+  const conceptId = (body.data.conceptId ?? "").trim();
+  const query = attempt || conceptId || "current learning topic";
+
+  const evidence = await retrieveTutorEvidence(user.id, query, 6);
+  const provenance = provenancePointers(evidence);
+
+  let hintLevel: "minimal" | "worked-example" = "minimal";
+  let hint = "Hint (minimal): Restate the core definition in 10 words before adding details.";
+
+  if (attempt && evidence.length > 0) {
+    const evaluation = evaluateAttemptAgainstEvidence(attempt, evidence);
+    const missing = evaluation.missingKeyPoints[0] ?? "the core mechanism";
+    hint = minimalHint(missing);
+    if (evaluation.score < 0.25) {
+      hintLevel = "worked-example";
+      hint = `${hint}\nWorked-example direction: write cause -> mechanism -> result in 3 short lines.`;
+    }
+  } else if (evidence.length > 0) {
+    const anchor = evidence[0].chunkText.slice(0, 120);
+    hint = `Hint (minimal): Start from this anchor and paraphrase it: "${anchor}"`;
   }
-
-  const attempts = Number(body.state?.attempts ?? 0);
-  const escalate = attempts >= 2;
-
-  const [profile, metrics] = await Promise.all([
-    getOrCreateTutorProfile(user.id),
-    listConceptMetrics(user.id, 20),
-  ]);
-
-  const tone = detectTone({
-    confidence: Number(body.confidence ?? 0.6),
-    recentCorrectRate: 0.6,
-    failedAttempts: attempts,
-  });
-
-  const stylePrefix = formatTutorStylePrefix(
-    tone,
-    (profile.preferredPersona as "strict" | "patient" | "neutral") ?? "patient"
-  );
-
-  const object = await callGroqJson(
-    `${PERSONAL_TUTOR_SYSTEM_PROMPT}
-${stylePrefix}
-Hint attempt count: ${attempts}
-Escalate explanation now: ${escalate}
-
-Student profile: ${JSON.stringify(profile)}
-Recent concept metrics: ${JSON.stringify(metrics.slice(0, 8))}
-Question: ${question}
-Student attempt: ${studentAttempt || "(none)"}
-
-If escalate=true, provide alternate analogy then ask student to explain back in one sentence.
-Return minimal hint otherwise.`,
-    schema
-  );
-
-  const response = {
-    ...object,
-    nextState: {
-      attempts: attempts + 1,
-      escalate,
-    },
-  };
 
   await logTutorEvent({
     userId: user.id,
     actor: "tutor",
-    type: "explanation",
-    payload: { question, studentAttempt, hint: response.hint, attempts: response.nextState.attempts },
-    reasoningSummary: response.reasoningSummary,
-    confidence: response.confidence,
-    suggestedNextSteps: response.nextSteps,
-    redacted: Boolean(body.sensitive),
+    type: "prompt",
+    payload: { conceptId: conceptId || null, hint, hintLevel, provenance },
+    reasoningSummary: "Generated targeted hint from retrieved evidence.",
+    confidence: evidence.length > 0 ? 0.7 : 0.45,
+    suggestedNextSteps: ["Try again in one sentence."],
   });
 
-  return NextResponse.json(response);
+  return NextResponse.json({
+    hint,
+    hintLevel,
+    provenance,
+  });
 }

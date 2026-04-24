@@ -1,64 +1,101 @@
-import { z } from "zod";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getCurrentUserProfile } from "@/server/auth";
-import { PERSONAL_TUTOR_SYSTEM_PROMPT } from "@/app/lib/personal-tutor";
 import { listConceptMetrics, logTutorEvent } from "@/server/tutor";
-import { callGroqJson } from "@/server/groq-json";
 
-const schema = z.object({
-  diagnosis: z.string(),
-  rootCauseLabel: z.enum([
-    "foundational_gap",
-    "conflation",
-    "misconception",
-    "retrieval_failure",
-    "mixed",
-  ]),
-  remediationPlan: z.array(z.string()).min(2).max(3),
-  confidence: z.number().min(0).max(1),
+const bodySchema = z.object({
+  conceptId: z.string().optional(),
+  recentAttempts: z.array(z.record(z.unknown())).optional(),
 });
+
+function buildDiagnosis(args: {
+  conceptId: string;
+  attempts: number;
+  correct: number;
+  confusions: string[];
+  wrongExamples: string[];
+}) {
+  const rate = args.attempts > 0 ? args.correct / args.attempts : 0;
+  const confusion = args.confusions[0] ?? "core mechanism mapping";
+  if (args.attempts === 0) {
+    return {
+      rootCause: `Root cause: insufficient observed attempts for ${args.conceptId}; diagnosis is provisional.`,
+      remediation: [
+        "Do 3 quick retrieval attempts without notes.",
+        "Submit one worked example and one non-example.",
+        "Request re-diagnosis after the attempts.",
+      ],
+      confidence: 0.35,
+    };
+  }
+  if (rate < 0.5) {
+    return {
+      rootCause: `Root cause: repeated confusion around ${confusion} within ${args.conceptId}.`,
+      remediation: [
+        "Practice cause -> mechanism -> result summaries for this concept.",
+        "Use two contrast pairs: correct case vs non-case.",
+        "Explain back in one sentence after each attempt.",
+      ],
+      confidence: 0.78,
+    };
+  }
+  return {
+    rootCause: `Root cause: intermittent retrieval slips in ${args.conceptId}, not a full conceptual gap.`,
+    remediation: [
+      "Run spaced retrieval: 2 minutes now, 2 minutes later.",
+      "Tighten definitions to <=10 words per key term.",
+      "Check one application question per session.",
+    ],
+    confidence: 0.67,
+  };
+}
 
 export async function POST(request: Request) {
   const user = await getCurrentUserProfile();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await request.json()) as {
-    conceptId?: string;
-    recentAttempts?: Array<Record<string, unknown>>;
-    sensitive?: boolean;
-  };
+  const body = bodySchema.safeParse(await request.json());
+  if (!body.success) return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
 
-  const conceptId = String(body.conceptId ?? "").trim();
-  if (!conceptId) {
-    return NextResponse.json({ error: "conceptId is required" }, { status: 400 });
-  }
+  const conceptId = (body.data.conceptId ?? "").trim();
+  const metrics = await listConceptMetrics(user.id, 60);
+  const metric =
+    metrics.find((item) => item.conceptId === conceptId) ??
+    metrics[0] ?? {
+      conceptId: conceptId || "general_concept",
+      attempts: 0,
+      correct: 0,
+      confusions: [],
+      lastWrongExamples: [],
+    };
 
-  const metrics = await listConceptMetrics(user.id, 40);
-  const conceptMetric = metrics.find((item) => item.conceptId === conceptId);
-
-  const generated = await callGroqJson(
-    `${PERSONAL_TUTOR_SYSTEM_PROMPT}
-Analyze repeated errors for concept ${conceptId}.
-Concept metric: ${JSON.stringify(conceptMetric ?? null)}
-Recent attempts: ${JSON.stringify(body.recentAttempts ?? [])}
-
-Return:
-- one sentence diagnosis
-- root-cause label
-- 2-3 targeted remediation actions.`,
-    schema
-  );
+  const result = buildDiagnosis({
+    conceptId: metric.conceptId,
+    attempts: metric.attempts,
+    correct: metric.correct,
+    confusions: metric.confusions,
+    wrongExamples: metric.lastWrongExamples,
+  });
 
   await logTutorEvent({
     userId: user.id,
     actor: "tutor",
     type: "diagnosis",
-    payload: { conceptId, output: generated },
-    reasoningSummary: generated.diagnosis,
-    confidence: generated.confidence,
-    suggestedNextSteps: generated.remediationPlan,
-    redacted: Boolean(body.sensitive),
+    payload: {
+      conceptId: metric.conceptId,
+      attempts: metric.attempts,
+      correct: metric.correct,
+      confusions: metric.confusions,
+      recentAttempts: body.data.recentAttempts ?? [],
+    },
+    reasoningSummary: result.rootCause,
+    confidence: result.confidence,
+    suggestedNextSteps: result.remediation,
   });
 
-  return NextResponse.json(generated);
+  return NextResponse.json({
+    rootCause: result.rootCause,
+    remediation: result.remediation,
+    confidence: result.confidence,
+  });
 }

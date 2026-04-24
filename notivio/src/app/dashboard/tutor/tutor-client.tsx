@@ -41,23 +41,18 @@ function uid() {
 
 function introMessage(profile: TutorProfileResponse | null) {
   if (!profile) {
-    return "Hello, I am your tutor. Before we start, tell me what subject you are working on and how confident you feel right now.";
+    return "Hello, I am your tutor. Tell me what you want to study right now and your current level, and we will start from there.";
   }
 
   const { openingContext } = profile;
   if (openingContext.isFirstSession) {
-    return "Hey! I am your tutor. I will challenge you honestly, remember what we work on, and help you understand instead of memorizing. First: what subject are you studying right now, and how are you feeling about it?";
+    return "Welcome. What do you want to study today, and what is your current level (beginner/intermediate/advanced)?";
   }
-
-  if ((openingContext.daysSinceLastSession ?? 99) === 0) {
-    return "Welcome back already, good sign. How did the rest of your day go after our last session? What actually stuck?";
+  const lastTopic = openingContext.lastTopic;
+  if (lastTopic && lastTopic.toLowerCase() !== "general") {
+    return `Welcome back. We can continue from ${lastTopic}, or switch topics. What do you want to study right now?`;
   }
-
-  if ((openingContext.daysSinceLastSession ?? 99) <= 3) {
-    return `Good to see you again. Last time we worked on ${openingContext.lastTopic ?? "your previous topic"}. Before we continue, tell me what you still remember in your own words.`;
-  }
-
-  return `Welcome back. It has been a few days since we worked on ${openingContext.lastTopic ?? "your previous topic"}. Give me a quick memory check before we move forward.`;
+  return "Welcome back. What do you want to study right now?";
 }
 
 export function TutorClient() {
