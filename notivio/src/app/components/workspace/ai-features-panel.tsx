@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Sparkles,
   FileText,
@@ -18,7 +18,17 @@ import {
   Puzzle,
   ClipboardCheck,
   Layers,
+  RotateCcw,
 } from "lucide-react";
+import {
+  AI_FEATURE_MAP,
+  type PanelFeatureId,
+  resolveExplainFeature,
+  resolveQuizFeature,
+  resolveSummaryFeature,
+  getMinLengthForFeature,
+} from "@/app/lib/ai-feature-config";
+import { callAIStudy, AIStudyError, mapAIErrorToMessage } from "@/app/lib/ai-study-client";
 
 interface AIFeaturesPanelProps {
   content: string;
@@ -54,39 +64,24 @@ interface FeynmanEvalResult {
   guidance: string;
 }
 
-type FeatureId =
-  | "summarize"
-  | "explain"
-  | "flashcards"
-  | "quiz"
-  | "enhance"
-  | "gap_fill"
-  | "feynman"
-  | "story"
-  | "exam_predict"
-  | "topic_segment";
-
-async function callAI(feature: string, content: string, extra: Record<string, string> = {}) {
-  const res = await fetch("/api/ai-study", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ feature, content, ...extra }),
-  });
-  if (!res.ok) throw new Error("AI request failed");
-  const data = await res.json();
-  return data.result;
+interface ShortQuestion {
+  question: string;
+  model_answer: string;
+  key_points: string[];
 }
 
-function parseJSON(text: string) {
-  try {
-    const match = text.match(/\[[\s\S]*\]/);
-    if (match) return JSON.parse(match[0]);
-    const match2 = text.match(/\{[\s\S]*\}/);
-    if (match2) return JSON.parse(match2[0]);
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
+interface MnemonicsResult {
+  acronym: string;
+  story: string;
+  rhyme: string;
+  association: string;
+  memory_palace: string;
+}
+
+interface PanelErrorState {
+  message: string;
+  retryable: boolean;
+  details?: string;
 }
 
 export function AIFeaturesPanel({
@@ -96,10 +91,14 @@ export function AIFeaturesPanel({
   onInsertToNotebook,
   onInsertToNotebookHtml,
 }: AIFeaturesPanelProps) {
-  const [activeFeature, setActiveFeature] = useState<FeatureId | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [activeFeature, setActiveFeature] = useState<PanelFeatureId | null>(null);
+  const [loadingFeature, setLoadingFeature] = useState<PanelFeatureId | "feynman_submit" | "topic_segment_request" | null>(null);
+  const [loadingLabel, setLoadingLabel] = useState("");
   const [result, setResult] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [panelError, setPanelError] = useState<PanelErrorState | null>(null);
+  const [attemptCount, setAttemptCount] = useState(0);
+  const retryActionRef = useRef<(() => Promise<void>) | null>(null);
 
   const [summaryMode, setSummaryMode] = useState<"key_points" | "narrative">("key_points");
   const [explainLevel, setExplainLevel] = useState<"simple" | "standard" | "deep">("standard");
@@ -117,10 +116,13 @@ export function AIFeaturesPanel({
   const [feynmanConcept, setFeynmanConcept] = useState<{ concept: string; prompt: string } | null>(null);
   const [feynmanExplanation, setFeynmanExplanation] = useState("");
   const [feynmanEval, setFeynmanEval] = useState<FeynmanEvalResult | null>(null);
+  const [mnemonics, setMnemonics] = useState<MnemonicsResult | null>(null);
+  const [shortQuestions, setShortQuestions] = useState<ShortQuestion[]>([]);
   const [topicChapters, setTopicChapters] = useState<{ title: string; content: string }[]>([]);
 
   const textToUse = selectedText || content;
   const hasContent = textToUse.trim().length > 0;
+  const loading = Boolean(loadingFeature);
 
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
@@ -184,10 +186,14 @@ export function AIFeaturesPanel({
 
   const resetFeature = () => {
     setResult("");
+    setPanelError(null);
+    setAttemptCount(0);
+    retryActionRef.current = null;
     setFlashcards([]);
     setFlippedCards(new Set());
     setMcqQuestions([]);
     setTfQuestions([]);
+    setShortQuestions([]);
     setQuizAnswers({});
     setQuizSubmitted(false);
     setGapFillResult(null);
@@ -196,204 +202,349 @@ export function AIFeaturesPanel({
     setFeynmanConcept(null);
     setFeynmanExplanation("");
     setFeynmanEval(null);
+    setMnemonics(null);
     setTopicChapters([]);
   };
 
-  const handleSummarize = async () => {
-    if (!hasContent) return;
-    setLoading(true);
-    resetFeature();
-    try {
-      const res = await callAI(`summarize_${summaryMode}`, textToUse);
-      setResult(res);
-      pushToNotebook("Summary", res);
-    } catch {
-      setResult("Error generating summary. Please try again.");
+  const setValidationError = useCallback((featureId: PanelFeatureId) => {
+    const minLength = getMinLengthForFeature(featureId);
+    const currentLength = textToUse.trim().length;
+    if (currentLength === 0) {
+      setPanelError({
+        message: "Add or select some content before using AI features.",
+        retryable: false,
+      });
+      return true;
     }
-    setLoading(false);
+    if (currentLength < minLength) {
+      setPanelError({
+        message: `Add more context for better results (minimum ${minLength} characters).`,
+        details: `Current length: ${currentLength} characters`,
+        retryable: false,
+      });
+      return true;
+    }
+    return false;
+  }, [textToUse]);
+
+  const handleKnownError = useCallback((error: unknown) => {
+    const mapped = error instanceof AIStudyError
+      ? error
+      : new AIStudyError({
+        code: "UNKNOWN_ERROR",
+        message: "Unexpected AI error.",
+        retryable: true,
+      });
+
+    setPanelError({
+      message: mapAIErrorToMessage(mapped),
+      retryable: mapped.retryable,
+      details: mapped.details,
+    });
+  }, []);
+
+  const runFeatureAction = useCallback(async (
+    featureId: PanelFeatureId | "feynman_submit" | "topic_segment_request",
+    label: string,
+    action: () => Promise<void>,
+    options?: {
+      rememberForRetry?: boolean;
+      retryAction?: () => Promise<void>;
+    }
+  ) => {
+    setLoadingFeature(featureId);
+    setLoadingLabel(label);
+    setPanelError(null);
+    if (options?.rememberForRetry ?? true) {
+      retryActionRef.current = options?.retryAction ?? action;
+    }
+
+    try {
+      await action();
+    } catch (error) {
+      handleKnownError(error);
+    } finally {
+      setLoadingFeature(null);
+      setLoadingLabel("");
+    }
+  }, [handleKnownError]);
+
+  const handleSummarize = async () => {
+    resetFeature();
+    if (setValidationError("summarize")) return;
+
+    await runFeatureAction("summarize", "Generating summary...", async () => {
+      setAttemptCount((p) => p + 1);
+      const res = await callAIStudy(resolveSummaryFeature(summaryMode), textToUse, { retries: 1 });
+      const summary = res.text ?? res.result;
+      setResult(summary);
+      pushToNotebook("Summary", summary);
+    });
   };
 
   const handleExplain = async () => {
-    if (!hasContent) return;
-    setLoading(true);
     resetFeature();
-    try {
-      const res = await callAI(`explain_${explainLevel}`, textToUse);
-      setResult(res);
-      pushToNotebook("Explanation", res);
-    } catch {
-      setResult("Error generating explanation. Please try again.");
-    }
-    setLoading(false);
+    if (setValidationError("explain")) return;
+
+    await runFeatureAction("explain", "Generating explanation...", async () => {
+      setAttemptCount((p) => p + 1);
+      const res = await callAIStudy(resolveExplainFeature(explainLevel), textToUse, { retries: 1 });
+      const explanation = res.text ?? res.result;
+      setResult(explanation);
+      pushToNotebook("Explanation", explanation);
+    });
   };
 
   const handleFlashcards = async () => {
-    if (!hasContent) return;
-    setLoading(true);
     resetFeature();
-    try {
-      const res = await callAI("flashcards", textToUse);
-      const cards = parseJSON(res);
-      if (cards && Array.isArray(cards)) {
-        setFlashcards(cards);
-        onSaveFlashcards?.(cards);
-        const asText = cards.map((card, index) => `${index + 1}. Q: ${card.question}\nA: ${card.answer}`).join("\n\n");
-        pushToNotebook("Flashcards", asText);
-      } else {
-        setResult("Failed to parse flashcards. Raw response:\n" + res);
-      }
-    } catch {
-      setResult("Error generating flashcards.");
-    }
-    setLoading(false);
+    if (setValidationError("flashcards")) return;
+
+    await runFeatureAction("flashcards", "Generating flashcards...", async () => {
+      setAttemptCount((p) => p + 1);
+      const res = await callAIStudy<Flashcard[]>(AI_FEATURE_MAP.flashcards, textToUse, { retries: 1 });
+      const cards = Array.isArray(res.data) ? res.data : [];
+      setFlashcards(cards);
+      onSaveFlashcards?.(cards);
+      const asText = cards.map((card, index) => `${index + 1}. Q: ${card.question}\nA: ${card.answer}`).join("\n\n");
+      pushToNotebook("Flashcards", asText);
+    });
   };
 
   const handleQuiz = async () => {
-    if (!hasContent) return;
-    setLoading(true);
     resetFeature();
-    try {
-      const res = await callAI(`quiz_${quizType}`, textToUse, { difficulty: quizDifficulty });
-      const parsed = parseJSON(res);
-      if (parsed && Array.isArray(parsed)) {
-        if (quizType === "mcq") {
-          setMcqQuestions(parsed);
-          const asText = parsed
-            .map(
-              (q: MCQQuestion, i: number) =>
-                `${i + 1}. ${q.question}\nA) ${q.options[0]}\nB) ${q.options[1]}\nC) ${q.options[2]}\nD) ${q.options[3]}\nAnswer: ${String.fromCharCode(65 + q.correct)}\nWhy: ${q.explanation}`
-            )
-            .join("\n\n");
-          pushToNotebook("Quiz (MCQ)", asText);
-        } else if (quizType === "truefalse") {
-          setTfQuestions(parsed);
-          const asText = parsed
-            .map((q: TFQuestion, i: number) => `${i + 1}. ${q.statement}\nAnswer: ${q.answer ? "True" : "False"}\nWhy: ${q.explanation}`)
-            .join("\n\n");
-          pushToNotebook("Quiz (True/False)", asText);
-        } else {
-          setResult(res);
-          pushToNotebook("Quiz (Short Answer)", res);
-        }
-      } else {
-        setResult("Failed to parse quiz. Raw:\n" + res);
+    if (setValidationError("quiz")) return;
+
+    await runFeatureAction("quiz", "Generating quiz...", async () => {
+      setAttemptCount((p) => p + 1);
+      const feature = resolveQuizFeature(quizType);
+      if (quizType === "mcq") {
+        const res = await callAIStudy<MCQQuestion[]>(feature, textToUse, {
+          difficulty: quizDifficulty,
+          retries: 1,
+        });
+        const parsed = Array.isArray(res.data) ? res.data : [];
+        setMcqQuestions(parsed);
+        const asText = parsed
+          .map(
+            (q, i) =>
+              `${i + 1}. ${q.question}\nA) ${q.options[0]}\nB) ${q.options[1]}\nC) ${q.options[2]}\nD) ${q.options[3]}\nAnswer: ${String.fromCharCode(65 + q.correct)}\nWhy: ${q.explanation}`
+          )
+          .join("\n\n");
+        pushToNotebook("Quiz (MCQ)", asText);
+        return;
       }
-    } catch {
-      setResult("Error generating quiz.");
-    }
-    setLoading(false);
+      if (quizType === "truefalse") {
+        const res = await callAIStudy<TFQuestion[]>(feature, textToUse, {
+          difficulty: quizDifficulty,
+          retries: 1,
+        });
+        const parsed = Array.isArray(res.data) ? res.data : [];
+        setTfQuestions(parsed);
+        const asText = parsed
+          .map((q, i) => `${i + 1}. ${q.statement}\nAnswer: ${q.answer ? "True" : "False"}\nWhy: ${q.explanation}`)
+          .join("\n\n");
+        pushToNotebook("Quiz (True/False)", asText);
+        return;
+      }
+
+      const res = await callAIStudy<ShortQuestion[]>(feature, textToUse, {
+        difficulty: quizDifficulty,
+        retries: 1,
+      });
+      const parsed = Array.isArray(res.data) ? res.data : [];
+      setShortQuestions(parsed);
+      const asText = parsed
+        .map((q, i) => `${i + 1}. ${q.question}\nModel answer: ${q.model_answer}\nKey points: ${(q.key_points || []).join(", ")}`)
+        .join("\n\n");
+      pushToNotebook("Quiz (Short Answer)", asText);
+    });
   };
 
   const handleEnhance = async () => {
-    if (!hasContent) return;
-    setLoading(true);
     resetFeature();
-    try {
-      const res = await callAI("enhance", textToUse);
-      setResult(res);
-      pushToNotebook("Enhanced Text", res);
-    } catch {
-      setResult("Error enhancing text.");
-    }
-    setLoading(false);
+    if (setValidationError("enhance")) return;
+
+    await runFeatureAction("enhance", "Enhancing content...", async () => {
+      setAttemptCount((p) => p + 1);
+      const res = await callAIStudy(AI_FEATURE_MAP.enhance, textToUse, { retries: 1 });
+      const enhanced = res.text ?? res.result;
+      setResult(enhanced);
+      pushToNotebook("Enhanced Text", enhanced);
+    });
+  };
+
+  const handleMnemonics = async () => {
+    resetFeature();
+    if (setValidationError("mnemonics")) return;
+
+    await runFeatureAction("mnemonics", "Creating memory aids...", async () => {
+      setAttemptCount((p) => p + 1);
+      const res = await callAIStudy<MnemonicsResult>(AI_FEATURE_MAP.mnemonics, textToUse, { retries: 1 });
+      const parsed = res.data;
+      if (!parsed) {
+        throw new AIStudyError({
+          code: "MODEL_JSON_INVALID",
+          message: "Mnemonics format is invalid.",
+          retryable: true,
+        });
+      }
+      setMnemonics(parsed);
+      const asText = `Acronym: ${parsed.acronym}\nStory: ${parsed.story}\nRhyme: ${parsed.rhyme}\nAssociation: ${parsed.association}\nMemory Palace: ${parsed.memory_palace}`;
+      pushToNotebook("Mnemonics", asText);
+    });
   };
 
   const handleGapFill = async () => {
-    if (!hasContent) return;
-    setLoading(true);
     resetFeature();
-    try {
-      const res = await callAI("gap_fill", textToUse);
-      const parsed = parseJSON(res);
-      if (parsed && parsed.text_with_blanks) {
-        setGapFillResult(parsed);
-        const asText = `${parsed.text_with_blanks}\n\nAnswers: ${parsed.answers.join(", ")}`;
-        pushToNotebook("Gap Fill Exercise", asText);
-      } else {
-        setResult(res);
+    if (setValidationError("gap_fill")) return;
+
+    await runFeatureAction("gap_fill", "Generating gap-fill exercise...", async () => {
+      setAttemptCount((p) => p + 1);
+      const res = await callAIStudy<{ text_with_blanks: string; answers: string[] }>(AI_FEATURE_MAP.gap_fill, textToUse, { retries: 1 });
+      const parsed = res.data;
+      if (!parsed?.text_with_blanks) {
+        throw new AIStudyError({
+          code: "MODEL_JSON_INVALID",
+          message: "Gap-fill output is malformed.",
+          retryable: true,
+        });
       }
-    } catch {
-      setResult("Error generating gap fill.");
-    }
-    setLoading(false);
+      setGapFillResult(parsed);
+      const asText = `${parsed.text_with_blanks}\n\nAnswers: ${(parsed.answers || []).join(", ")}`;
+      pushToNotebook("Gap Fill Exercise", asText);
+    });
   };
 
   const handleFeynmanStart = async () => {
-    if (!hasContent) return;
-    setLoading(true);
     resetFeature();
-    try {
-      const res = await callAI("feynman_pick", textToUse);
-      const parsed = parseJSON(res);
-      if (parsed) setFeynmanConcept(parsed);
-      else setResult(res);
-    } catch {
-      setResult("Error starting Feynman test.");
-    }
-    setLoading(false);
+    if (setValidationError("feynman")) return;
+
+    await runFeatureAction("feynman", "Picking a concept...", async () => {
+      setAttemptCount((p) => p + 1);
+      const res = await callAIStudy<{ concept: string; prompt: string }>(AI_FEATURE_MAP.feynman_pick, textToUse, { retries: 1 });
+      const parsed = res.data;
+      if (!parsed?.concept || !parsed?.prompt) {
+        throw new AIStudyError({
+          code: "MODEL_JSON_INVALID",
+          message: "Feynman concept payload is invalid.",
+          retryable: true,
+        });
+      }
+      setFeynmanConcept(parsed);
+    });
   };
 
   const handleFeynmanSubmit = async () => {
     if (!feynmanExplanation.trim()) return;
-    setLoading(true);
-    try {
-      const res = await callAI("feynman_evaluate", textToUse, { userMessage: feynmanExplanation });
-      const parsed = parseJSON(res);
-      if (parsed) {
-        setFeynmanEval(parsed);
-        const asText = `Score: ${parsed.score}/10\nCorrect: ${(parsed.correct_points || []).join("; ")}\nVague: ${(parsed.vague_points || []).join("; ")}\nMissing: ${(parsed.missing_points || []).join("; ")}\nGuidance: ${parsed.guidance || ""}`;
-        pushToNotebook("Feynman Feedback", asText);
-      } else {
-        setResult(res);
+
+    await runFeatureAction("feynman_submit", "Evaluating your explanation...", async () => {
+      setAttemptCount((p) => p + 1);
+      const res = await callAIStudy<FeynmanEvalResult>(AI_FEATURE_MAP.feynman_evaluate, textToUse, {
+        userMessage: feynmanExplanation,
+        retries: 1,
+      });
+      const parsed = res.data;
+      if (!parsed) {
+        throw new AIStudyError({
+          code: "MODEL_JSON_INVALID",
+          message: "Feynman evaluation payload is invalid.",
+          retryable: true,
+        });
       }
-    } catch {
-      setResult("Error evaluating explanation.");
-    }
-    setLoading(false);
+      setFeynmanEval(parsed);
+      const asText = `Score: ${parsed.score}/10\nCorrect: ${(parsed.correct_points || []).join("; ")}\nVague: ${(parsed.vague_points || []).join("; ")}\nMissing: ${(parsed.missing_points || []).join("; ")}\nGuidance: ${parsed.guidance || ""}`;
+      pushToNotebook("Feynman Feedback", asText);
+    }, {
+      retryAction: async () => {
+        await handleFeynmanSubmit();
+      },
+    });
   };
 
   const handleStory = async () => {
-    if (!hasContent) return;
-    setLoading(true);
     resetFeature();
-    try {
-      const res = await callAI("story_mode", textToUse);
-      setResult(res);
-      pushToNotebook("Story Mode", res);
-    } catch {
-      setResult("Error generating story.");
-    }
-    setLoading(false);
+    if (setValidationError("story")) return;
+
+    await runFeatureAction("story", "Generating narrative...", async () => {
+      setAttemptCount((p) => p + 1);
+      const res = await callAIStudy(AI_FEATURE_MAP.story, textToUse, { retries: 1 });
+      const story = res.text ?? res.result;
+      setResult(story);
+      pushToNotebook("Story Mode", story);
+    });
   };
 
   const handleExamPredict = async () => {
-    if (!hasContent) return;
-    setLoading(true);
     resetFeature();
-    try {
-      const res = await callAI("exam_predictor", textToUse);
-      setResult(res);
-      pushToNotebook("Predicted Exam Questions", res);
-    } catch {
-      setResult("Error predicting exam questions.");
-    }
-    setLoading(false);
+    if (setValidationError("exam_predict")) return;
+
+    await runFeatureAction("exam_predict", "Predicting exam questions...", async () => {
+      setAttemptCount((p) => p + 1);
+      const res = await callAIStudy<Array<{ question: string; type: string; difficulty: string; model_answer: string }>>(AI_FEATURE_MAP.exam_predict, textToUse, { retries: 1 });
+      const parsed = Array.isArray(res.data) ? res.data : [];
+      const asText = parsed
+        .map((q, i) => `${i + 1}. ${q.question}\nType: ${q.type}\nDifficulty: ${q.difficulty}\nModel answer: ${q.model_answer}`)
+        .join("\n\n");
+      setResult(asText);
+      pushToNotebook("Predicted Exam Questions", asText);
+    });
   };
 
   const features = [
-    { id: "summarize" as FeatureId, label: "Summarize", icon: FileText, desc: "Key points or narrative summary" },
-    { id: "explain" as FeatureId, label: "Explain", icon: Lightbulb, desc: "Explain at adjustable depth" },
-    { id: "flashcards" as FeatureId, label: "Flashcards", icon: Brain, desc: "Auto-generate study cards" },
-    { id: "quiz" as FeatureId, label: "Quiz", icon: Target, desc: "MCQ, True/False, Short answer" },
-    { id: "enhance" as FeatureId, label: "Enhance", icon: Zap, desc: "Improve clarity and readability" },
-    { id: "gap_fill" as FeatureId, label: "Gap Fill", icon: Puzzle, desc: "Fill-in-the-blank exercises" },
-    { id: "feynman" as FeatureId, label: "Feynman Test", icon: GraduationCap, desc: "Explain it back to learn" },
-    { id: "story" as FeatureId, label: "Story Mode", icon: BookOpen, desc: "Content as a narrative" },
-    { id: "exam_predict" as FeatureId, label: "Exam Predictor", icon: ClipboardCheck, desc: "Predict likely exam questions" },
-    { id: "topic_segment" as FeatureId, label: "Topic Segments", icon: Layers, desc: "Auto-chapter long transcripts" },
+    { id: "summarize" as PanelFeatureId, label: "Summarize", icon: FileText, desc: "Key points or narrative summary" },
+    { id: "explain" as PanelFeatureId, label: "Explain", icon: Lightbulb, desc: "Explain at adjustable depth" },
+    { id: "flashcards" as PanelFeatureId, label: "Flashcards", icon: Brain, desc: "Auto-generate study cards" },
+    { id: "quiz" as PanelFeatureId, label: "Quiz", icon: Target, desc: "MCQ, True/False, Short answer" },
+    { id: "enhance" as PanelFeatureId, label: "Enhance", icon: Zap, desc: "Improve clarity and readability" },
+    { id: "mnemonics" as PanelFeatureId, label: "Mnemonics", icon: Sparkles, desc: "Memory tricks and recall aids" },
+    { id: "gap_fill" as PanelFeatureId, label: "Gap Fill", icon: Puzzle, desc: "Fill-in-the-blank exercises" },
+    { id: "feynman" as PanelFeatureId, label: "Feynman Test", icon: GraduationCap, desc: "Explain it back to learn" },
+    { id: "story" as PanelFeatureId, label: "Story Mode", icon: BookOpen, desc: "Content as a narrative" },
+    { id: "exam_predict" as PanelFeatureId, label: "Exam Predictor", icon: ClipboardCheck, desc: "Predict likely exam questions" },
+    { id: "topic_segment" as PanelFeatureId, label: "Topic Segments", icon: Layers, desc: "Auto-chapter long transcripts" },
   ];
 
-  const renderFeatureContent = (featureId: FeatureId) => {
+  const handleRetry = async () => {
+    if (!retryActionRef.current || loading) return;
+    await retryActionRef.current();
+  };
+
+  const handleTopicSegment = async () => {
+    resetFeature();
+    if (setValidationError("topic_segment")) return;
+
+    await runFeatureAction("topic_segment_request", "Segmenting topics...", async () => {
+      const plainText = textToUse.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+      const res = await fetch("/api/topic-segment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: plainText }),
+      });
+      if (!res.ok) {
+        const details = await res.text();
+        throw new AIStudyError({
+          code: "TOPIC_SEGMENT_FAILED",
+          message: "Topic segmentation failed.",
+          retryable: res.status >= 500,
+          details,
+          status: res.status,
+        });
+      }
+      const data = await res.json();
+      const chapters = Array.isArray(data.chapters) ? data.chapters : [];
+      setTopicChapters(chapters);
+      if (chapters.length > 0 && onInsertToNotebookHtml) {
+        const html = chapters
+          .map((ch: { title: string; content: string }) =>
+            `<h2>${escapeHtml(ch.title)}</h2><p>${escapeHtml(ch.content).replace(/\n/g, "<br/>")}</p>`
+          )
+          .join("");
+        onInsertToNotebookHtml(html);
+      }
+    });
+  };
+
+  const renderFeatureContent = (featureId: PanelFeatureId) => {
     if (activeFeature !== featureId) return null;
 
     if (featureId === "summarize") {
@@ -509,6 +660,17 @@ export function AIFeaturesPanel({
           {!quizSubmitted && (mcqQuestions.length > 0 || tfQuestions.length > 0) && (
             <button onClick={() => setQuizSubmitted(true)} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium">Submit</button>
           )}
+          {shortQuestions.length > 0 && (
+            <div className="space-y-3">
+              {shortQuestions.map((q, i) => (
+                <div key={i} className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8]">
+                  <p className="text-sm text-[#6f5b43] mb-2 font-medium">{i + 1}. {q.question}</p>
+                  <p className="text-xs text-[#8a7559]"><span className="font-semibold text-[#6f5b43]">Model answer:</span> {q.model_answer}</p>
+                  <p className="text-xs text-[#8a7559] mt-1"><span className="font-semibold text-[#6f5b43]">Key points:</span> {(q.key_points || []).join(", ")}</p>
+                </div>
+              ))}
+            </div>
+          )}
           {result && <ResultBox text={result} onCopy={() => handleCopy(result)} copied={copied} />}
         </div>
       );
@@ -522,6 +684,25 @@ export function AIFeaturesPanel({
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />} Enhance Text
           </button>
           {result && <ResultBox text={result} onCopy={() => handleCopy(result)} copied={copied} />}
+        </div>
+      );
+    }
+
+    if (featureId === "mnemonics") {
+      return (
+        <div className="space-y-3 p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
+          <button onClick={handleMnemonics} disabled={loading || !hasContent} className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />} Generate Mnemonics
+          </button>
+          {mnemonics && (
+            <div className="space-y-2">
+              <div className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8] text-sm text-[#6f5b43]"><span className="font-semibold">Acronym:</span> {mnemonics.acronym}</div>
+              <div className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8] text-sm text-[#6f5b43]"><span className="font-semibold">Story:</span> {mnemonics.story}</div>
+              <div className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8] text-sm text-[#6f5b43]"><span className="font-semibold">Rhyme:</span> {mnemonics.rhyme}</div>
+              <div className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8] text-sm text-[#6f5b43]"><span className="font-semibold">Association:</span> {mnemonics.association}</div>
+              <div className="p-3 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8] text-sm text-[#6f5b43]"><span className="font-semibold">Memory Palace:</span> {mnemonics.memory_palace}</div>
+            </div>
+          )}
         </div>
       );
     }
@@ -544,7 +725,7 @@ export function AIFeaturesPanel({
                     <input type="text" value={gapFillUserAnswers[i] || ""} onChange={(e) => setGapFillUserAnswers((p) => ({ ...p, [i]: e.target.value }))} className="flex-1 px-2 py-1 bg-[#f2e6d8] border border-[#d8c6b2] rounded text-sm text-[#6f5b43] outline-none focus:border-[#a68b5b]" placeholder="Your answer..." disabled={gapFillChecked} />
                     {gapFillChecked && (
                       <span className={`text-xs ${gapFillUserAnswers[i]?.toLowerCase().trim() === gapFillResult.answers[i].toLowerCase().trim() ? "text-emerald-400" : "text-red-400"}`}>
-                        {gapFillUserAnswers[i]?.toLowerCase().trim() === gapFillResult.answers[i].toLowerCase().trim() ? "✓" : gapFillResult.answers[i]}
+                        {gapFillUserAnswers[i]?.toLowerCase().trim() === gapFillResult.answers[i].toLowerCase().trim() ? "Correct" : gapFillResult.answers[i]}
                       </span>
                     )}
                   </div>
@@ -619,34 +800,7 @@ export function AIFeaturesPanel({
         <div className="space-y-3 p-3 rounded-xl border border-[#e4d7c8] bg-[#f5eadc]">
           <p className="text-xs text-[#8a7559]">Uses ML-based TextTiling on sentence embeddings to detect topic shifts and split content into chapters automatically.</p>
           <button
-            onClick={async () => {
-              if (!hasContent) return;
-              setLoading(true);
-              resetFeature();
-              try {
-                const plainText = textToUse.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-                const res = await fetch("/api/topic-segment", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ text: plainText }),
-                });
-                if (!res.ok) throw new Error("Segmentation failed");
-                const data = await res.json();
-                const chapters = data.chapters || [];
-                setTopicChapters(chapters);
-                if (chapters.length > 0 && onInsertToNotebookHtml) {
-                  const html = chapters
-                    .map((ch: { title: string; content: string }) =>
-                      `<h2>${escapeHtml(ch.title)}</h2><p>${escapeHtml(ch.content).replace(/\n/g, "<br/>")}</p>`
-                    )
-                    .join("");
-                  onInsertToNotebookHtml(html);
-                }
-              } catch {
-                setResult("Error segmenting topics. Make sure your content is long enough (requires 10+ sentences).");
-              }
-              setLoading(false);
-            }}
+            onClick={handleTopicSegment}
             disabled={loading || !hasContent}
             className="w-full py-2 bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] rounded-lg text-sm font-medium transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
           >
@@ -686,6 +840,34 @@ export function AIFeaturesPanel({
           <p className="text-[10px] text-[#6f5b43] mt-1 truncate">Selected: &quot;{selectedText.slice(0, 50)}...&quot;</p>
         )}
       </div>
+
+      {(loadingLabel || panelError) && (
+        <div className="px-3 pt-3 space-y-2">
+          {loadingLabel && (
+            <div className="px-3 py-2 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8] text-xs text-[#6f5b43] flex items-center gap-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>{loadingLabel}</span>
+              {attemptCount > 1 && <span className="text-[#8a7559]">(Attempt {attemptCount})</span>}
+            </div>
+          )}
+          {panelError && (
+            <div className="px-3 py-2 rounded-lg border border-red-300/70 bg-red-100/60 text-xs text-red-700 space-y-2">
+              <p>{panelError.message}</p>
+              {panelError.details && <p className="text-red-700/80">{panelError.details}</p>}
+              {panelError.retryable && (
+                <button
+                  onClick={handleRetry}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-red-300 text-red-700 hover:bg-red-200/50 disabled:opacity-60"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  Retry
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {features.map((f) => (
