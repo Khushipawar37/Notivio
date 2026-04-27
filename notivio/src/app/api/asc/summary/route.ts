@@ -23,14 +23,15 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [flashcardsCount, notebooksCount, sessionsCount, profileMeta] = await Promise.all([
-    prisma.flashcard.count({ where: { userId: user.id } }),
-    prisma.notebook.count({ where: { userId: user.id } }),
-    prisma.studySession.count({ where: { userId: user.id } }),
-    prisma.workspaceState.findUnique({
-      where: { userId_key: { userId: user.id, key: PROFILE_META_KEY } },
-    }),
-  ]);
+  const [flashcardsCount, notebooksCount, sessionsCount, profileMeta] =
+    await Promise.all([
+      prisma.flashcard.count({ where: { userId: user.id } }),
+      prisma.notebook.count({ where: { userId: user.id } }),
+      prisma.studySession.count({ where: { userId: user.id } }),
+      prisma.workspaceState.findUnique({
+        where: { userId_key: { userId: user.id, key: PROFILE_META_KEY } },
+      }),
+    ]);
 
   const subjects = parseSubjects(profileMeta?.activePageId);
   const topSubject = subjects[0] || "your top subject";
