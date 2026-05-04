@@ -278,7 +278,7 @@ export function SourcesPanel({
                     void removeSource(source.id);
                   }}
                   className="text-[10px] px-2 py-0.5 rounded border border-[#d8c6b2] text-[#7a6143] hover:bg-[#f2e6d8]"
-                > 
+                >
                   Remove
                 </button>
               </div>
