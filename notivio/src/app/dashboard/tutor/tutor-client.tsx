@@ -8,7 +8,6 @@ interface ChatMessage {
   id: string;
   role: ChatRole;
   text: string;
-  meta?: string;
 }
 
 interface SessionCard {
@@ -86,7 +85,6 @@ export function TutorClient() {
           id: uid(),
           role: "tutor",
           text: introMessage(profile),
-          meta: "Tutor opening",
         },
       ]);
     }, 1500);
@@ -140,13 +138,6 @@ export function TutorClient() {
           id: uid(),
           role: "tutor",
           text: data.tutorReply,
-          meta: [
-            `mode: ${data.mode}`,
-            data.rootCause ? `root cause: ${data.rootCause}` : "",
-            data.remediation?.length ? `fix: ${data.remediation.join("; ")}` : "",
-          ]
-            .filter(Boolean)
-            .join(" | "),
         },
       ]);
       setFailedAttempts((value) => (data.shouldEscalate ? value + 1 : 0));
@@ -178,10 +169,6 @@ export function TutorClient() {
           id: uid(),
           role: "tutor",
           text: data.briefing,
-          meta: [
-            ...(data.prioritizedTopics ?? []).slice(0, 3),
-            ...(data["30minPlan"] ?? []).slice(0, 2),
-          ].join(" | "),
         },
       ]);
     } catch (err) {
@@ -200,20 +187,17 @@ export function TutorClient() {
         id: uid(),
         role: "tutor",
         text: "Before you go, without looking at anything, what is the one thing from today you want to remember? One sentence only.",
-        meta: "Closing 1/3",
       },
       {
         id: uid(),
         role: "tutor",
         text:
           "Honest summary: you are improving on recall, but your application step still needs cleaner reasoning. Next session we should focus on one worked example chain.",
-        meta: "Closing 2/3",
       },
       {
         id: uid(),
         role: "tutor",
         text: "Next session hook: we will pick up exactly from your weakest application pattern. I will remember this point.",
-        meta: "Closing 3/3",
       },
     ]);
   };
@@ -272,7 +256,6 @@ export function TutorClient() {
                 }`}
               >
                 <p>{message.text}</p>
-                {message.meta ? <p className="mt-1 text-[11px] opacity-80">{message.meta}</p> : null}
               </div>
             ))}
           </div>

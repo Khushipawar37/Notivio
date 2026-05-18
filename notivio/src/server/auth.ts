@@ -5,20 +5,24 @@ export async function getCurrentUserProfile() {
   const user = await stackServerApp.getUser({ or: "return-null" });
   if (!user) return null;
 
-  await prisma.userProfile.upsert({
-    where: { id: user.id },
-    update: {
-      email: user.primaryEmail,
-      displayName: user.displayName,
-      imageUrl: user.profileImageUrl,
-    },
-    create: {
-      id: user.id,
-      email: user.primaryEmail,
-      displayName: user.displayName,
-      imageUrl: user.profileImageUrl,
-    },
-  });
+  try {
+    await prisma.userProfile.upsert({
+      where: { id: user.id },
+      update: {
+        email: user.primaryEmail,
+        displayName: user.displayName,
+        imageUrl: user.profileImageUrl,
+      },
+      create: {
+        id: user.id,
+        email: user.primaryEmail,
+        displayName: user.displayName,
+        imageUrl: user.profileImageUrl,
+      },
+    });
+  } catch (error) {
+    console.error("userProfile upsert failed; continuing with authenticated user", error);
+  }
 
   return user;
 }

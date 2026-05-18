@@ -6,11 +6,24 @@ export async function GET() {
   const user = await getCurrentUserProfile();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [profile, conceptMetrics, sessions] = await Promise.all([
+  const settled = await Promise.allSettled([
     getOrCreateTutorProfile(user.id),
     listConceptMetrics(user.id, 30),
     listRecentTutorSessions(user.id, 12),
   ]);
+
+  const profile =
+    settled[0].status === "fulfilled"
+      ? settled[0].value
+      : {
+          id: `fallback-${user.id}`,
+          preferredTone: "encouraging",
+          preferredPersona: "patient",
+          memoryEnabled: false,
+          studyPatterns: null,
+        };
+  const conceptMetrics = settled[1].status === "fulfilled" ? settled[1].value : [];
+  const sessions = settled[2].status === "fulfilled" ? settled[2].value : [];
 
   const strengths = conceptMetrics
     .map((metric) => ({

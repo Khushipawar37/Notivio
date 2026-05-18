@@ -86,6 +86,8 @@ const NON_TOPIC_WORDS = new Set([
   "hi",
   "hello",
   "hey",
+  "heyy",
+  "hiya",
 ]);
 
 export function normalizeText(text: string): string {
@@ -129,6 +131,14 @@ export function hasLearningIntent(text: string): boolean {
   return (
     /\b(i want to learn|teach me|help me learn|i want to study|let s study|study)\b/.test(clean) ||
     /\blearn\b/.test(clean)
+  );
+}
+
+export function asksForTopicList(text: string): boolean {
+  const clean = normalizeText(text);
+  return (
+    /\b(list|syllabus|roadmap|important topics|all topics|topics)\b/.test(clean) &&
+    /\b(study|learn|prepare|cover|start|want)\b/.test(clean)
   );
 }
 
@@ -233,7 +243,7 @@ export function socraticStarter(): string {
 
 export function isGreetingMessage(text: string): boolean {
   const clean = normalizeText(text);
-  return /^(hi|hii|hello|hey|yo|sup|good morning|good evening|good afternoon)$/.test(clean);
+  return /^(h(i+|e+|eya+)|hello+|hey+|hiya+|yo+|sup|good (morning|evening|afternoon))$/.test(clean);
 }
 
 export function asksTutorToAskFirst(text: string): boolean {
@@ -270,6 +280,8 @@ export function isTopicOnlyMessage(text: string): boolean {
   const clean = normalizeText(text);
   if (!clean) return false;
   if (clean.split(" ").length > 4) return false;
+  const tokens = clean.split(" ").filter(Boolean);
+  if (tokens.every((token) => NON_TOPIC_WORDS.has(token))) return false;
   if (isGreetingMessage(clean)) return false;
   if (seemsAttempt(clean)) return false;
   if (asksTutorToAskFirst(clean)) return false;

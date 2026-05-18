@@ -3,8 +3,10 @@ import { z } from "zod";
 import { getCurrentUserProfile } from "@/server/auth";
 import { getOrCreateTutorProfile, logTutorEvent, updateConceptMetric } from "@/server/tutor";
 import {
+  asksForTopicList,
   asksTutorToAskFirst,
   buildDiagnosticQuestion,
+  buildExpectedKeyPoints,
   buildRootCauseAndRemediation,
   chooseTutorMode,
   extractLikelyTopic,
@@ -109,10 +111,78 @@ export async function POST(request: Request) {
   }
 
   const learningIntent = hasLearningIntent(message);
+  const asksTopicList = asksForTopicList(message);
   const explicitAskFirst = asksTutorToAskFirst(message);
   const topicOnly = isTopicOnlyMessage(message);
+  if (asksTopicList && !hasAttemptSignal) {
+    const inferredTopic = extractLikelyTopic(message) ?? "this subject";
+    const evidence = await retrieveTutorEvidence(user.id, inferredTopic, 8);
+    const provenance = provenancePointers(evidence);
+    const keyPoints = buildExpectedKeyPoints(evidence).slice(0, 8);
+    const formattedTopics =
+      keyPoints.length > 0
+        ? keyPoints.map((point, index) => `${index + 1}. ${point}`).join("\n")
+        : [
+            "1. Fundamentals and definitions",
+            "2. Core architecture/components",
+            "3. Key algorithms/processes",
+            "4. Resource management and performance",
+            "5. Security and reliability basics",
+            "6. Common interview/exam problems",
+          ].join("\n");
+
+    const reply = [
+      `Great ask. Here is a focused starter list for ${inferredTopic}:`,
+      formattedTopics,
+      "",
+      "If you want, I can now convert this into a 7-day study plan and start with Topic 1 at your level.",
+      provenance.length ? `source: ${provenance.map((p) => `${p.pageId}:${p.chunkIndex}`).join(", ")}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    await logTutorEvent({
+      userId: user.id,
+      actor: "tutor",
+      type: "prompt",
+      payload: { reply, mode, reason: "topic_list_requested" },
+      reasoningSummary: "Provided direct topic list because user explicitly requested syllabus-style guidance.",
+      confidence: keyPoints.length > 0 ? 0.84 : 0.58,
+      suggestedNextSteps: ["Ask for a day-wise plan or pick one topic to start."],
+      redacted: sensitive,
+    });
+    return NextResponse.json({
+      tutorReply: reply,
+      mode,
+      shouldEscalate: false,
+      remediation: [],
+      provenance,
+    });
+  }
+
   if ((learningIntent || explicitAskFirst || topicOnly) && !hasAttemptSignal) {
-    const inferredTopic = extractLikelyTopic(message) ?? "your topic";
+    const inferredTopic = extractLikelyTopic(message);
+    if (!inferredTopic) {
+      const reply =
+        "Great, let's start. Share the exact topic in 2-5 words (example: binary search trees, SQL joins, Newton's laws), and I will ask your first diagnostic question.";
+      await logTutorEvent({
+        userId: user.id,
+        actor: "tutor",
+        type: "prompt",
+        payload: { reply, mode, reason: "topic_missing_after_intent" },
+        reasoningSummary: "Detected learning intent but topic was too vague to diagnose reliably.",
+        confidence: 0.86,
+        suggestedNextSteps: ["Provide a concrete topic in 2-5 words."],
+        redacted: sensitive,
+      });
+      return NextResponse.json({
+        tutorReply: reply,
+        mode,
+        shouldEscalate: false,
+        remediation: [],
+        provenance: [],
+      });
+    }
     const evidence = await retrieveTutorEvidence(user.id, inferredTopic, 6);
     const provenance = provenancePointers(evidence);
     const question = buildDiagnosticQuestion(inferredTopic, evidence);
