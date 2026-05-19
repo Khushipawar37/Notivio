@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type ChatRole = "student" | "tutor";
+type TutorMode = "learn" | "exam_prep" | "practice" | "revision" | "planner";
 
 interface ChatMessage {
   id: string;
@@ -59,11 +60,8 @@ export function TutorClient() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [examName, setExamName] = useState("Upcoming Exam");
-  const [examDate, setExamDate] = useState("");
+  const [mode, setMode] = useState<TutorMode>("learn");
   const [error, setError] = useState<string | null>(null);
-  const [endingSession, setEndingSession] = useState(false);
   const seededRef = useRef(false);
 
   useEffect(() => {
@@ -101,18 +99,22 @@ export function TutorClient() {
     const trimmed = input.trim();
     if (!trimmed || loading) return;
 
+    const historyForRequest = messages.map((msg) => ({ role: msg.role, text: msg.text }));
     setMessages((prev) => [...prev, { id: uid(), role: "student", text: trimmed }]);
     setInput("");
     setLoading(true);
     setError(null);
 
+    const placeholderId = uid();
+    setMessages((prev) => [...prev, { id: placeholderId, role: "tutor", text: "" }]);
     try {
       const response = await fetch("/api/tutor/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: trimmed,
-          state: { failedAttempts, confidence: 0.6, recentCorrectRate: 0.6 },
+          mode,
+          history: historyForRequest,
           context: {
             studentProfile: profile,
             sessionHistory: profile?.sessions ?? [],
@@ -123,83 +125,30 @@ export function TutorClient() {
         const text = await response.text();
         throw new Error(text || "Tutor response failed");
       }
-
-      const data = (await response.json()) as {
-        tutorReply: string;
-        mode: "encouraging" | "direct" | "curious";
-        rootCause?: string;
-        remediation?: string[];
-        shouldEscalate: boolean;
-      };
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: uid(),
-          role: "tutor",
-          text: data.tutorReply,
-        },
-      ]);
-      setFailedAttempts((value) => (data.shouldEscalate ? value + 1 : 0));
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const data = (await response.json()) as { tutorReply: string };
+        setMessages((prev) =>
+          prev.map((msg) => (msg.id === placeholderId ? { ...msg, text: data.tutorReply } : msg)),
+        );
+      } else {
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        if (!reader) throw new Error("Tutor stream unavailable");
+        let acc = "";
+        while (true) {
+          const chunk = await reader.read();
+          if (chunk.done) break;
+          acc += decoder.decode(chunk.value, { stream: true });
+          setMessages((prev) => prev.map((msg) => (msg.id === placeholderId ? { ...msg, text: acc } : msg)));
+        }
+      }
     } catch (err) {
+      setMessages((prev) => prev.filter((msg) => msg.id !== placeholderId));
       setError(err instanceof Error ? err.message : "Tutor response failed");
     } finally {
       setLoading(false);
     }
-  };
-
-  const runExamBrief = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/tutor/exam-briefing", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ examName, examDate }),
-      });
-      if (!response.ok) throw new Error("Exam briefing failed");
-      const data = (await response.json()) as {
-        briefing: string;
-        prioritizedTopics?: string[];
-        "30minPlan"?: string[];
-      };
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: uid(),
-          role: "tutor",
-          text: data.briefing,
-        },
-      ]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Exam briefing failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const endSession = () => {
-    if (endingSession) return;
-    setEndingSession(true);
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: uid(),
-        role: "tutor",
-        text: "Before you go, without looking at anything, what is the one thing from today you want to remember? One sentence only.",
-      },
-      {
-        id: uid(),
-        role: "tutor",
-        text:
-          "Honest summary: you are improving on recall, but your application step still needs cleaner reasoning. Next session we should focus on one worked example chain.",
-      },
-      {
-        id: uid(),
-        role: "tutor",
-        text: "Next session hook: we will pick up exactly from your weakest application pattern. I will remember this point.",
-      },
-    ]);
   };
 
   return (
@@ -240,6 +189,23 @@ export function TutorClient() {
           <header className="border-b border-[#eadfcf] px-4 py-3">
             <h1 className="font-serif text-2xl text-[#4f3d2d]">The Tutor</h1>
             <p className="text-xs text-[#8e775e]">A personal AI tutor that asks before it tells.</p>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {([
+                ["learn", "Learn"],
+                ["exam_prep", "Exam Prep"],
+                ["practice", "Practice"],
+                ["revision", "Revision"],
+                ["planner", "Planner"],
+              ] as Array<[TutorMode, string]>).map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => setMode(value)}
+                  className={`rounded-md border px-2 py-1 text-xs ${mode === value ? "border-[#8a7559] bg-[#efe5d5] text-[#5d4a34]" : "border-[#d8c6b2] text-[#7d6850]"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             {error ? (
               <p className="mt-1 rounded-md bg-red-50 px-2 py-1 text-xs text-red-700">{error}</p>
             ) : null}
@@ -265,35 +231,6 @@ export function TutorClient() {
           </div>
 
           <footer className="px-4 pb-4">
-            <div className="mb-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_130px_140px_130px]">
-              <input
-                value={examName}
-                onChange={(e) => setExamName(e.target.value)}
-                placeholder="Exam name"
-                className="rounded-md border border-[#d8c6b2] px-2 py-1.5 text-xs text-[#5d4a34]"
-              />
-              <input
-                value={examDate}
-                onChange={(e) => setExamDate(e.target.value)}
-                type="date"
-                className="rounded-md border border-[#d8c6b2] px-2 py-1.5 text-xs text-[#5d4a34]"
-              />
-              <button
-                onClick={() => void runExamBrief()}
-                disabled={loading}
-                className="rounded-md border border-[#d8c6b2] px-2 py-1.5 text-xs text-[#6f5b43] disabled:opacity-60"
-              >
-                Pre-Exam Brief
-              </button>
-              <button
-                onClick={endSession}
-                disabled={endingSession}
-                className="rounded-md border border-[#d8c6b2] px-2 py-1.5 text-xs text-[#6f5b43] disabled:opacity-60"
-              >
-                End Session
-              </button>
-            </div>
-
             <div className="flex gap-2">
               <textarea
                 value={input}

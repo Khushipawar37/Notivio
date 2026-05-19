@@ -1,375 +1,150 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUserProfile } from "@/server/auth";
-import { getOrCreateTutorProfile, logTutorEvent, updateConceptMetric } from "@/server/tutor";
-import {
-  asksForTopicList,
-  asksTutorToAskFirst,
-  buildDiagnosticQuestion,
-  buildExpectedKeyPoints,
-  buildRootCauseAndRemediation,
-  chooseTutorMode,
-  extractLikelyTopic,
-  evaluateAttemptAgainstEvidence,
-  hasLearningIntent,
-  inferConceptId,
-  isGreetingMessage,
-  isLikelySmallTalk,
-  isTopicOnlyMessage,
-  lowConfidenceResponse,
-  minimalHint,
-  provenancePointers,
-  retrieveTutorEvidence,
-  seemsAttempt,
-  seemsProblemQuestion,
-  socraticStarter,
-  escalationExplanation,
-} from "@/server/tutorService";
+import { getOrCreateTutorProfile, logTutorEvent } from "@/server/tutor";
+
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const bodySchema = z.object({
   message: z.string().min(1),
-  state: z
-    .object({
-      failedAttempts: z.number().int().min(0).optional(),
-      confidence: z.number().min(0).max(1).optional(),
-      recentCorrectRate: z.number().min(0).max(1).optional(),
-    })
+  mode: z.enum(["learn", "exam_prep", "practice", "revision", "planner"]).optional(),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(["student", "tutor"]),
+        text: z.string(),
+      }),
+    )
     .optional(),
   context: z.record(z.unknown()).optional(),
   sensitive: z.boolean().optional(),
 });
 
+const MODE_HINTS: Record<string, string> = {
+  learn: "Teach clearly with step-by-step explanation and one short check question.",
+  exam_prep: "Give concise, exam-ready answer: definition, key points, and likely framing.",
+  practice: "Ask 1-3 practice questions first, then provide brief feedback.",
+  revision: "Give compact revision summary and quick recall bullets.",
+  planner: "Give realistic short study plan without pressure.",
+};
+
+async function streamGroq(messages: Array<{ role: "system" | "user" | "assistant"; content: string }>) {
+  const response = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.3,
+      max_tokens: 1400,
+      stream: true,
+      messages,
+    }),
+  });
+
+  if (!response.ok || !response.body) {
+    const text = await response.text();
+    throw new Error(text || "Groq tutor request failed");
+  }
+
+  const decoder = new TextDecoder();
+  const encoder = new TextEncoder();
+  const reader = response.body.getReader();
+
+  return new ReadableStream({
+    async start(controller) {
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const payload = trimmed.slice(5).trim();
+          if (!payload || payload === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(payload) as { choices?: Array<{ delta?: { content?: string } }> };
+            const token = parsed.choices?.[0]?.delta?.content || "";
+            if (token) controller.enqueue(encoder.encode(token));
+          } catch {
+            // ignore malformed chunks
+          }
+        }
+      }
+      controller.close();
+    },
+  });
+}
+
 export async function POST(request: Request) {
   const user = await getCurrentUserProfile();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!process.env.GROQ_API_KEY) return NextResponse.json({ error: "GROQ_API_KEY not configured" }, { status: 500 });
 
-  const parsedBody = bodySchema.safeParse(await request.json());
-  if (!parsedBody.success) {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
-  }
+  const parsed = bodySchema.safeParse(await request.json());
+  if (!parsed.success) return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
 
-  const message = parsedBody.data.message.trim();
-  const state = parsedBody.data.state ?? {};
-  const failedAttempts = state.failedAttempts ?? 0;
-  const hasAttemptSignal = seemsAttempt(message);
-  const mode = chooseTutorMode(state);
-  const sensitive = Boolean(parsedBody.data.sensitive);
-
+  const { message, history = [], mode = "learn", context = {}, sensitive = false } = parsed.data;
   const profile = await getOrCreateTutorProfile(user.id);
-  const memoryEnabled = Boolean(profile.memoryEnabled);
+  const profileCtx = JSON.stringify({
+    preferredTone: profile.preferredTone,
+    preferredPersona: profile.preferredPersona,
+    studentProfile: context.studentProfile ?? null,
+  });
 
   await logTutorEvent({
     userId: user.id,
     actor: "student",
     type: "attempt",
-    payload: { message, context: parsedBody.data.context ?? null },
+    payload: { message, mode },
     redacted: sensitive,
   });
 
-  if (isGreetingMessage(message)) {
-    const reply =
-      "Nice to meet you. What do you want to study right now? Share the subject and your current level (beginner/intermediate/advanced), and I will personalize the session.";
-    await logTutorEvent({
-      userId: user.id,
-      actor: "tutor",
-      type: "prompt",
-      payload: { reply, mode, reason: "greeting_detected" },
-      reasoningSummary: "Handled greeting and guided student into topic selection.",
-      confidence: 0.9,
-      suggestedNextSteps: ["Share one topic (for example: DBMS transactions) and your current level."],
-      redacted: sensitive,
-    });
-    return NextResponse.json({
-      tutorReply: reply,
-      mode,
-      shouldEscalate: false,
-      remediation: [],
-      provenance: [],
-    });
-  }
+  const systemPrompt = [
+    "You are the Notivio Personal Tutor.",
+    "Answer the student's actual question directly and accurately.",
+    "Do not ignore user intent. Do not force diagnostics when user asked for explanation.",
+    "If user says they are beginner or they do not know topic, start from basics immediately.",
+    "If uncertain, clearly say uncertainty and ask one clarifying question.",
+    "Keep calm tone. Avoid hype and avoid unrelated statements.",
+    MODE_HINTS[mode] ?? MODE_HINTS.learn,
+  ].join(" ");
 
-  if (isLikelySmallTalk(message) && !hasAttemptSignal) {
-    const reply =
-      "Glad to hear that. To start properly, tell me what subject you want to study today, and I will ask a tailored first diagnostic question.";
-    await logTutorEvent({
-      userId: user.id,
-      actor: "tutor",
-      type: "prompt",
-      payload: { reply, mode, reason: "smalltalk_to_topic_transition" },
-      reasoningSummary: "Handled conversational reply and redirected to study topic setup.",
-      confidence: 0.88,
-      suggestedNextSteps: ["Tell me the subject you want to study."],
-      redacted: sensitive,
-    });
-    return NextResponse.json({
-      tutorReply: reply,
-      mode,
-      shouldEscalate: false,
-      remediation: [],
-      provenance: [],
-    });
-  }
+  const historyMessages = history.slice(-8).map((item) => ({
+    role: item.role === "tutor" ? ("assistant" as const) : ("user" as const),
+    content: item.text,
+  }));
 
-  const learningIntent = hasLearningIntent(message);
-  const asksTopicList = asksForTopicList(message);
-  const explicitAskFirst = asksTutorToAskFirst(message);
-  const topicOnly = isTopicOnlyMessage(message);
-  if (asksTopicList && !hasAttemptSignal) {
-    const inferredTopic = extractLikelyTopic(message) ?? "this subject";
-    const evidence = await retrieveTutorEvidence(user.id, inferredTopic, 8);
-    const provenance = provenancePointers(evidence);
-    const keyPoints = buildExpectedKeyPoints(evidence).slice(0, 8);
-    const formattedTopics =
-      keyPoints.length > 0
-        ? keyPoints.map((point, index) => `${index + 1}. ${point}`).join("\n")
-        : [
-            "1. Fundamentals and definitions",
-            "2. Core architecture/components",
-            "3. Key algorithms/processes",
-            "4. Resource management and performance",
-            "5. Security and reliability basics",
-            "6. Common interview/exam problems",
-          ].join("\n");
-
-    const reply = [
-      `Great ask. Here is a focused starter list for ${inferredTopic}:`,
-      formattedTopics,
-      "",
-      "If you want, I can now convert this into a 7-day study plan and start with Topic 1 at your level.",
-      provenance.length ? `source: ${provenance.map((p) => `${p.pageId}:${p.chunkIndex}`).join(", ")}` : "",
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    await logTutorEvent({
-      userId: user.id,
-      actor: "tutor",
-      type: "prompt",
-      payload: { reply, mode, reason: "topic_list_requested" },
-      reasoningSummary: "Provided direct topic list because user explicitly requested syllabus-style guidance.",
-      confidence: keyPoints.length > 0 ? 0.84 : 0.58,
-      suggestedNextSteps: ["Ask for a day-wise plan or pick one topic to start."],
-      redacted: sensitive,
-    });
-    return NextResponse.json({
-      tutorReply: reply,
-      mode,
-      shouldEscalate: false,
-      remediation: [],
-      provenance,
-    });
-  }
-
-  if ((learningIntent || explicitAskFirst || topicOnly) && !hasAttemptSignal) {
-    const inferredTopic = extractLikelyTopic(message);
-    if (!inferredTopic) {
-      const reply =
-        "Great, let's start. Share the exact topic in 2-5 words (example: binary search trees, SQL joins, Newton's laws), and I will ask your first diagnostic question.";
-      await logTutorEvent({
-        userId: user.id,
-        actor: "tutor",
-        type: "prompt",
-        payload: { reply, mode, reason: "topic_missing_after_intent" },
-        reasoningSummary: "Detected learning intent but topic was too vague to diagnose reliably.",
-        confidence: 0.86,
-        suggestedNextSteps: ["Provide a concrete topic in 2-5 words."],
-        redacted: sensitive,
-      });
-      return NextResponse.json({
-        tutorReply: reply,
-        mode,
-        shouldEscalate: false,
-        remediation: [],
-        provenance: [],
-      });
-    }
-    const evidence = await retrieveTutorEvidence(user.id, inferredTopic, 6);
-    const provenance = provenancePointers(evidence);
-    const question = buildDiagnosticQuestion(inferredTopic, evidence);
-    const tutorReply = [
-      question,
-      "Answer in 1-2 lines and I will adapt the next step to your level.",
-      provenance.length ? `source: ${provenance.map((p) => `${p.pageId}:${p.chunkIndex}`).join(", ")}` : "",
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    await logTutorEvent({
-      userId: user.id,
-      actor: "tutor",
-      type: "prompt",
-      payload: { reply: tutorReply, mode, reason: explicitAskFirst ? "asked_question_first" : "topic_diagnostic" },
-      reasoningSummary: "Started with a targeted diagnostic question based on user topic.",
-      confidence: evidence.length > 0 ? 0.8 : 0.6,
-      suggestedNextSteps: ["Answer the diagnostic question in 1-2 lines."],
-      redacted: sensitive,
-    });
-    return NextResponse.json({
-      tutorReply,
-      mode,
-      shouldEscalate: false,
-      remediation: [],
-      provenance,
-    });
-  }
-
-  // Retrieval-first policy: ask for attempt before explaining if this looks like a fresh problem prompt.
-  if (!hasAttemptSignal && failedAttempts === 0 && seemsProblemQuestion(message)) {
-    const reply = socraticStarter();
-    await logTutorEvent({
-      userId: user.id,
-      actor: "tutor",
-      type: "prompt",
-      payload: { reply, mode, reason: "attempt_first_gate" },
-      reasoningSummary: "Prompted student attempt before explanation.",
-      confidence: 0.8,
-      suggestedNextSteps: ["Give a one-sentence attempt or type 'stuck'."],
-      redacted: sensitive,
-    });
-    return NextResponse.json({
-      tutorReply: reply,
-      mode,
-      shouldEscalate: false,
-      remediation: [],
-      provenance: [],
-    });
-  }
-
-  if (!hasAttemptSignal && failedAttempts === 0) {
-    const reply =
-      "I read your message. Before I coach deeply, give me your attempt in 1-2 lines so I can diagnose what to fix first. If you want, I can ask a starter question instead.";
-    await logTutorEvent({
-      userId: user.id,
-      actor: "tutor",
-      type: "prompt",
-      payload: { reply, mode, reason: "attempt_or_question_choice" },
-      reasoningSummary: "Asked for attempt with conversational fallback option.",
-      confidence: 0.7,
-      suggestedNextSteps: ["Share a short attempt, or say 'ask me first'."],
-      redacted: sensitive,
-    });
-    return NextResponse.json({
-      tutorReply: reply,
-      mode,
-      shouldEscalate: false,
-      remediation: [],
-      provenance: [],
-    });
-  }
-
-  const evidence = await retrieveTutorEvidence(user.id, message, 6);
-  if (evidence.length === 0) {
-    const reply = lowConfidenceResponse();
-    await logTutorEvent({
-      userId: user.id,
-      actor: "tutor",
-      type: "explanation",
-      payload: { reply, mode, reason: "low_retrieval" },
-      reasoningSummary: "Low-confidence response due to weak/empty retrieval.",
-      confidence: 0.25,
-      suggestedNextSteps: ["Provide narrower topic keywords."],
-      redacted: sensitive,
-    });
-    return NextResponse.json({
-      tutorReply: reply,
-      mode,
-      shouldEscalate: false,
-      remediation: [],
-      provenance: [],
-    });
-  }
-
-  const evaluation = evaluateAttemptAgainstEvidence(message, evidence);
-  const conceptId = inferConceptId(message, evidence);
-  const provenance = provenancePointers(evidence);
-
-  let tutorReply = "";
-  let shouldEscalate = false;
-  let rootCause: string | undefined;
-  let remediation: string[] = [];
-  let reasoningSummary = "";
-  let confidence = 0.6;
-  let eventType: "prompt" | "attempt" | "explanation" | "diagnosis" | "acceptance" = "explanation";
-
-  if (evaluation.isCorrect) {
-    const extensionFocus = evaluation.expectedKeyPoints[0] ?? "the core idea";
-    tutorReply = [
-      "Nice work. Your attempt captures the key idea.",
-      `Extension question: can you apply this to a slightly different case involving ${extensionFocus}?`,
-      `source: ${provenance.map((p) => `${p.pageId}:${p.chunkIndex}`).join(", ")}`,
-    ].join("\n");
-    reasoningSummary = "Attempt evaluated as sufficiently aligned with retrieved key points.";
-    confidence = Math.min(0.95, 0.55 + evaluation.score * 0.4);
-    eventType = "acceptance";
-  } else if (failedAttempts >= 2) {
-    tutorReply = [
-      escalationExplanation(message, evaluation, evidence),
-      `source: ${provenance.map((p) => `${p.pageId}:${p.chunkIndex}`).join(", ")}`,
-    ].join("\n");
-    const diagnosis = buildRootCauseAndRemediation(evaluation, failedAttempts);
-    rootCause = diagnosis.rootCause;
-    remediation = diagnosis.remediation;
-    shouldEscalate = true;
-    reasoningSummary = "Escalated to worked explanation after repeated failed attempts.";
-    confidence = 0.72;
-    eventType = "diagnosis";
-  } else {
-    const missingKey = evaluation.missingKeyPoints[0] ?? "the missing mechanism";
-    tutorReply = [
-      minimalHint(missingKey),
-      "Try again in one sentence before I reveal more.",
-      `source: ${provenance.map((p) => `${p.pageId}:${p.chunkIndex}`).join(", ")}`,
-    ].join("\n");
-    const diagnosis = buildRootCauseAndRemediation(evaluation, failedAttempts);
-    rootCause = diagnosis.rootCause;
-    remediation = diagnosis.remediation;
-    shouldEscalate = true;
-    reasoningSummary = "Minimal-hint path selected because key points were missing.";
-    confidence = 0.6;
-    eventType = "prompt";
-  }
-
-  if (memoryEnabled) {
-    await updateConceptMetric({
-      userId: user.id,
-      conceptId,
-      isCorrect: evaluation.isCorrect,
-      confusionCandidates: evaluation.missingKeyPoints.slice(0, 3),
-      wrongExample: evaluation.isCorrect ? undefined : message.slice(0, 220),
-    });
-  }
+  const stream = await streamGroq([
+    { role: "system", content: systemPrompt },
+    { role: "system", content: `Student context: ${profileCtx}` },
+    ...historyMessages,
+    { role: "user", content: message.trim() },
+  ]);
 
   await logTutorEvent({
     userId: user.id,
     actor: "tutor",
-    type: eventType,
-    payload: {
-      mode,
-      conceptId,
-      evaluationScore: evaluation.score,
-      expectedKeyPoints: evaluation.expectedKeyPoints,
-      coveredKeyPoints: evaluation.coveredKeyPoints,
-      missingKeyPoints: evaluation.missingKeyPoints,
-      provenance,
-      rootCause: rootCause ?? null,
-    },
-    reasoningSummary,
-    confidence,
-    suggestedNextSteps:
-      remediation.length > 0
-        ? remediation
-        : evaluation.isCorrect
-          ? ["Answer the extension question in one sentence."]
-          : ["Retry with the minimal hint."],
+    type: "explanation",
+    payload: { mode },
+    reasoningSummary: "Baseline Groq tutor response generated with chat history context.",
+    confidence: 0.7,
+    suggestedNextSteps: [],
     redacted: sensitive,
   });
 
-  return NextResponse.json({
-    tutorReply,
-    mode,
-    rootCause,
-    remediation,
-    shouldEscalate,
-    provenance,
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Tutor-Mode": mode,
+    },
   });
 }
+
