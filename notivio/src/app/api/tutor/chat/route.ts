@@ -112,6 +112,13 @@ export async function POST(request: Request) {
     "If user says they are beginner or they do not know topic, start from basics immediately.",
     "If uncertain, clearly say uncertainty and ask one clarifying question.",
     "Keep calm tone. Avoid hype and avoid unrelated statements.",
+    "Format every response for readability using short sections and bullet points.",
+    "Use this response template when possible:",
+    "1) Direct answer (1-2 lines).",
+    "2) Key points (3-6 bullets).",
+    "3) Example (if helpful, 2-4 bullets).",
+    "4) Quick check question (one line).",
+    "Do not output long unbroken paragraphs.",
     MODE_HINTS[mode] ?? MODE_HINTS.learn,
   ].join(" ");
 
@@ -147,4 +154,3 @@ export async function POST(request: Request) {
     },
   });
 }
-

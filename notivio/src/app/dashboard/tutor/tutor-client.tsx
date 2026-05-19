@@ -221,7 +221,7 @@ export function TutorClient() {
                     : "ml-auto bg-[#8a7559] text-white"
                 }`}
               >
-                <p>{message.text}</p>
+                <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
               </div>
             ))}
           </div>
