@@ -113,6 +113,8 @@ export async function POST(request: Request) {
     "If uncertain, clearly say uncertainty and ask one clarifying question.",
     "Keep calm tone. Avoid hype and avoid unrelated statements.",
     "Format every response for readability using short sections and bullet points.",
+    "Write section labels as bold markdown headings like **Concept:**, **Key Points:**, **Example:**.",
+    "Use '-' for bullet points, never '*' bullets.",
     "Use this response template when possible:",
     "1) Direct answer (1-2 lines).",
     "2) Key points (3-6 bullets).",

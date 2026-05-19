@@ -55,6 +55,54 @@ function introMessage(profile: TutorProfileResponse | null) {
   return "Welcome back. What do you want to study right now?";
 }
 
+function renderInlineBold(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      return <strong key={`${part}-${index}`}>{part.slice(2, -2)}</strong>;
+    }
+    return <span key={`${part}-${index}`}>{part}</span>;
+  });
+}
+
+function renderTutorMessage(text: string) {
+  const lines = text.split("\n");
+  return (
+    <div className="space-y-1.5">
+      {lines.map((line, index) => {
+        const bullet = line.match(/^\s*[*-]\s+(.+)$/);
+        if (bullet) {
+          return (
+            <div key={`${line}-${index}`} className="flex items-start gap-2">
+              <span className="mt-1 text-xs">•</span>
+              <span>{renderInlineBold(bullet[1])}</span>
+            </div>
+          );
+        }
+        return (
+          <p key={`${line}-${index}`} className="whitespace-pre-wrap leading-relaxed">
+            {renderInlineBold(line)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+function TutorTypingLoader() {
+  return (
+    <div className="inline-flex items-center gap-1.5 rounded-full border border-[#d6c3ad] bg-[#f7ecdd] px-2.5 py-1">
+      {[0, 1, 2].map((index) => (
+        <span
+          key={index}
+          className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#8a7559]"
+          style={{ animationDelay: `${index * 0.14}s`, animationDuration: "0.9s" }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function TutorClient() {
   const [profile, setProfile] = useState<TutorProfileResponse | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -221,7 +269,11 @@ export function TutorClient() {
                     : "ml-auto bg-[#8a7559] text-white"
                 }`}
               >
-                <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                {message.role === "tutor" && message.text.trim().length === 0 ? (
+                  <TutorTypingLoader />
+                ) : (
+                  renderTutorMessage(message.text)
+                )}
               </div>
             ))}
           </div>
