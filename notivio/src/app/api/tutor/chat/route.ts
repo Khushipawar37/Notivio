@@ -22,7 +22,7 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const bodySchema = z.object({
   message: z.string().min(1),
   conversationId: z.string().optional(),
-  mode: z.enum(["learn", "exam_prep", "practice", "revision", "planner"]).optional(),
+  mode: z.enum(["learn", "practice", "planner"]).optional(),
   history: z
     .array(
       z.object({
@@ -37,10 +37,10 @@ const bodySchema = z.object({
 
 const MODE_HINTS: Record<string, string> = {
   learn: "Teach clearly with step-by-step explanation and one short check question.",
-  exam_prep: "Give concise, exam-ready answer: definition, key points, and likely framing.",
-  practice: "Ask 1-3 practice questions first, then provide brief feedback.",
-  revision: "Give compact revision summary and quick recall bullets.",
-  planner: "Give realistic short study plan without pressure.",
+  practice:
+    "Run an active practice session. Start by giving questions based on requested pattern, wait for student answers, then evaluate with scoring and correction.",
+  planner:
+    "Create a deep, date-wise study timetable. Break each subject into units/topics and allocate daily study time blocks with revision windows.",
 };
 
 async function streamGroq(messages: Array<{ role: "system" | "user" | "assistant"; content: string }>) {
