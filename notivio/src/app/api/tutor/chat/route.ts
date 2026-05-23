@@ -1,12 +1,27 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUserProfile } from "@/server/auth";
-import { getOrCreateTutorProfile, logTutorEvent } from "@/server/tutor";
+import { prisma } from "@/server/prisma";
+import { isDbConnectivityError, isDbSchemaMissingError } from "@/server/db-guard";
+import {
+  appendTutorConversationMessage,
+  createTutorConversation,
+  extractTopicFromMessage,
+  getTutorConversation,
+  getOrCreateTutorProfile,
+  inferSessionStrength,
+  listConversationMessages,
+  listRecentTutorSessions,
+  logTutorEvent,
+  summarizeSessionReply,
+  updateTutorConversationMeta,
+} from "@/server/tutor";
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const bodySchema = z.object({
   message: z.string().min(1),
+  conversationId: z.string().optional(),
   mode: z.enum(["learn", "exam_prep", "practice", "revision", "planner"]).optional(),
   history: z
     .array(
@@ -89,13 +104,59 @@ export async function POST(request: Request) {
   const parsed = bodySchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
 
-  const { message, history = [], mode = "learn", context = {}, sensitive = false } = parsed.data;
-  const profile = await getOrCreateTutorProfile(user.id);
+  const { message, conversationId, history = [], mode = "learn", context = {}, sensitive = false } = parsed.data;
+  const [profile, userProfile, recentSessions] = await Promise.all([
+    getOrCreateTutorProfile(user.id),
+    prisma.userProfile.findUnique({
+      where: { id: user.id },
+      select: { displayName: true, email: true },
+    }),
+    listRecentTutorSessions(user.id, 6),
+  ]);
   const profileCtx = JSON.stringify({
+    userDetails: {
+      displayName: userProfile?.displayName ?? user.displayName ?? null,
+      email: userProfile?.email ?? user.primaryEmail ?? null,
+    },
     preferredTone: profile.preferredTone,
     preferredPersona: profile.preferredPersona,
+    previousSessions: recentSessions,
     studentProfile: context.studentProfile ?? null,
   });
+
+  let activeConversationId = conversationId ?? null;
+  let dbMemoryAvailable = true;
+  try {
+    if (activeConversationId) {
+      const existing = await getTutorConversation(activeConversationId, user.id);
+      if (!existing) {
+        return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+      }
+    } else {
+      const created = await createTutorConversation({ userId: user.id, firstMessage: message, mode });
+      if (!created) {
+        dbMemoryAvailable = false;
+      } else {
+        activeConversationId = created.id;
+      }
+    }
+    if (dbMemoryAvailable && activeConversationId) {
+      const saved = await appendTutorConversationMessage({
+        conversationId: activeConversationId,
+        userId: user.id,
+        role: "student",
+        content: message.trim(),
+      });
+      if (!saved) dbMemoryAvailable = false;
+    }
+  } catch (error) {
+    if (isDbConnectivityError(error) || isDbSchemaMissingError(error)) {
+      dbMemoryAvailable = false;
+      activeConversationId = null;
+    } else {
+      throw error;
+    }
+  }
 
   await logTutorEvent({
     userId: user.id,
@@ -124,10 +185,27 @@ export async function POST(request: Request) {
     MODE_HINTS[mode] ?? MODE_HINTS.learn,
   ].join(" ");
 
-  const historyMessages = history.slice(-8).map((item) => ({
+  const dbThreadHistory = dbMemoryAvailable && activeConversationId
+    ? await listConversationMessages({
+        conversationId: activeConversationId,
+        userId: user.id,
+        limit: 20,
+      }).catch((error) => {
+        if (isDbConnectivityError(error) || isDbSchemaMissingError(error)) return [];
+        throw error;
+      })
+    : [];
+
+  const fallbackHistoryMessages = history.slice(-8).map((item) => ({
     role: item.role === "tutor" ? ("assistant" as const) : ("user" as const),
     content: item.text,
   }));
+  const historyMessages = dbThreadHistory.length
+    ? dbThreadHistory.slice(-12).map((item) => ({
+        role: item.role === "tutor" ? ("assistant" as const) : ("user" as const),
+        content: item.content,
+      }))
+    : fallbackHistoryMessages;
 
   const stream = await streamGroq([
     { role: "system", content: systemPrompt },
@@ -135,24 +213,68 @@ export async function POST(request: Request) {
     ...historyMessages,
     { role: "user", content: message.trim() },
   ]);
+  const reader = stream.getReader();
+  const encoder = new TextEncoder();
+  let fullReply = "";
 
-  await logTutorEvent({
-    userId: user.id,
-    actor: "tutor",
-    type: "explanation",
-    payload: { mode },
-    reasoningSummary: "Baseline Groq tutor response generated with chat history context.",
-    confidence: 0.7,
-    suggestedNextSteps: [],
-    redacted: sensitive,
+  const proxyStream = new ReadableStream({
+    async start(controller) {
+      try {
+        while (true) {
+          const chunk = await reader.read();
+          if (chunk.done) break;
+          const text = chunk.value ? new TextDecoder().decode(chunk.value, { stream: true }) : "";
+          if (text) fullReply += text;
+          controller.enqueue(encoder.encode(text));
+        }
+      } finally {
+        controller.close();
+        const topic = extractTopicFromMessage(message);
+        const sessionSummary = summarizeSessionReply(fullReply);
+        const sessionStrength = inferSessionStrength(fullReply);
+        await logTutorEvent({
+          userId: user.id,
+          actor: "tutor",
+          type: "explanation",
+          payload: {
+            mode,
+            sessionTopic: topic,
+            sessionSummary,
+            sessionStrength,
+            source: "tutor-chat",
+          },
+          reasoningSummary: sessionSummary,
+          confidence: 0.8,
+          suggestedNextSteps: [],
+          redacted: sensitive,
+        });
+        if (dbMemoryAvailable && activeConversationId) {
+          const firstStudentInThread =
+            dbThreadHistory.find((item) => item.role === "student")?.content ?? message;
+          await appendTutorConversationMessage({
+            conversationId: activeConversationId,
+            userId: user.id,
+            role: "tutor",
+            content: fullReply,
+          }).catch(() => null);
+          await updateTutorConversationMeta({
+            conversationId: activeConversationId,
+            firstStudentMessage: firstStudentInThread,
+            tutorReply: fullReply,
+            strength: sessionStrength,
+          }).catch(() => null);
+        }
+      }
+    },
   });
 
-  return new Response(stream, {
+  return new Response(proxyStream, {
     status: 200,
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       "X-Tutor-Mode": mode,
+      "X-Conversation-Id": activeConversationId ?? "",
     },
   });
 }

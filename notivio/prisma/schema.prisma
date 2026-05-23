@@ -38,6 +38,8 @@ model UserProfile {
   tutorProfile    TutorProfile?
   conceptMetrics  ConceptMetric[]
   tutorEvents     TutorEventLog[]
+  tutorConversations TutorConversation[]
+  tutorConversationMessages TutorConversationMessage[]
   pageEmbeddings  PageEmbedding[]
 }
 
@@ -262,6 +264,40 @@ model TutorEventLog {
 
   user UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, createdAt])
+}
+
+model TutorConversation {
+  id          String   @id @default(uuid())
+  userId      String
+  title       String
+  topic       String   @default("General")
+  mode        String?
+  summary     String?
+  strength    String   @default("amber")
+  lastMessageAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      UserProfile               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  TutorConversationMessage[]
+
+  @@index([userId, updatedAt])
+  @@index([userId, lastMessageAt])
+}
+
+model TutorConversationMessage {
+  id              String   @id @default(uuid())
+  conversationId  String
+  userId          String
+  role            String
+  content         String   @db.Text
+  createdAt       DateTime @default(now())
+
+  conversation TutorConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         UserProfile       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
   @@index([userId, createdAt])
 }
 

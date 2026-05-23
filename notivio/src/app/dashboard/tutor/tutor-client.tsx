@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type ChatRole = "student" | "tutor";
 type TutorMode = "learn" | "exam_prep" | "practice" | "revision" | "planner";
@@ -12,10 +12,12 @@ interface ChatMessage {
 }
 
 interface SessionCard {
+  id: string;
   date: string;
   topic: string;
   summary: string;
   strength: "green" | "amber" | "red";
+  messageCount?: number;
 }
 
 interface TutorProfileResponse {
@@ -106,35 +108,43 @@ function TutorTypingLoader() {
 export function TutorClient() {
   const [profile, setProfile] = useState<TutorProfileResponse | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [showAllSessions, setShowAllSessions] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<TutorMode>("learn");
   const [error, setError] = useState<string | null>(null);
   const seededRef = useRef(false);
 
-  useEffect(() => {
-    const load = async () => {
-      const response = await fetch("/api/tutor/profile");
-      if (!response.ok) return;
-      const data = (await response.json()) as TutorProfileResponse;
-      setProfile(data);
-    };
-    void load();
+  const loadProfile = useCallback(async () => {
+    const response = await fetch("/api/tutor/profile");
+    if (!response.ok) return;
+    const data = (await response.json()) as TutorProfileResponse;
+    setProfile(data);
   }, []);
 
   useEffect(() => {
-    if (!profile || seededRef.current) return;
+    void loadProfile();
+  }, [loadProfile]);
+
+  useEffect(() => {
+    if (seededRef.current) return;
     seededRef.current = true;
-    const timer = setTimeout(() => {
-      setMessages([
-        {
-          id: uid(),
-          role: "tutor",
-          text: introMessage(profile),
-        },
-      ]);
-    }, 1500);
-    return () => clearTimeout(timer);
+    setMessages([
+      {
+        id: uid(),
+        role: "tutor",
+        text: introMessage(profile),
+      },
+    ]);
+  }, [profile]);
+
+  useEffect(() => {
+    if (!profile) return;
+    setMessages((prev) => {
+      if (prev.length !== 1 || prev[0]?.role !== "tutor") return prev;
+      return [{ ...prev[0], text: introMessage(profile) }];
+    });
   }, [profile]);
 
   const contextOneLiner = useMemo(() => {
@@ -142,6 +152,9 @@ export function TutorClient() {
     if (!weak) return "Focus today: retrieval first, then correction.";
     return `Last time you mixed up ${weak}. Explain mechanism first, then one counter-example.`;
   }, [profile]);
+
+  const allSessions = profile?.sessions ?? [];
+  const visibleSessions = showAllSessions ? allSessions : allSessions.slice(0, 4);
 
   const sendChat = async () => {
     const trimmed = input.trim();
@@ -161,6 +174,7 @@ export function TutorClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: trimmed,
+          conversationId: conversationId ?? undefined,
           mode,
           history: historyForRequest,
           context: {
@@ -172,6 +186,10 @@ export function TutorClient() {
       if (!response.ok) {
         const text = await response.text();
         throw new Error(text || "Tutor response failed");
+      }
+      const nextConversationId = response.headers.get("X-Conversation-Id");
+      if (nextConversationId) {
+        setConversationId(nextConversationId);
       }
       const contentType = response.headers.get("content-type") || "";
       if (contentType.includes("application/json")) {
@@ -196,6 +214,7 @@ export function TutorClient() {
       setError(err instanceof Error ? err.message : "Tutor response failed");
     } finally {
       setLoading(false);
+      void loadProfile();
     }
   };
 
@@ -206,13 +225,13 @@ export function TutorClient() {
           <h2 className="font-serif text-xl text-[#4f3d2d]">Session History</h2>
           <p className="mt-1 text-xs text-[#8e775e]">{contextOneLiner}</p>
           <div className="mt-3 space-y-2">
-            {(profile?.sessions ?? []).length === 0 ? (
+            {allSessions.length === 0 ? (
               <p className="rounded-lg bg-[#f5ebdd] p-2 text-xs text-[#7a6852]">
                 No prior tutor sessions yet.
               </p>
             ) : (
-              (profile?.sessions ?? []).map((session) => (
-                <div key={`${session.date}-${session.topic}`} className="rounded-lg border border-[#e8dccd] bg-white p-2">
+              visibleSessions.map((session) => (
+                <div key={session.id} className="rounded-lg border border-[#e8dccd] bg-white p-2">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-semibold text-[#5d4a34]">{session.topic}</p>
                     <span
@@ -230,6 +249,14 @@ export function TutorClient() {
                 </div>
               ))
             )}
+            {allSessions.length > 4 ? (
+              <button
+                onClick={() => setShowAllSessions((prev) => !prev)}
+                className="w-full rounded-lg border border-[#d8c6b2] bg-[#f8efe2] px-2 py-1.5 text-xs font-medium text-[#6c5944]"
+              >
+                {showAllSessions ? "Show recent 4" : `View more (${allSessions.length - 4})`}
+              </button>
+            ) : null}
           </div>
         </aside>
 
