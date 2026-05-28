@@ -64,7 +64,13 @@ function practiceGreeting(type: PracticeType) {
   if (type === "timed_test") {
     return `Practice mode is ready for a ${labelMap[type]}. In your first prompt, include topic, level, difficulty, number of questions, and total minutes.`;
   }
-  return `Practice mode is ready for a ${labelMap[type]}. In your first prompt, include topic, level, difficulty, and number of questions.`;
+  if (type === "brainstorm") {
+    return "Brainstorm mode is ready. Send the topic you want to explore, and I’ll teach it briefly, challenge your thinking, and keep asking sharper follow-up questions.";
+  }
+  if (type === "feynman") {
+    return "Feynman mode is ready. Send the topic, and I’ll explain it simply, then ask you to teach it back and spot any gaps.";
+  }
+  return `Practice mode is ready for a ${labelMap[type]}. Send the topic you want to study, and I’ll generate questions that build from basics to deeper reasoning.`;
 }
 
 function formatTimer(totalSeconds: number) {
@@ -146,6 +152,7 @@ export function TutorClient() {
   const [practiceTimedMinutes, setPracticeTimedMinutes] = useState<number | null>(null);
   const [timedTestStarted, setTimedTestStarted] = useState(false);
   const [timedTestExpired, setTimedTestExpired] = useState(false);
+  const [timedTestEvaluated, setTimedTestEvaluated] = useState(false);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerSecondsLeft, setTimerSecondsLeft] = useState(0);
   const [plannerExamDate, setPlannerExamDate] = useState("");
@@ -156,6 +163,9 @@ export function TutorClient() {
   const [plannerSyllabus, setPlannerSyllabus] = useState<File | null>(null);
   const seededRef = useRef(false);
   const chatAttachRef = useRef<HTMLInputElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef("");
+  const timedTestAutoSubmitRef = useRef(false);
   const activeRequestAbortRef = useRef<AbortController | null>(null);
 
   const loadProfile = useCallback(async () => {
@@ -176,6 +186,17 @@ export function TutorClient() {
     if (!profile) return;
     setMessages((prev) => (prev.length === 1 && prev[0]?.role === "tutor" ? [{ ...prev[0], text: introMessage(profile) }] : prev));
   }, [profile]);
+
+  useEffect(() => {
+    inputRef.current = input;
+  }, [input]);
+
+  useEffect(() => {
+    if (!messagesEndRef.current) return;
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ block: "end" });
+    });
+  }, [messages]);
 
   const contextOneLiner = useMemo(() => {
     const weak = profile?.summary.topInconsistentTopics?.[0]?.conceptId;
@@ -212,19 +233,6 @@ export function TutorClient() {
     });
   }, [mode, practiceType, timedTestExpired, timedTestStarted, timerSecondsLeft]);
 
-  const buildModePromptPrefix = () => {
-    if (mode === "practice") {
-      return `Practice mode: ${practiceType}. Total questions: ${practiceQuestionCount ?? "not set"}. Timed minutes: ${practiceType === "timed_test" ? (practiceTimedMinutes ?? "not set") : "not applicable"}. Generate questions first, wait for answers, then evaluate.`;
-    }
-    if (mode === "planner") {
-      return `Planner mode. Exam date: ${plannerExamDate || "not provided"}. Daily hours: ${plannerDailyHours}. Create a deep timetable by subjects then units/topics. Ask for missing datesheet/syllabus details if needed.`;
-    }
-    const attachmentContext = learnAttachmentContext
-      .map((item, index) => `Source ${index + 1} (${item.name}): ${item.extractedText.slice(0, 4000)}`)
-      .join("\n\n");
-    return `Learn mode. Use uploaded references if provided: ${learnFiles.map((f) => f.name).join(", ") || "none"}.\n${attachmentContext ? `Attached source text:\n${attachmentContext}` : ""}`;
-  };
-
   const resetPracticeChatForOption = (nextType: PracticeType) => {
     setConversationId(null);
     setInput("");
@@ -233,6 +241,8 @@ export function TutorClient() {
     setPracticeTimedMinutes(null);
     setTimedTestStarted(false);
     setTimedTestExpired(false);
+    setTimedTestEvaluated(false);
+    timedTestAutoSubmitRef.current = false;
     setTimerSecondsLeft(0);
     setTimerRunning(false);
     activeRequestAbortRef.current?.abort();
@@ -258,15 +268,15 @@ export function TutorClient() {
     setMessages([{ id: uid(), role: "tutor", text: nextMode === "planner" ? "Planner mode is ready. Share datesheet, syllabus, and exam timelines to build a deep timetable." : introMessage(profile) }]);
   };
 
-  const sendChatText = async (rawText: string) => {
+  const sendChatText = async (rawText: string, options: { timedOutSubmission?: boolean } = {}) => {
     const trimmed = rawText.trim();
-    if (!trimmed || loading || timedTestExpired) return;
+    if (!trimmed || loading) return;
     let effectiveQuestionCount = practiceQuestionCount;
     let effectiveTimedMinutes = practiceTimedMinutes;
     if (mode === "practice" && !practiceConfigured) {
       const parsedQuestions = parseQuestionCount(trimmed);
       const parsedMinutes = practiceType === "timed_test" ? parseMinutes(trimmed) : null;
-      if (!parsedQuestions || (practiceType === "timed_test" && !parsedMinutes)) {
+      if (practiceType === "timed_test" && (!parsedQuestions || !parsedMinutes)) {
         const askText =
           practiceType === "timed_test"
             ? "Before we begin, tell me both values in one message: number of questions and total time in minutes. Example: 10 questions, 15 minutes."
@@ -276,8 +286,12 @@ export function TutorClient() {
         return;
       }
       setPracticeConfigured(true);
-      setPracticeQuestionCount(parsedQuestions);
-      effectiveQuestionCount = parsedQuestions;
+      if (parsedQuestions) {
+        setPracticeQuestionCount(parsedQuestions);
+        effectiveQuestionCount = parsedQuestions;
+      } else if (practiceType === "brainstorm" || practiceType === "feynman") {
+        effectiveQuestionCount = 5;
+      }
       if (practiceType === "timed_test" && parsedMinutes) {
         setPracticeTimedMinutes(parsedMinutes);
         effectiveTimedMinutes = parsedMinutes;
@@ -285,7 +299,7 @@ export function TutorClient() {
     }
     const finalMessage = `${
       mode === "practice"
-        ? `Practice mode: ${practiceType}. Total questions: ${effectiveQuestionCount ?? "not set"}. Timed minutes: ${practiceType === "timed_test" ? (effectiveTimedMinutes ?? "not set") : "not applicable"}. Generate questions first, wait for answers, then evaluate.`
+        ? buildModePromptPrefix({ timedOutSubmission: options.timedOutSubmission, effectiveQuestionCount, effectiveTimedMinutes })
         : buildModePromptPrefix()
     }\n\nStudent request: ${trimmed}`;
     const historyForRequest = messages.map((msg) => ({ role: msg.role, text: msg.text }));
@@ -363,6 +377,9 @@ export function TutorClient() {
       if (activeRequestAbortRef.current?.signal.aborted) {
         activeRequestAbortRef.current = null;
       }
+      if (options.timedOutSubmission) {
+        setTimedTestEvaluated(true);
+      }
       setLoading(false);
       void loadProfile();
     }
@@ -395,9 +412,61 @@ export function TutorClient() {
     setLearnAttachmentContext(contexts.filter((item) => item.extractedText.length > 0));
   }, []);
 
+  useEffect(() => {
+    if (mode !== "practice" || practiceType !== "timed_test") return;
+    if (!timedTestStarted || timedTestExpired || timerSecondsLeft > 0 || timedTestAutoSubmitRef.current) return;
+
+    timedTestAutoSubmitRef.current = true;
+    setTimedTestExpired(true);
+    setTimerRunning(false);
+    activeRequestAbortRef.current?.abort();
+
+    const submittedAnswer = inputRef.current.trim();
+    if (!submittedAnswer) {
+      setTimedTestEvaluated(true);
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "tutor" && last.text === "Time is up. This test has ended.") return prev;
+        return [...prev, { id: uid(), role: "tutor", text: "Time is up. This test has ended. You can keep chatting below." }];
+      });
+      return;
+    }
+
+    void sendChatText(submittedAnswer, { timedOutSubmission: true });
+  }, [mode, practiceType, timedTestExpired, timedTestStarted, timerSecondsLeft]);
+
+  const buildModePromptPrefix = (options?: {
+    timedOutSubmission?: boolean;
+    effectiveQuestionCount?: number | null;
+    effectiveTimedMinutes?: number | null;
+  }) => {
+    if (mode === "practice") {
+      if (practiceType === "timed_test" && options?.timedOutSubmission) {
+        return `Practice mode: timed test. Time has expired, so evaluate the student's submitted answers now, give corrections and scoring, then continue normally if the student asks follow-up questions. Total questions: ${options.effectiveQuestionCount ?? "not set"}. Timed minutes: ${options.effectiveTimedMinutes ?? "not set"}.`;
+      }
+      if (practiceType === "timed_test" && timedTestEvaluated) {
+        return `Practice mode: timed test completed. The student's answers have already been evaluated, so continue the conversation naturally as a tutor. Total questions: ${practiceQuestionCount ?? "not set"}. Timed minutes: ${practiceTimedMinutes ?? "not set"}.`;
+      }
+      if (practiceType === "brainstorm") {
+        return `Practice mode: brainstorm. Stay strictly on the student's topic. Give a short useful explanation first, then ask 3-5 strategic follow-up questions that probe why, how, what-if, comparisons, edge cases, and misconceptions. Do not ask for a question count. Do not drift to unrelated topics.`;
+      }
+      if (practiceType === "feynman") {
+        return `Practice mode: feynman. Explain the student's topic simply and clearly, then ask them to restate it in their own words and identify any gaps. Follow with a few probing questions that reveal misconceptions. Do not ask for a question count.`;
+      }
+      return `Practice mode: ${practiceType}. Use the student's topic as the anchor. Ask questions that progress from basic understanding to application and reasoning. If a question count was provided, respect it; otherwise use a sensible default of 5. Do not invent a topic.`;
+    }
+    if (mode === "planner") {
+      return `Planner mode. Exam date: ${plannerExamDate || "not provided"}. Daily hours: ${plannerDailyHours}. Create a deep timetable by subjects then units/topics. Ask for missing datesheet/syllabus details if needed.`;
+    }
+    const attachmentContext = learnAttachmentContext
+      .map((item, index) => `Source ${index + 1} (${item.name}): ${item.extractedText.slice(0, 4000)}`)
+      .join("\n\n");
+    return `Learn mode. Use uploaded references if provided: ${learnFiles.map((f) => f.name).join(", ") || "none"}.\n${attachmentContext ? `Attached source text:\n${attachmentContext}` : ""}`;
+  };
+
   return (
-    <main className="min-h-screen bg-[#f6f1e9] px-4 pb-16 pt-32">
-      <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
+    <main className="min-h-screen bg-[#f6f1e9] px-4 pb-10 pt-32">
+      <div className="mx-auto grid min-h-[calc(100vh-8rem)] max-w-7xl gap-5 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-stretch">
         <aside className="rounded-2xl border border-[#dccbb4] bg-[#fffdf8] p-4 shadow-sm">
           <h2 className="font-serif text-xl text-[#4f3d2d]">Session History</h2>
           <p className="mt-1 text-xs text-[#8e775e]">{contextOneLiner}</p>
@@ -413,7 +482,7 @@ export function TutorClient() {
           </div>
         </aside>
 
-        <section className="flex h-[calc(100vh-9rem)] min-h-[74vh] flex-col rounded-2xl border border-[#dccbb4] bg-[#fffdf8] shadow-sm">
+        <section className="flex min-h-[calc(100vh-8rem)] flex-col rounded-2xl border border-[#dccbb4] bg-[#fffdf8] shadow-sm">
           <header className="border-b border-[#eadfcf] px-4 py-3">
             <h1 className="font-serif text-2xl text-[#4f3d2d]">The Tutor</h1>
             <p className="text-xs text-[#8e775e]">A personal AI tutor that asks before it tells.</p>
@@ -458,11 +527,13 @@ export function TutorClient() {
                       {timedTestStarted ? formatTimer(timerSecondsLeft) : "Waiting"}
                     </p>
                     <p className="mt-1 text-[11px] text-[#7d6850]">
-                      {timedTestExpired
-                        ? "Time ended. This round is closed."
-                        : timedTestStarted
-                          ? "Timer started with the first question."
-                          : "Timer will start when the first question appears."}
+                      {timedTestEvaluated
+                        ? "Time ended. Your answers were submitted and you can keep chatting below."
+                        : timedTestExpired
+                          ? "Time ended. Your answers are being submitted now."
+                          : timedTestStarted
+                            ? "Timer started with the first question."
+                            : "Timer will start when the first question appears."}
                     </p>
                   </div>
                 ) : null}
@@ -484,15 +555,16 @@ export function TutorClient() {
             ) : null}
           </div>
 
-          <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
+          <div className="flex-1 min-h-0 space-y-3 overflow-y-auto px-4 py-3">
             {messages.map((message) => (
               <div key={message.id} className={`max-w-[86%] rounded-xl px-3 py-2 text-sm ${message.role === "tutor" ? "bg-[#efe5d5] text-[#5d4a34]" : "ml-auto bg-[#8a7559] text-white"}`}>
                 {message.role === "tutor" && message.text.trim().length === 0 ? <TutorTypingLoader /> : renderTutorMessage(message.text)}
               </div>
             ))}
+            <div ref={messagesEndRef} />
           </div>
 
-          <footer className="sticky bottom-0 border-t border-[#eadfcf] bg-[#fffdf8] px-4 pb-4 pt-3">
+          <footer className="flex-none border-t border-[#eadfcf] bg-[#fffdf8] px-4 pb-4 pt-3">
             <div className="flex gap-2">
               <input
                 ref={chatAttachRef}
@@ -506,7 +578,7 @@ export function TutorClient() {
                   void extractAttachmentContext(files);
                 }}
               />
-              <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendChat(); } }} placeholder={mode === "practice" && timedTestExpired ? "This timed test has ended." : "Explain your current understanding..."} disabled={mode === "practice" && timedTestExpired} className="h-20 flex-1 rounded-md border border-[#d8c6b2] p-2 text-sm text-[#5d4a34] disabled:cursor-not-allowed disabled:bg-[#f4efe7]" />
+              <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendChat(); } }} placeholder={mode === "practice" && practiceType === "timed_test" && timedTestExpired && !timedTestEvaluated ? "Time is up. Sending your answers now..." : "Explain your current understanding..."} className="h-20 flex-1 rounded-md border border-[#d8c6b2] p-2 text-sm text-[#5d4a34] disabled:cursor-not-allowed disabled:bg-[#f4efe7]" />
               <button
                 onClick={() => chatAttachRef.current?.click()}
                 className="rounded-md border border-[#d8c6b2] px-3 py-2 text-xs font-semibold text-[#6c5944]"
@@ -514,7 +586,7 @@ export function TutorClient() {
               >
                 Attach
               </button>
-              <button onClick={() => void sendChat()} disabled={loading || (mode === "practice" && timedTestExpired)} className="rounded-md bg-[#8a7559] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{loading ? "Sending..." : mode === "practice" && timedTestExpired ? "Closed" : "Send"}</button>
+              <button onClick={() => void sendChat()} disabled={loading} className="rounded-md bg-[#8a7559] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{loading ? "Sending..." : "Send"}</button>
             </div>
             {learnFiles.length > 0 ? <p className="mt-1 text-[11px] text-[#7d6850]">Attached: {learnFiles.map((f) => f.name).join(", ")}</p> : null}
             {mode === "learn" && learnAttachmentContext.length > 0 ? (

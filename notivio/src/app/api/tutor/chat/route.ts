@@ -35,13 +35,43 @@ const bodySchema = z.object({
   sensitive: z.boolean().optional(),
 });
 
-const MODE_HINTS: Record<string, string> = {
-  learn: "Teach clearly with step-by-step explanation and one short check question.",
-  practice:
-    "Run an active practice session. Start by giving questions based on requested pattern, wait for student answers, then evaluate with scoring and correction.",
-  planner:
-    "Create a deep, date-wise study timetable. Break each subject into units/topics and allocate daily study time blocks with revision windows.",
-};
+function getModeHint(mode: "learn" | "practice" | "planner", practiceType?: string) {
+  if (mode === "learn") {
+    return "Teach clearly with step-by-step explanation and one short check question.";
+  }
+
+  if (mode === "planner") {
+    return "Create a deep, date-wise study timetable. Break each subject into units/topics and allocate daily study time blocks with revision windows.";
+  }
+
+  if (practiceType === "brainstorm") {
+    return [
+      "Run a brainstorm session anchored to the student's exact topic.",
+      "First answer or frame the topic briefly so the student learns something useful immediately.",
+      "Then ask 3-5 strategic follow-up questions that probe why, how, what-if, compare/contrast, edge cases, and likely misconceptions.",
+      "Do not ask for a question count, and do not switch to unrelated topics.",
+      "Keep the questions specific, non-generic, and progressively harder.",
+    ].join(" ");
+  }
+
+  if (practiceType === "feynman") {
+    return [
+      "Run a Feynman-style session.",
+      "Explain the topic simply first, then ask the student to restate it in their own words.",
+      "Probe for gaps, misconceptions, and weak spots with targeted follow-up questions.",
+      "Do not ask for a question count.",
+    ].join(" ");
+  }
+
+  return [
+    "Run an active practice session anchored to the student's topic.",
+    "Stay on the requested subject and do not invent a different one.",
+    "Ask a mix of recall, application, and reasoning questions.",
+    "If the user did not specify a question count, default to a sensible number instead of asking for one.",
+    "When the student asks for teaching, give a short explanation before questioning them.",
+    "Wait for student answers, then evaluate with scoring and correction.",
+  ].join(" ");
+}
 
 async function streamGroq(messages: Array<{ role: "system" | "user" | "assistant"; content: string }>) {
   const response = await fetch(GROQ_URL, {
@@ -105,6 +135,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
 
   const { message, conversationId, history = [], mode = "learn", context = {}, sensitive = false } = parsed.data;
+  const practiceType = typeof context.practiceType === "string" ? context.practiceType : undefined;
   const [profile, userProfile, recentSessions] = await Promise.all([
     getOrCreateTutorProfile(user.id),
     prisma.userProfile.findUnique({
@@ -182,7 +213,7 @@ export async function POST(request: Request) {
     "3) Example (if helpful, 2-4 bullets).",
     "4) Quick check question (one line).",
     "Do not output long unbroken paragraphs.",
-    MODE_HINTS[mode] ?? MODE_HINTS.learn,
+    getModeHint(mode, practiceType),
   ].join(" ");
 
   const dbThreadHistory = dbMemoryAvailable && activeConversationId

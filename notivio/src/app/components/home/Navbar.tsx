@@ -6,13 +6,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { Home, FileText, Video, User, MessageSquare } from "lucide-react";
-import { Lobster } from "next/font/google";
-
-const lobster = Lobster({
-  subsets: ["latin"],
-  weight: ["400"],
-  display: "swap",
-});
 
 const FlashCard = (props: any) => (
   <svg
@@ -126,7 +119,7 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
       */}
       <Link
         href="/"
-        className={`hidden sm:block absolute top-8 left-6 text-5xl font-bold ${lobster.className} text-[#c6ac8f] z-30`}
+        className="hidden sm:block absolute top-8 left-6 text-5xl font-bold font-[cursive] text-[#c6ac8f] z-30"
       >
         Notivio
       </Link>
