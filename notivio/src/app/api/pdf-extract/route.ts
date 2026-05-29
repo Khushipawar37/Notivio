@@ -2,12 +2,32 @@ import { NextRequest, NextResponse } from "next/server";
 
 const OCR_SPACE_URL = "https://api.ocr.space/parse/image";
 
+async function extractTextFromPdfBuffer(buffer: Buffer) {
+  try {
+    const pdfParseModule = await import("pdf-parse");
+    const pdfParse =
+      ("default" in pdfParseModule ? pdfParseModule.default : pdfParseModule) as unknown as (
+        input: Buffer,
+      ) => Promise<{ text?: string }>;
+    const parsed = await pdfParse(buffer);
+    return String(parsed.text || "").trim();
+  } catch {
+    return "";
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const incoming = await request.formData();
     const file = incoming.get("file");
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "PDF file is required" }, { status: 400 });
+    }
+
+    const pdfBuffer = Buffer.from(await file.arrayBuffer());
+    let text = await extractTextFromPdfBuffer(pdfBuffer);
+    if (text.replace(/\s+/g, "").length >= 80) {
+      return NextResponse.json({ text });
     }
 
     // OCR.space free key can be used for testing, and users can override with env.
@@ -40,7 +60,6 @@ export async function POST(request: NextRequest) {
         .join("\n\n");
     };
 
-    let text = "";
     try {
       text = await runOCR("2");
     } catch {

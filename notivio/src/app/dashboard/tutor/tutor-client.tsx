@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type ChatRole = "student" | "tutor";
-type TutorMode = "learn" | "practice" | "planner";
+type TutorMode = "learn" | "practice";
 type PracticeType = "timed_test" | "short_answer" | "mcq" | "fill_ups" | "mixed_custom" | "feynman" | "brainstorm";
 
 interface ChatMessage {
@@ -155,12 +155,8 @@ export function TutorClient() {
   const [timedTestEvaluated, setTimedTestEvaluated] = useState(false);
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerSecondsLeft, setTimerSecondsLeft] = useState(0);
-  const [plannerExamDate, setPlannerExamDate] = useState("");
-  const [plannerDailyHours, setPlannerDailyHours] = useState("4");
   const [learnFiles, setLearnFiles] = useState<File[]>([]);
   const [learnAttachmentContext, setLearnAttachmentContext] = useState<AttachmentContext[]>([]);
-  const [plannerDatesheet, setPlannerDatesheet] = useState<File | null>(null);
-  const [plannerSyllabus, setPlannerSyllabus] = useState<File | null>(null);
   const seededRef = useRef(false);
   const chatAttachRef = useRef<HTMLInputElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -265,7 +261,7 @@ export function TutorClient() {
       return;
     }
     setConversationId(null);
-    setMessages([{ id: uid(), role: "tutor", text: nextMode === "planner" ? "Planner mode is ready. Share datesheet, syllabus, and exam timelines to build a deep timetable." : introMessage(profile) }]);
+    setMessages([{ id: uid(), role: "tutor", text: introMessage(profile) }]);
   };
 
   const sendChatText = async (rawText: string, options: { timedOutSubmission?: boolean } = {}) => {
@@ -330,12 +326,8 @@ export function TutorClient() {
             practiceType,
             practiceQuestionCount,
             practiceTimedMinutes,
-            plannerExamDate,
-            plannerDailyHours,
             learnFiles: learnFiles.map((f) => ({ name: f.name, type: f.type, size: f.size })),
             learnAttachmentContext: learnAttachmentContext.map((item) => ({ name: item.name, extractedText: item.extractedText.slice(0, 3000) })),
-            datesheetFile: plannerDatesheet ? { name: plannerDatesheet.name, type: plannerDatesheet.type, size: plannerDatesheet.size } : null,
-            syllabusFile: plannerSyllabus ? { name: plannerSyllabus.name, type: plannerSyllabus.type, size: plannerSyllabus.size } : null,
           },
         }),
       });
@@ -455,9 +447,6 @@ export function TutorClient() {
       }
       return `Practice mode: ${practiceType}. Use the student's topic as the anchor. Ask questions that progress from basic understanding to application and reasoning. If a question count was provided, respect it; otherwise use a sensible default of 5. Do not invent a topic.`;
     }
-    if (mode === "planner") {
-      return `Planner mode. Exam date: ${plannerExamDate || "not provided"}. Daily hours: ${plannerDailyHours}. Create a deep timetable by subjects then units/topics. Ask for missing datesheet/syllabus details if needed.`;
-    }
     const attachmentContext = learnAttachmentContext
       .map((item, index) => `Source ${index + 1} (${item.name}): ${item.extractedText.slice(0, 4000)}`)
       .join("\n\n");
@@ -487,7 +476,7 @@ export function TutorClient() {
             <h1 className="font-serif text-2xl text-[#4f3d2d]">The Tutor</h1>
             <p className="text-xs text-[#8e775e]">A personal AI tutor that asks before it tells.</p>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {([ ["learn", "Learn"], ["practice", "Practice"], ["planner", "Planner"] ] as Array<[TutorMode, string]>).map(([value, label]) => (
+              {([["learn", "Learn"], ["practice", "Practice"]] as Array<[TutorMode, string]>).map(([value, label]) => (
                 <button key={value} onClick={() => handleModeSelect(value)} className={`rounded-md border px-2 py-1 text-xs ${mode === value ? "border-[#8a7559] bg-[#efe5d5] text-[#5d4a34]" : "border-[#d8c6b2] text-[#7d6850]"}`}>{label}</button>
               ))}
             </div>
@@ -540,19 +529,6 @@ export function TutorClient() {
               </div>
             ) : null}
 
-            {mode === "planner" ? (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-[#6f5b43]">Planner intake (datesheet + syllabus)</p>
-                <div className="grid gap-2 md:grid-cols-2">
-                  <input type="date" value={plannerExamDate} onChange={(e) => setPlannerExamDate(e.target.value)} className="rounded-md border border-[#d8c6b2] px-2 py-1 text-xs" />
-                  <input value={plannerDailyHours} onChange={(e) => setPlannerDailyHours(e.target.value)} placeholder="Daily study hours" className="rounded-md border border-[#d8c6b2] px-2 py-1 text-xs" />
-                </div>
-                <div className="grid gap-2 md:grid-cols-2">
-                  <div><p className="text-[11px] text-[#7d6850]">Upload datesheet</p><input type="file" accept="image/*,.pdf" onChange={(e) => setPlannerDatesheet(e.target.files?.[0] ?? null)} className="block w-full text-xs" /></div>
-                  <div><p className="text-[11px] text-[#7d6850]">Upload syllabus</p><input type="file" accept="image/*,.pdf" onChange={(e) => setPlannerSyllabus(e.target.files?.[0] ?? null)} className="block w-full text-xs" /></div>
-                </div>
-              </div>
-            ) : null}
           </div>
 
           <div className="flex-1 min-h-0 space-y-3 overflow-y-auto px-4 py-3">

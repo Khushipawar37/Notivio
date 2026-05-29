@@ -22,7 +22,7 @@ const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const bodySchema = z.object({
   message: z.string().min(1),
   conversationId: z.string().optional(),
-  mode: z.enum(["learn", "practice", "planner"]).optional(),
+  mode: z.enum(["learn", "practice"]).optional(),
   history: z
     .array(
       z.object({
@@ -35,13 +35,9 @@ const bodySchema = z.object({
   sensitive: z.boolean().optional(),
 });
 
-function getModeHint(mode: "learn" | "practice" | "planner", practiceType?: string) {
+function getModeHint(mode: "learn" | "practice", practiceType?: string) {
   if (mode === "learn") {
     return "Teach clearly with step-by-step explanation and one short check question.";
-  }
-
-  if (mode === "planner") {
-    return "Create a deep, date-wise study timetable. Break each subject into units/topics and allocate daily study time blocks with revision windows.";
   }
 
   if (practiceType === "brainstorm") {
