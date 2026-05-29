@@ -175,11 +175,11 @@ export function MainSourceWorkspace({
 
   return (
     <div className="h-full flex flex-col bg-[#fffaf3]">
-      <div className="px-4 py-2 border-b border-[#e4d7c8] bg-[#f8f1e7] flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
+      <div className="flex flex-col gap-2 border-b border-[#e4d7c8] bg-[#f8f1e7] px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+        <div className="flex min-w-0 items-center gap-2">
           <button
             onClick={onBackToNotes}
-            className="px-2 py-1 text-xs rounded border border-[#d8c6b2] text-[#6f5b43] hover:bg-[#f2e6d8] inline-flex items-center gap-1"
+            className="inline-flex shrink-0 items-center gap-1 rounded border border-[#d8c6b2] px-2 py-1 text-xs text-[#6f5b43] hover:bg-[#f2e6d8]"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back To Notes
@@ -187,7 +187,7 @@ export function MainSourceWorkspace({
           <p className="text-sm font-medium text-[#6f5b43] truncate">{source.title}</p>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
           {source.type === "pdf" && (
             <>
               <button
@@ -224,8 +224,8 @@ export function MainSourceWorkspace({
       {status && <p className="px-4 py-1 border-b border-[#e4d7c8] text-[11px] text-[#8a7559]">{status}</p>}
 
       {source.type === "pdf" && viewTab === "preview" && source.fileUrl ? (
-        <div className="flex-1 min-h-0 p-3 space-y-2">
-          <div className="flex items-center gap-2">
+        <div className="min-h-0 flex-1 space-y-2 p-3">
+          <div className="flex flex-wrap items-center gap-2">
             <button onClick={() => setPdfPage((p) => Math.max(1, p - 1))} className="px-2 py-1 text-xs rounded border border-[#d8c6b2] text-[#6f5b43] hover:bg-[#f2e6d8]">Prev</button>
             <input value={pdfPage} onChange={(event) => setPdfPage(Math.max(1, Number(event.target.value) || 1))} className="w-16 px-2 py-1 text-xs rounded border border-[#d8c6b2] bg-white text-[#6f5b43] outline-none" />
             <button onClick={() => setPdfPage((p) => p + 1)} className="px-2 py-1 text-xs rounded border border-[#d8c6b2] text-[#6f5b43] hover:bg-[#f2e6d8]">Next</button>
@@ -236,12 +236,12 @@ export function MainSourceWorkspace({
           <iframe
             key={`${source.id}-${pdfPage}-${pdfZoom}`}
             src={`${source.fileUrl}#page=${pdfPage}&zoom=${pdfZoom}&toolbar=0&navpanes=0`}
-            className="w-full h-[min(64vh,560px)] rounded border border-[#d8c6b2] bg-white"
+            className="h-[min(52vh,560px)] w-full rounded border border-[#d8c6b2] bg-white sm:h-[min(64vh,560px)]"
             title={`PDF ${source.title}`}
           />
         </div>
       ) : (
-        <div className="flex-1 min-h-0 p-3 flex flex-col gap-2">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 p-3">
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-[#9c8871] absolute left-2 top-1/2 -translate-y-1/2" />
             <input
@@ -252,7 +252,7 @@ export function MainSourceWorkspace({
             />
           </div>
 
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex flex-wrap items-center gap-1.5">
             <button onClick={() => applyCommand("bold")} className="px-2 py-1 text-xs rounded border border-[#d8c6b2] text-[#6f5b43] hover:bg-[#f2e6d8] inline-flex items-center gap-1"><Bold className="w-3.5 h-3.5" />Bold</button>
             <button onClick={() => applyCommand("italic")} className="px-2 py-1 text-xs rounded border border-[#d8c6b2] text-[#6f5b43] hover:bg-[#f2e6d8] inline-flex items-center gap-1"><Italic className="w-3.5 h-3.5" />Italic</button>
             <button onClick={() => applyCommand("underline")} className="px-2 py-1 text-xs rounded border border-[#d8c6b2] text-[#6f5b43] hover:bg-[#f2e6d8] inline-flex items-center gap-1"><Underline className="w-3.5 h-3.5" />Underline</button>
@@ -265,7 +265,7 @@ export function MainSourceWorkspace({
             contentEditable
             suppressContentEditableWarning
             onInput={(event) => setEditableText(event.currentTarget.innerText)}
-            className="flex-1 min-h-0 overflow-y-auto rounded border border-[#d8c6b2] bg-white p-3 text-sm text-[#6f5b43] whitespace-pre-wrap leading-relaxed outline-none"
+            className="min-h-[18rem] flex-1 overflow-y-auto whitespace-pre-wrap rounded border border-[#d8c6b2] bg-white p-3 text-sm leading-relaxed text-[#6f5b43] outline-none"
             dangerouslySetInnerHTML={{
               __html: (visibleText || editableText || source.extractedText || "No source text available yet. For PDFs click Extract Text.")
                 .replace(/&/g, "&amp;")

@@ -113,7 +113,7 @@ export function NotebookSidebar({
 
   if (isCollapsed) {
     return (
-      <aside className="w-12 bg-[#f8f1e7] border-r border-[#e4d7c8] flex flex-col items-center py-3 gap-3">
+      <aside className="flex w-full flex-row items-center gap-3 border-b border-[#e4d7c8] bg-[#f8f1e7] px-3 py-2 lg:w-12 lg:flex-col lg:border-b-0 lg:border-r lg:px-0 lg:py-3">
         <button
           onClick={onToggleCollapse}
           className="p-1.5 rounded-lg hover:bg-[#ede1d1] text-[#8a7559] hover:text-[#7b664d] transition-colors"
@@ -143,7 +143,7 @@ export function NotebookSidebar({
   }
 
   return (
-    <aside className="w-64 sm:w-72 bg-[#f8f1e7] border-r border-[#e4d7c8] flex flex-col h-full">
+    <aside className="flex max-h-[34vh] w-full flex-col border-b border-[#e4d7c8] bg-[#f8f1e7] lg:h-full lg:max-h-none lg:w-72 lg:border-b-0 lg:border-r">
       <div className="px-3 py-3 border-b border-[#e4d7c8]">
         <div className="flex items-center justify-between mb-2.5">
           <div className="flex items-center gap-2">
@@ -265,7 +265,7 @@ export function NotebookSidebar({
                 </span>
               )}
 
-              <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
+              <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                 <button
                   onClick={() => onCreatePageInNotebook(notebook.id)}
                   className="p-0.5 rounded hover:bg-[#ede1d1] text-[#8a7559]"
@@ -362,7 +362,7 @@ export function NotebookSidebar({
                       </span>
                     )}
 
-                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
+                    <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                       <button
                         onClick={() => onCreatePage(notebook.id, section.id)}
                         className="p-0.5 rounded hover:bg-[#ede1d1] text-[#8a7559]"
@@ -423,7 +423,7 @@ export function NotebookSidebar({
                               {page.title}
                             </span>
                           )}
-                          <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
+                          <div className="flex items-center gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                             <button
                               onClick={(event) => {
                                 event.stopPropagation();

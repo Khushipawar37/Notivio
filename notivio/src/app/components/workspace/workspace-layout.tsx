@@ -155,8 +155,8 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
   );
 
   return (
-    <div className="min-h-screen pt-24 sm:pt-28 bg-[#f5f0e8] text-[#6f5b43] flex flex-col">
-      <div className="flex-1 min-h-0 flex overflow-hidden">
+    <div className="flex min-h-screen flex-col bg-[#f5f0e8] pb-20 pt-24 text-[#6f5b43] sm:pb-0 sm:pt-28">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
         <NotebookSidebar
           notebooks={filteredNotebooks}
           activePageId={activePageId}
@@ -204,7 +204,7 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
           onOpenSemanticSearch={() => setShowSemanticSearch(true)}
         />
 
-        <main className="flex-1 min-w-0 flex flex-col bg-[#fffaf3]">
+        <main className="flex min-h-[60vh] min-w-0 flex-1 flex-col bg-[#fffaf3] lg:min-h-0">
           {loading ? (
             <div className="flex-1 flex items-center justify-center px-6">
               <div className="text-center max-w-lg animate-pulse">
@@ -216,21 +216,21 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
             </div>
           ) : activePage ? (
             <>
-              <header className="px-4 py-2 border-b border-[#e4d7c8] bg-[#f8f1e7]">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-xs text-[#7c6a53]/80">
+              <header className="border-b border-[#e4d7c8] bg-[#f8f1e7] px-3 py-2 sm:px-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-[#7c6a53]/80">
                     <Save className="w-3.5 h-3.5 text-[#8a7559]" />
                     <span>{saveLabel}</span>
                     <span>•</span>
                     <span>{wordCount} words</span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {activePage && !shareToken && <ShareDialog noteId={activePage.id} />}
                     <button
                       onClick={() => setShowTemplates(true)}
                       disabled={readOnly}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[#7c6a53] hover:text-[#5d4a34] hover:bg-[#ede1d1] rounded-lg transition-colors"
+                      className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-[#7c6a53] transition-colors hover:bg-[#ede1d1] hover:text-[#5d4a34]"
                     >
                       <LayoutTemplate className="w-3.5 h-3.5" />
                       Templates
@@ -239,7 +239,7 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
                     <div className="relative">
                       <button
                         onClick={() => setShowExportMenu((prev) => !prev)}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-[#7c6a53] hover:text-[#5d4a34] hover:bg-[#ede1d1] rounded-lg transition-colors"
+                        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-[#7c6a53] transition-colors hover:bg-[#ede1d1] hover:text-[#5d4a34]"
                       >
                         <Download className="w-3.5 h-3.5" />
                         Export
@@ -267,7 +267,7 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
 
                     <button
                       onClick={() => setRightPanelCollapsed((prev) => !prev)}
-                      className="p-1.5 text-[#7c6a53] hover:text-[#5d4a34] hover:bg-[#ede1d1] rounded-lg transition-colors"
+                      className="rounded-lg p-1.5 text-[#7c6a53] transition-colors hover:bg-[#ede1d1] hover:text-[#5d4a34]"
                       title={rightPanelCollapsed ? "Show Right Panel" : "Hide Right Panel"}
                     >
                       {rightPanelCollapsed ? (
@@ -286,7 +286,7 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
                       void renamePage(activePage.id, event.target.value || "Untitled Page")
                     }
                     disabled={readOnly}
-                    className="flex-1 min-w-[220px] px-3 py-1.5 rounded-lg bg-white border border-[#d8c6b2] text-sm text-[#6f5b43] outline-none focus:border-[#a68b5b]"
+                    className="min-w-0 flex-1 rounded-lg border border-[#d8c6b2] bg-white px-3 py-1.5 text-sm text-[#6f5b43] outline-none focus:border-[#a68b5b] sm:min-w-[220px]"
                     placeholder="Page Title"
                   />
                   <input
@@ -302,7 +302,7 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
                       )
                     }
                     disabled={readOnly}
-                    className="w-full sm:w-[240px] px-3 py-1.5 rounded-lg bg-white border border-[#d8c6b2] text-sm text-[#6f5b43] outline-none focus:border-[#a68b5b]"
+                    className="w-full rounded-lg border border-[#d8c6b2] bg-white px-3 py-1.5 text-sm text-[#6f5b43] outline-none focus:border-[#a68b5b] sm:w-[240px]"
                     placeholder="Tags (comma separated)"
                   />
                 </div>
@@ -354,7 +354,7 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
         </main>
 
         {!rightPanelCollapsed && (
-          <aside className="hidden xl:flex w-[360px] border-l border-[#e4d7c8] flex-col bg-[#f8f1e7]">
+          <aside className="flex max-h-[42vh] min-h-[18rem] flex-col border-t border-[#e4d7c8] bg-[#f8f1e7] lg:max-h-none lg:w-80 lg:border-l lg:border-t-0 xl:w-[360px]">
             <div className="p-2 border-b border-[#e4d7c8] grid grid-cols-2 gap-1.5">
               <button
                 onClick={() => setRightTab("ai")}
@@ -426,7 +426,7 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
         }}
       />
 
-      <footer className="h-10 px-4 border-t border-[#e4d7c8] bg-[#fbf6ee] flex items-center justify-between text-[11px] text-[#9b876e]">
+      <footer className="hidden h-10 items-center justify-between border-t border-[#e4d7c8] bg-[#fbf6ee] px-4 text-[11px] text-[#9b876e] sm:flex">
         <span>Notivio</span>
         <span>Built for focused study notes and sources</span>
       </footer>

@@ -183,12 +183,12 @@ export function SourcesPanel({
 
   return (
     <div className="h-full bg-[#f8f1e7] flex flex-col">
-      <div className="px-4 py-3 border-b border-[#e4d7c8]">
-        <div className="flex items-center justify-between">
+      <div className="border-b border-[#e4d7c8] px-3 py-3 sm:px-4">
+        <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-[#6f5b43]">Sources</h2>
           <button
             onClick={() => setImportOpen((prev) => !prev)}
-            className="px-2 py-1 rounded-md text-xs bg-[#e7d6c2] hover:bg-[#ddc8ad] text-[#6f5b43] inline-flex items-center gap-1"
+            className="inline-flex shrink-0 items-center gap-1 rounded-md bg-[#e7d6c2] px-2 py-1 text-xs text-[#6f5b43] hover:bg-[#ddc8ad]"
           >
             <Import className="w-3.5 h-3.5" />
             Import
@@ -198,7 +198,7 @@ export function SourcesPanel({
       </div>
 
       {importOpen && (
-        <div className="p-3 border-b border-[#e4d7c8] bg-[#fff8ee] space-y-2">
+        <div className="space-y-2 border-b border-[#e4d7c8] bg-[#fff8ee] p-3">
           <button
             onClick={() => fileInputRef.current?.click()}
             className="w-full px-2.5 py-2 rounded-md text-xs border border-[#d8c6b2] text-[#6f5b43] hover:bg-[#f2e6d8] inline-flex items-center justify-center gap-1.5"
@@ -237,7 +237,7 @@ export function SourcesPanel({
         </div>
       )}
 
-      <div className="p-3 border-b border-[#e4d7c8]">
+      <div className="border-b border-[#e4d7c8] p-3">
         <div className="relative">
           <Search className="w-3.5 h-3.5 text-[#9c8871] absolute left-2 top-1/2 -translate-y-1/2" />
           <input
@@ -249,7 +249,7 @@ export function SourcesPanel({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
         {sourcesLoading ? (
           <div className="space-y-2 animate-pulse">
             <div className="h-16 rounded-lg border border-[#d8c6b2] bg-[#f2e6d8]" />
@@ -265,7 +265,7 @@ export function SourcesPanel({
                   <span className="text-[10px] uppercase text-[#9c8871]">{source.type}</span>
                 </div>
               </button>
-              <div className="mt-2 flex items-center justify-between gap-2">
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                 <button
                   onClick={() => onSelectSource?.(source)}
                   className="text-[10px] px-2 py-0.5 rounded border border-[#d8c6b2] text-[#7a6143] hover:bg-[#f2e6d8] inline-flex items-center gap-1"

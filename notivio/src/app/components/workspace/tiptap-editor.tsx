@@ -355,7 +355,7 @@ export function TipTapEditor({
     <div className="tiptap-editor-wrapper flex flex-col h-full">
       {/* Toolbar */}
       {!readOnly && (
-      <div className="tiptap-toolbar flex items-center gap-0.5 gap-y-1 px-3 py-2 bg-[#f8f1e7] border-b border-[#e4d7c8] flex-wrap">
+      <div className="tiptap-toolbar flex items-center gap-0.5 overflow-x-auto border-b border-[#e4d7c8] bg-[#f8f1e7] px-2 py-2 sm:flex-wrap sm:gap-y-1 sm:px-3">
         <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} title="Undo">
           <Undo className="w-4 h-4" />
         </ToolbarBtn>
@@ -391,7 +391,7 @@ export function TipTapEditor({
               editor.chain().focus().setMark("textStyle", { fontFamily }).run();
             }
           }}
-          className="h-8 px-2 rounded-md border border-[#d8c6b2] bg-[#fff8ee] text-[#6f5b43] text-xs outline-none"
+          className="h-8 max-w-[8.5rem] rounded-md border border-[#d8c6b2] bg-[#fff8ee] px-2 text-xs text-[#6f5b43] outline-none sm:max-w-none"
           title="Font Style"
         >
           {FONT_FAMILIES.map((font) => (
@@ -411,7 +411,7 @@ export function TipTapEditor({
               editor.chain().focus().setMark("textStyle", { fontSize: size }).run();
             }
           }}
-          className="h-8 px-2 rounded-md border border-[#d8c6b2] bg-[#fff8ee] text-[#6f5b43] text-xs outline-none"
+          className="h-8 rounded-md border border-[#d8c6b2] bg-[#fff8ee] px-2 text-xs text-[#6f5b43] outline-none"
           title="Font Size"
         >
           <option value="">Auto</option>

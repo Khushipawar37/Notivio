@@ -13,13 +13,14 @@ import {
   FileText,
   Lightbulb,
   HelpCircle,
+  type LucideIcon,
 } from "lucide-react";
 
 type FAQItem = {
   id: string;
   question: string;
   answer: string;
-  icon: any;
+  icon: LucideIcon;
   category: string;
 };
 
@@ -111,12 +112,12 @@ const CategoryFilter = ({
   onCategoryChange: (category: string) => void;
 }) => {
   return (
-    <div className="flex flex-wrap gap-2 justify-center mb-8">
+    <div className="mb-8 flex flex-wrap justify-center gap-2">
       {categories.map((category) => (
         <motion.button
           key={category}
           onClick={() => onCategoryChange(category)}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+          className={`rounded-full px-3 py-2 text-xs font-medium transition-all duration-300 sm:px-4 sm:text-sm ${
             activeCategory === category
               ? "bg-[#8a7559] text-white shadow-lg"
               : "bg-white text-[#8a7559] border border-[#c6ac8f]/30 hover:border-[#c6ac8f] hover:bg-[#c6ac8f]/10"
@@ -152,14 +153,14 @@ const FAQCard = ({
     >
       <motion.button
         onClick={onToggle}
-        className="w-full p-6 text-left flex items-center gap-4 hover:bg-[#f5f0e8]/50 transition-colors duration-200"
+        className="flex w-full items-start gap-3 p-4 text-left transition-colors duration-200 hover:bg-[#f5f0e8]/50 sm:items-center sm:gap-4 sm:p-6"
         whileHover={{ backgroundColor: "rgba(245, 240, 232, 0.5)" }}
       >
-        <div className="p-2 rounded-lg bg-[#c6ac8f]/20 border border-[#c6ac8f]/30 text-[#8a7559] flex-shrink-0">
+        <div className="flex-shrink-0 rounded-lg border border-[#c6ac8f]/30 bg-[#c6ac8f]/20 p-2 text-[#8a7559]">
           <Icon className="w-5 h-5" />
         </div>
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-black mb-1">
+        <div className="min-w-0 flex-1">
+          <h3 className="mb-1 text-base font-semibold leading-snug text-black sm:text-lg">
             {faq.question}
           </h3>
           <span className="text-xs text-[#8a7559] bg-[#c6ac8f]/20 px-2 py-1 rounded-full">
@@ -184,31 +185,12 @@ const FAQCard = ({
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="overflow-hidden"
           >
-            <div className="px-6 pb-6 pl-[4.5rem]">
+            <div className="px-4 pb-5 sm:px-6 sm:pb-6 sm:pl-[4.5rem]">
               <p className="text-gray-700 leading-relaxed">{faq.answer}</p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
-  );
-};
-
-const FloatingQuestionMark = () => {
-  return (
-    <motion.div
-      className="absolute top-10 right-10 text-[#c6ac8f]/30"
-      animate={{
-        y: [0, -10, 0],
-        rotate: [0, 5, -5, 0],
-      }}
-      transition={{
-        duration: 4,
-        repeat: Number.POSITIVE_INFINITY,
-        ease: "easeInOut",
-      }}
-    >
-      <HelpCircle className="w-16 h-16" />
     </motion.div>
   );
 };
@@ -233,7 +215,7 @@ export default function FAQSection() {
       : faqData.filter((faq) => faq.category === activeCategory);
 
   return (
-    <section className="relative py-20 px-4 bg-[#f5f0e8] overflow-hidden">
+    <section className="relative overflow-hidden bg-[#f5f0e8] px-4 py-16 sm:py-20">
       {/* Background decorations */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#f5f0e8] via-[#f5f0e8] to-transparent opacity-50"></div>
       <div className="container mx-auto max-w-6xl relative z-10">
@@ -242,7 +224,7 @@ export default function FAQSection() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-12"
+          className="mb-10 text-center sm:mb-12"
         >
           <motion.div
             className="inline-flex items-center gap-2 bg-[#c6ac8f]/20 border border-[#c6ac8f]/30 rounded-full px-4 py-2 mb-6"
@@ -254,10 +236,10 @@ export default function FAQSection() {
             </span>
           </motion.div>
 
-          <h2 className="text-4xl md:text-5xl font-bold text-black mb-4">
+          <h2 className="mb-4 text-3xl font-bold leading-tight text-black sm:text-4xl md:text-5xl">
             Got Questions About <span className="text-[#8a7559]">Notivio</span>?
           </h2>
-          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
+          <p className="mx-auto max-w-2xl text-base leading-relaxed text-gray-700 sm:text-xl">
             Find answers to common questions about our AI-powered note-taking
             platform
           </p>

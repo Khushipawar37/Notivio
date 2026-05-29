@@ -132,10 +132,10 @@ const FeatureCarousel = () => {
   if (!mounted) {
     const FirstIcon = features[0].icon;
     return (
-      <div ref={containerRef} className="relative w-full h-[600px] overflow-hidden">
+      <div ref={containerRef} className="relative h-[420px] w-full overflow-hidden sm:h-[600px]">
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-full max-w-xl">
-            <div className="relative bg-black border border-[#c6ac8f] rounded-xl p-8 shadow-xl">
+          <div className="w-full max-w-xl px-2 sm:px-0">
+            <div className="relative rounded-xl border border-[#c6ac8f] bg-black p-5 shadow-xl sm:p-8">
               <div
                 className={`absolute inset-0 rounded-xl bg-gradient-to-br ${features[0].bgGradient} opacity-30`}
               />
@@ -144,11 +144,11 @@ const FeatureCarousel = () => {
                   <div className="p-3 rounded-lg bg-[#c6ac8f] border border-[#c6ac8f]/30 text-[#8a7559]">
                     <FirstIcon className="w-8 h-8" />
                   </div>
-                  <h3 className="text-white font-semibold text-2xl">
+                  <h3 className="text-xl font-semibold text-white sm:text-2xl">
                     {features[0].title}
                   </h3>
                 </div>
-                <p className="text-gray-200 text-lg">{features[0].description}</p>
+                <p className="text-base text-gray-200 sm:text-lg">{features[0].description}</p>
               </div>
             </div>
           </div>
@@ -160,7 +160,7 @@ const FeatureCarousel = () => {
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[600px] overflow-hidden"
+      className="relative h-[420px] w-full overflow-hidden sm:h-[600px]"
     >
       {/* 3D Perspective Container */}
       <div
@@ -179,13 +179,13 @@ const FeatureCarousel = () => {
             return (
               <motion.div
                 key={index}
-                className="absolute top-1/2 left-1/2 w-full max-w-xl -translate-x-1/2 -translate-y-1/2"
+                className="absolute top-1/2 left-1/2 w-full max-w-[calc(100%-3rem)] -translate-x-1/2 -translate-y-1/2 sm:max-w-xl"
                 initial={false}
                 animate={style}
                 transition={{ duration: 0.6, ease: "easeOut" }}
               >
                 <div
-                  className={`bg-black border border-gray-200 rounded-xl p-8 shadow-xl transition-all duration-300 ${
+                  className={`bg-black border border-gray-200 rounded-xl p-5 shadow-xl transition-all duration-300 sm:p-8 ${
                     index === activeIndex ? "border-[#c6ac8f]" : ""
                   }`}
                 >
@@ -194,16 +194,16 @@ const FeatureCarousel = () => {
                   ></div>
 
                   <div className="relative z-10">
-                    <div className="flex items-center gap-4 mb-6">
-                      <div className="p-3 rounded-lg bg-[#c6ac8f] border border-[#c6ac8f]/30 text-[#8a7559]">
-                        <Icon className="w-8 h-8" />
+                    <div className="mb-5 flex items-center gap-3 sm:mb-6 sm:gap-4">
+                      <div className="rounded-lg border border-[#c6ac8f]/30 bg-[#c6ac8f] p-2.5 text-[#8a7559] sm:p-3">
+                        <Icon className="h-6 w-6 sm:h-8 sm:w-8" />
                       </div>
-                      <h3 className="text-white font-semibold text-2xl">
+                      <h3 className="text-xl font-semibold text-white sm:text-2xl">
                         {feature.title}
                       </h3>
                     </div>
 
-                    <p className="text-gray-200 text-lg">
+                    <p className="text-base leading-relaxed text-gray-200 sm:text-lg">
                       {feature.description}
                     </p>
 
@@ -266,47 +266,6 @@ const FeatureCarousel = () => {
   );
 };
 
-// Animated typing effect component
-const TypingEffect = ({
-  text,
-  className,
-}: {
-  text: string;
-  className?: string;
-}) => {
-  const [displayText, setDisplayText] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    const timeout = setTimeout(
-      () => {
-        if (!isDeleting && currentIndex < text.length) {
-          setDisplayText(text.substring(0, currentIndex + 1));
-          setCurrentIndex((prev) => prev + 1);
-        } else if (isDeleting && currentIndex > 0) {
-          setDisplayText(text.substring(0, currentIndex - 1));
-          setCurrentIndex((prev) => prev - 1);
-        } else if (currentIndex === text.length) {
-          setTimeout(() => setIsDeleting(true), 2000);
-        } else if (currentIndex === 0) {
-          setIsDeleting(false);
-        }
-      },
-      isDeleting ? 50 : 100
-    );
-
-    return () => clearTimeout(timeout);
-  }, [currentIndex, isDeleting, text]);
-
-  return (
-    <span className={`relative ${className}`}>
-      {displayText}
-      <span className="absolute right-[-4px] top-0 h-full w-[2px] bg-[#c6ac8f] animate-blink"></span>
-    </span>
-  );
-};
-
 // Interactive workflow component
 const InteractiveWorkflow = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -363,11 +322,11 @@ const InteractiveWorkflow = () => {
       initial={{ opacity: 0 }}
       animate={isInView ? { opacity: 1 } : { opacity: 0 }}
       transition={{ duration: 2.6 }}
-      className="relative w-full h-[400px]" // Fixed height to prevent content shifting
+      className="relative w-full md:h-[400px]"
     >
       <div className="relative z-10">
-        <div className="flex flex-col items-center mb-10">
-          <h3 className="text-2xl font-bold text-black mb-2">
+        <div className="mb-8 flex flex-col items-center md:mb-10">
+          <h3 className="mb-2 text-2xl font-bold text-black">
             How Notivio Works
           </h3>
           <div className="h-1 w-20 bg-[#c6ac8f]"></div>
@@ -375,7 +334,7 @@ const InteractiveWorkflow = () => {
 
         <div className="relative">
           {/* Progress bar */}
-          <div className="absolute top-12 left-0 right-0 h-1 bg-gray-200 z-0">
+          <div className="absolute left-0 right-0 top-12 z-0 hidden h-1 bg-gray-200 md:block">
             <motion.div
               className="h-full bg-[#c6ac8f]"
               initial={{ width: "0%" }}
@@ -385,14 +344,14 @@ const InteractiveWorkflow = () => {
           </div>
 
           {/* Steps */}
-          <div className="relative z-10 grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="relative z-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-5">
             {steps.map((step, index) => {
               const Icon = step.icon;
               return (
-                <div key={index} className="flex flex-col items-center">
+                <div key={index} className="flex flex-col items-center rounded-xl bg-white/60 p-4 md:bg-transparent md:p-0">
                   <motion.button
                     onClick={() => setActiveStep(index)}
-                    className={`relative w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    className={`relative flex h-16 w-16 items-center justify-center rounded-full transition-all duration-300 md:h-24 md:w-24 ${
                       index <= activeStep ? "bg-black" : "bg-gray-100"
                     } border-2 ${
                       index === activeStep
@@ -425,7 +384,7 @@ const InteractiveWorkflow = () => {
                     </div>
                   </motion.button>
 
-                  <div className="mt-4 text-center">
+                  <div className="mt-3 text-center md:mt-4">
                     <h4
                       className={`font-medium ${
                         index <= activeStep ? "text-black" : "text-gray-400"
@@ -440,7 +399,7 @@ const InteractiveWorkflow = () => {
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="text-sm text-gray-600 mt-2"
+                          className="mt-2 text-sm text-gray-600"
                         >
                           {step.description}
                         </motion.p>
@@ -463,7 +422,7 @@ export default function AboutSection() {
   const isHeaderInView = useInView(headerRef, { once: true, amount: 0.3 });
 
   return (
-    <section className="relative w-full overflow-hidden bg-[#f5f0e8] py-24">
+    <section className="relative w-full overflow-hidden bg-[#f5f0e8] py-16 sm:py-24">
       {/* Background elements */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#f5f0e8] via-[#f5f0e8] to-[#f5f0e8] opacity-70"></div>
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-1/3 bg-[#c6ac8f]/10 blur-[100px] rounded-full"></div>
@@ -477,19 +436,19 @@ export default function AboutSection() {
             isHeaderInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }
           }
           transition={{ duration: 0.8 }}
-          className="text-center mb-20"
+          className="mb-14 text-center sm:mb-20"
         >
-          <h2 className="text-6xl md:text-7xl font-bold text-black mb-6">
+          <h2 className="mb-5 text-4xl font-bold leading-tight text-black sm:mb-6 sm:text-6xl md:text-7xl">
             About <span className="text-[#8a7559]">Notivio</span>
           </h2>
-          <div className="max-w-4xl mx-auto mb-32">
-            <p className="text-xl text-gray-700 mb-4">
+          <div className="mx-auto mb-16 max-w-4xl sm:mb-32">
+            <p className="mb-4 text-base leading-relaxed text-gray-700 sm:text-xl">
               Notivio is an AI-powered note-taking platform that transforms
               video content into structured, editable notes and study materials,
               helping you learn more effectively.
             </p>
-            <p className="text-lg text-gray-600 mb-4">
-              Whether you're a student trying to keep up with lectures, a
+            <p className="mb-4 text-base leading-relaxed text-gray-600 sm:text-lg">
+              Whether you&apos;re a student trying to keep up with lectures, a
               professional developing new skills, or an educator creating
               learning materials, Notivio streamlines your workflow and enhances
               your learning experience.
@@ -503,13 +462,13 @@ export default function AboutSection() {
         </motion.div>
 
         {/* Features Carousel - Now placed BEFORE How Notivio Works */}
-        <div className="mb-32">
+        <div className="mb-20 sm:mb-32">
           <motion.h3
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-4xl font-bold text-black text-center"
+            className="text-center text-3xl font-bold text-black sm:text-4xl"
           >
             Powerful Features
           </motion.h3>
@@ -518,7 +477,7 @@ export default function AboutSection() {
         </div>
 
         {/* Interactive workflow section - Now placed AFTER Features */}
-        <div className="mb-32">
+        <div className="mb-20 sm:mb-32">
           <InteractiveWorkflow />
         </div>
 
@@ -528,13 +487,13 @@ export default function AboutSection() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="relative bg-[#c6ac8f] border border-[#c6ac8f]/20 rounded-2xl p-10 overflow-hidden"
+          className="relative overflow-hidden rounded-2xl border border-[#c6ac8f]/20 bg-[#c6ac8f] p-6 sm:p-10"
         >
           <div className="relative z-10 text-center">
-            <h3 className="text-5xl font-bold text-black mb-4">
+            <h3 className="mb-4 text-3xl font-bold leading-tight text-black sm:text-5xl">
               Ready to Transform Your Learning?
             </h3>
-            <p className="text-gray-700 max-w-2xl mx-auto text-xl mb-8">
+            <p className="mx-auto mb-8 max-w-2xl text-base leading-relaxed text-gray-700 sm:text-xl">
               Join thousands of students and educators who are already using
               Notivio to enhance their learning experience.
             </p>
