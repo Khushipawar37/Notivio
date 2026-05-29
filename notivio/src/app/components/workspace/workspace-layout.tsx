@@ -155,7 +155,7 @@ export function WorkspaceLayout({ shareToken = null, shareRole = null }: Workspa
   );
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#f5f0e8] pb-20 pt-24 text-[#6f5b43] sm:pb-0 sm:pt-28">
+    <div className="flex min-h-screen flex-col bg-[#f5f0e8] pt-24 text-[#6f5b43] sm:pt-28">
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
         <NotebookSidebar
           notebooks={filteredNotebooks}
