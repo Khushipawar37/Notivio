@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { WorkspaceLayout } from "../components/workspace/workspace-layout";
+import Footer from "../components/home/Footer";
 import { stackServerApp } from "@/stack/server";
 import { prisma } from "@/server/prisma";
 import {
@@ -43,12 +44,25 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
 
     if (link && !link.revokedAt && (!link.expiresAt || link.expiresAt.getTime() > Date.now())) {
       const shareRole = link.role === "editor" ? "editor" : "viewer";
-      return <WorkspaceLayout shareToken={shareToken} shareRole={shareRole} />;
+      return (
+        <>
+          <WorkspaceLayout shareToken={shareToken} shareRole={shareRole} />
+          <Footer />
+        </>
+      );
     }
   }
-  if (user) return <WorkspaceLayout />;
+  if (user) {
+    return (
+      <>
+        <WorkspaceLayout />
+        <Footer />
+      </>
+    );
+  }
 
   return (
+    <>
     <main className="min-h-screen bg-gradient-to-b from-[#f8f4ec] via-[#f5f0e8] to-[#f2eadf] px-4 pb-16 pt-32">
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-10">
 
@@ -140,5 +154,7 @@ export default async function NotesPage({ searchParams }: NotesPageProps) {
 
       </div>
     </main>
+    <Footer />
+    </>
   );
 }

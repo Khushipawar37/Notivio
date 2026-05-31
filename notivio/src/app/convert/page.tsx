@@ -85,6 +85,10 @@ export default function VideoNotesPage() {
   const formRef = useRef<HTMLFormElement>(null)
   const notesContainerRef = useRef<HTMLDivElement>(null)
 
+  const getErrorMessage = (err: unknown, fallback: string) => {
+    return err instanceof Error ? err.message : fallback
+  }
+
   // Extract video ID from YouTube URL
   const extractVideoId = (url: string): string | null => {
     const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/
@@ -303,9 +307,9 @@ export default function VideoNotesPage() {
       setTimeout(() => {
         setShowSuccessAnimation(false)
       }, 3000)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error in handleSubmit:", err)
-      setError(err.message || "An error occurred while processing the video")
+      setError(getErrorMessage(err, "An error occurred while processing the video"))
     } finally {
       setLoading(false)
     }
@@ -333,8 +337,8 @@ export default function VideoNotesPage() {
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
-    } catch (err: any) {
-      setError(err.message || "An error occurred while generating PDF")
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, "An error occurred while generating PDF"))
     }
   }
 
@@ -407,21 +411,21 @@ export default function VideoNotesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f5f0e8] via-[#f8f4ed] to-[#f5f0e8] pt-[12rem]">
-      <div className="container mx-auto max-w-6xl mb-[12rem]">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-[#f5f0e8] via-[#f8f4ed] to-[#f5f0e8] pt-28 sm:pt-36 lg:pt-[12rem]">
+      <div className="container mx-auto mb-20 max-w-6xl px-3 sm:mb-[12rem] sm:px-4">
         {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="mb-10 text-center sm:mb-16"
         >
-          <h1 className="text-5xl md:text-6xl font-bold text-black mb-6">
+          <h1 className="mb-4 text-4xl font-bold leading-tight text-black sm:mb-6 sm:text-5xl md:text-6xl">
             <span className="bg-gradient-to-r from-[#8a7559] to-[#a68b5b] bg-clip-text text-transparent">Notivio</span>{" "}
             Video Notes
           </h1>
 
-          <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
+          <p className="mx-auto max-w-3xl text-base leading-relaxed text-gray-700 sm:text-xl">
             Transform any YouTube video into comprehensive, structured notes with our AI-powered tool. Perfect for
             students, researchers, and lifelong learners.
           </p>
@@ -432,10 +436,10 @@ export default function VideoNotesPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16"
+          className="mb-10 grid grid-cols-1 gap-4 sm:mb-16 md:grid-cols-3 md:gap-6"
         >
           <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 text-center sm:p-6">
               <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-lg mb-4">
                 <Zap className="h-6 w-6 text-white" />
               </div>
@@ -447,7 +451,7 @@ export default function VideoNotesPage() {
           </Card>
 
           <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 text-center sm:p-6">
               <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-lg mb-4">
                 <BookOpen className="h-6 w-6 text-white" />
               </div>
@@ -459,7 +463,7 @@ export default function VideoNotesPage() {
           </Card>
 
           <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 text-center sm:p-6">
               <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-lg mb-4">
                 <FileSearch className="h-6 w-6 text-white" />
               </div>
@@ -477,22 +481,22 @@ export default function VideoNotesPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <Card className="mb-12 border-0 shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20 pb-6">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-lg">
+          <Card className="mb-10 overflow-hidden border-0 bg-white/90 shadow-xl backdrop-blur-sm sm:mb-12">
+            <CardHeader className="border-b border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white pb-5 sm:pb-6">
+              <div className="flex items-start gap-3">
+                <div className="shrink-0 rounded-lg bg-gradient-to-r from-[#8a7559] to-[#a68b5b] p-2">
                   <Youtube className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl text-[#8a7559]">Enter YouTube Video URL</CardTitle>
-                  <CardDescription className="text-base">
+                  <CardTitle className="text-xl leading-tight text-[#8a7559] sm:text-2xl">Enter YouTube Video URL</CardTitle>
+                  <CardDescription className="text-sm sm:text-base">
                     Paste any YouTube video URL to automatically generate structured notes
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent className="pt-8 pb-8">
+            <CardContent className="px-4 pb-6 pt-6 sm:px-6 sm:pb-8 sm:pt-8">
               {/* Helpful Tips */}
               <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
                 <div className="relative">
@@ -501,7 +505,7 @@ export default function VideoNotesPage() {
                     placeholder="https://www.youtube.com/watch?v=..."
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
-                    className={`h-14 text-lg border-2 focus:ring-[#c6ac8f] focus:border-[#c6ac8f] transition-all duration-200 ${url && !isUrlValid ? "border-red-300 bg-red-50" : "border-[#c6ac8f]/30"
+                    className={`h-12 border-2 pr-11 text-sm transition-all duration-200 focus:border-[#c6ac8f] focus:ring-[#c6ac8f] sm:h-14 sm:text-lg ${url && !isUrlValid ? "border-red-300 bg-red-50" : "border-[#c6ac8f]/30"
                       } ${url && isUrlValid ? "border-[#c6ac8f] bg-[#f5f1eb]" : ""}`}
                     required
                   />
@@ -522,7 +526,7 @@ export default function VideoNotesPage() {
                       <Button
                         type="submit"
                         disabled={loading || !isUrlValid}
-                        className="w-full h-14 text-lg bg-gradient-to-r from-[#8a7559] to-[#a68b5b] hover:from-[#8a7559]/90 hover:to-[#a68b5b]/90 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                        className="h-12 w-full bg-gradient-to-r from-[#8a7559] to-[#a68b5b] text-sm text-white shadow-lg transition-all duration-300 hover:from-[#8a7559]/90 hover:to-[#a68b5b]/90 hover:shadow-xl sm:h-14 sm:text-lg"
                       >
                         {loading ? (
                           <>
@@ -548,11 +552,11 @@ export default function VideoNotesPage() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-8 p-6 bg-gradient-to-r from-[#f5f0e8] to-white rounded-xl border border-[#c6ac8f]/20"
+                  className="mt-8 rounded-xl border border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white p-4 sm:p-6"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-lg">
+                  <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3">
+                      <div className="shrink-0 rounded-lg bg-gradient-to-r from-[#8a7559] to-[#a68b5b] p-2">
                         <Brain className="h-5 w-5 text-white animate-pulse" />
                       </div>
                       <div>
@@ -569,7 +573,7 @@ export default function VideoNotesPage() {
 
                   <Progress value={processingProgress} className="h-2 bg-[#c6ac8f]/20" />
 
-                  <div className="mt-2 flex justify-between items-center">
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                     <span className="text-sm text-gray-600">{Math.round(processingProgress)}% complete</span>
                     {chunkingProgress.isChunked && chunkingProgress.totalChunks > 0 && (
                       <span className="text-sm text-gray-600">
@@ -633,7 +637,7 @@ export default function VideoNotesPage() {
               initial={{ opacity: 0, y: -20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.9 }}
-              className="fixed top-6 right-6 bg-white border border-[#c6ac8f] text-[#8b7355] px-6 py-4 rounded-xl shadow-xl flex items-center z-50"
+              className="fixed left-3 right-3 top-20 z-50 flex items-center rounded-xl border border-[#c6ac8f] bg-white px-4 py-3 text-[#8b7355] shadow-xl sm:left-auto sm:right-6 sm:top-6 sm:px-6 sm:py-4"
             >
               <CheckCircle2 className="h-6 w-6 mr-3 text-[#8b7355]" />
               <div>
@@ -652,40 +656,40 @@ export default function VideoNotesPage() {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="mt-8"
+            className="mt-8 min-w-0"
           >
             {/* Notes Header */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
-              <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
-                  <div className="p-2 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-lg">
+            <div className="mb-6 flex min-w-0 flex-col items-start justify-between gap-5 lg:mb-8 lg:flex-row lg:items-center lg:gap-6">
+              <div className="min-w-0 flex-1">
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="shrink-0 rounded-lg bg-gradient-to-r from-[#8a7559] to-[#a68b5b] p-2">
                     <FileText className="h-5 w-5 text-white" />
                   </div>
-                  <h2 className="text-3xl font-bold text-black">Generated Notes</h2>
+                  <h2 className="min-w-0 text-2xl font-bold leading-tight text-black sm:text-3xl">Generated Notes</h2>
                 </div>
-                <h3 className="text-xl text-[#8a7559] font-semibold mb-2">{notes.title}</h3>
-                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                  <div className="flex items-center space-x-1">
+                <h3 className="mb-3 max-w-full break-words text-base font-semibold leading-snug text-[#8a7559] sm:text-xl">{notes.title}</h3>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-600 sm:text-sm">
+                  <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
                     <span>{notes.duration}</span>
                   </div>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center gap-1">
                     <FileText className="h-4 w-4" />
                     <span>{notes.sections.length} sections</span>
                   </div>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center gap-1">
                     <Brain className="h-4 w-4" />
                     <span>AI Generated</span>
                   </div>
                   {notes.contentType && (
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center gap-1">
                       <Badge variant="secondary" className="bg-[#f5f1eb] text-[#8b7355] text-xs">
                         {notes.contentType.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                       </Badge>
                     </div>
                   )}
                   {notes.difficulty && (
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center gap-1">
                       <Badge
                         variant="secondary"
                         className={`text-xs ${notes.difficulty === "beginner"
@@ -700,7 +704,7 @@ export default function VideoNotesPage() {
                     </div>
                   )}
                   {notes.estimatedStudyTime && (
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
                       <span>{notes.estimatedStudyTime}</span>
                     </div>
@@ -708,7 +712,7 @@ export default function VideoNotesPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-2 sm:gap-3">
                 {editMode ? (
                   <>
                     <Button
@@ -717,13 +721,13 @@ export default function VideoNotesPage() {
                         setEditMode(false)
                         setEditableNotes(JSON.parse(JSON.stringify(notes)))
                       }}
-                      className="border-[#c6ac8f]/30 hover:bg-[#f5f0e8] hover:text-[#8a7559]"
+                      className="w-full border-[#c6ac8f]/30 hover:bg-[#f5f0e8] hover:text-[#8a7559] sm:w-auto"
                     >
                       Cancel
                     </Button>
                     <Button
                       onClick={handleSaveEdits}
-                      className="bg-gradient-to-r from-[#8a7559] to-[#a68b5b] hover:from-[#8a7559]/90 hover:to-[#a68b5b]/90 text-white shadow-lg"
+                      className="w-full bg-gradient-to-r from-[#8a7559] to-[#a68b5b] text-white shadow-lg hover:from-[#8a7559]/90 hover:to-[#a68b5b]/90 sm:w-auto"
                     >
                       <Save className="h-4 w-4 mr-2" />
                       Save Changes
@@ -737,7 +741,7 @@ export default function VideoNotesPage() {
                           <Button
                             variant="outline"
                             onClick={() => setEditMode(true)}
-                            className="border-[#c6ac8f]/30 hover:bg-[#f5f0e8] hover:text-[#8a7559]"
+                            className="w-full border-[#c6ac8f]/30 hover:bg-[#f5f0e8] hover:text-[#8a7559] sm:w-auto"
                           >
                             <Edit className="h-4 w-4 mr-2" />
                             Edit Notes
@@ -754,7 +758,7 @@ export default function VideoNotesPage() {
                         <TooltipTrigger asChild>
                           <Button
                             onClick={handleDownloadPDF}
-                            className="bg-gradient-to-r from-[#8a7559] to-[#a68b5b] hover:from-[#8a7559]/90 hover:to-[#a68b5b]/90 text-white shadow-lg"
+                            className="w-full bg-gradient-to-r from-[#8a7559] to-[#a68b5b] text-white shadow-lg hover:from-[#8a7559]/90 hover:to-[#a68b5b]/90 sm:w-auto"
                           >
                             <FileDown className="h-4 w-4 mr-2" />
                             Download PDF
@@ -771,32 +775,32 @@ export default function VideoNotesPage() {
             </div>
 
             {/* Notes Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-              <TabsList className="mb-8 bg-white p-1 border border-[#c6ac8f]/30 shadow-lg rounded-xl">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6 min-w-0">
+              <TabsList className="mb-6 grid h-auto w-full grid-cols-1 gap-1 rounded-xl border border-[#c6ac8f]/30 bg-white p-1 shadow-lg sm:mb-8 sm:grid-cols-2 lg:grid-cols-4">
                 <TabsTrigger
                   value="structured"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
+                  className="min-w-0 rounded-lg px-3 py-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md sm:px-4 sm:py-3"
                 >
                   <FileText className="h-4 w-4 mr-2" />
                   Structured Notes
                 </TabsTrigger>
                 <TabsTrigger
                   value="summary"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
+                  className="min-w-0 rounded-lg px-3 py-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md sm:px-4 sm:py-3"
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Summary & Key Points
                 </TabsTrigger>
                 <TabsTrigger
                   value="study"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
+                  className="min-w-0 rounded-lg px-3 py-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md sm:px-4 sm:py-3"
                 >
                   <Brain className="h-4 w-4 mr-2" />
                   Study Guide
                 </TabsTrigger>
                 <TabsTrigger
                   value="raw"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md rounded-lg px-6 py-3"
+                  className="min-w-0 rounded-lg px-3 py-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8a7559] data-[state=active]:to-[#a68b5b] data-[state=active]:text-white data-[state=active]:shadow-md sm:px-4 sm:py-3"
                 >
                   <Youtube className="h-4 w-4 mr-2" />
                   Raw Transcript
@@ -804,18 +808,18 @@ export default function VideoNotesPage() {
               </TabsList>
 
               <TabsContent value="structured">
-                <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
-                  <CardContent className="pt-8">
+                <Card className="border-0 bg-white/90 shadow-xl backdrop-blur-sm">
+                  <CardContent className="px-4 pt-5 sm:px-6 sm:pt-8">
                     {(editMode ? editableNotes : notes)?.sections.map((section, sIndex) => (
                       <motion.div
                         key={sIndex}
-                        className="mb-8 border border-[#c6ac8f]/20 rounded-xl overflow-hidden shadow-lg bg-white"
+                        className="mb-5 overflow-hidden rounded-xl border border-[#c6ac8f]/20 bg-white shadow-lg sm:mb-8"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: sIndex * 0.1 }}
                       >
                         <div
-                          className="flex justify-between items-center p-6 bg-gradient-to-r from-[#f5f0e8] to-white cursor-pointer hover:from-[#f0e9d8] hover:to-[#f8f4ed] transition-all duration-200"
+                          className="flex cursor-pointer items-center justify-between gap-3 bg-gradient-to-r from-[#f5f0e8] to-white p-4 transition-all duration-200 hover:from-[#f0e9d8] hover:to-[#f8f4ed] sm:p-6"
                           onClick={() => toggleSection(sIndex)}
                         >
                           {editMode ? (
@@ -824,17 +828,17 @@ export default function VideoNotesPage() {
                               value={section.title}
                               onChange={(e) => handleEditSectionTitle(sIndex, e.target.value)}
                               onClick={(e) => e.stopPropagation()}
-                              className="text-xl font-bold w-full p-3 bg-white border border-[#c6ac8f]/30 rounded-lg focus:ring-[#c6ac8f] focus:border-[#c6ac8f] shadow-sm"
+                              className="w-full rounded-lg border border-[#c6ac8f]/30 bg-white p-3 text-base font-bold shadow-sm focus:border-[#c6ac8f] focus:ring-[#c6ac8f] sm:text-xl"
                             />
                           ) : (
-                            <h3 className="text-xl font-bold text-[#8a7559] flex items-center">
-                              <span className="w-8 h-8 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
+                            <h3 className="flex min-w-0 items-start text-base font-bold leading-snug text-[#8a7559] sm:items-center sm:text-xl">
+                              <span className="mr-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-[#8a7559] to-[#a68b5b] text-xs font-bold text-white sm:h-8 sm:w-8 sm:text-sm">
                                 {sIndex + 1}
                               </span>
-                              {section.title}
+                              <span className="min-w-0 break-words">{section.title}</span>
                             </h3>
                           )}
-                          <div className="text-[#8a7559] ml-4">
+                          <div className="ml-2 shrink-0 text-[#8a7559] sm:ml-4">
                             {expandedSections[sIndex] ? (
                               <ChevronUp className="h-6 w-6" />
                             ) : (
@@ -844,13 +848,13 @@ export default function VideoNotesPage() {
                         </div>
 
                         {expandedSections[sIndex] && (
-                          <div className="p-6">
+                          <div className="p-4 sm:p-6">
                             {editMode ? (
                               <div className="space-y-4">
                                 {section.content.map((point, pIndex) => (
                                   <motion.div
                                     key={pIndex}
-                                    className="flex items-start space-x-3"
+                                    className="flex items-start gap-2 sm:gap-3"
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{
@@ -865,7 +869,7 @@ export default function VideoNotesPage() {
                                         newContent[pIndex] = e.target.value
                                         handleEditSection(sIndex, newContent)
                                       }}
-                                      className="flex-1 p-4 border border-[#c6ac8f]/30 rounded-lg min-h-[100px] focus:ring-[#c6ac8f] focus:border-[#c6ac8f] shadow-sm resize-none"
+                                      className="min-h-[100px] min-w-0 flex-1 resize-none rounded-lg border border-[#c6ac8f]/30 p-3 shadow-sm focus:border-[#c6ac8f] focus:ring-[#c6ac8f] sm:p-4"
                                     />
                                     <Button
                                       variant="ghost"
@@ -874,7 +878,7 @@ export default function VideoNotesPage() {
                                         const newContent = section.content.filter((_, i) => i !== pIndex)
                                         handleEditSection(sIndex, newContent)
                                       }}
-                                      className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                                      className="shrink-0 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700"
                                     >
                                       <Trash2 className="h-4 w-4" />
                                     </Button>
@@ -887,7 +891,7 @@ export default function VideoNotesPage() {
                                     const newContent = [...section.content, "New point"]
                                     handleEditSection(sIndex, newContent)
                                   }}
-                                  className="mt-4 border-[#c6ac8f]/30 text-[#8a7559] hover:bg-[#f5f0e8] rounded-lg"
+                                  className="mt-4 rounded-lg border-[#c6ac8f]/30 text-[#8a7559] hover:bg-[#f5f0e8]"
                                 >
                                   <Plus className="h-4 w-4 mr-2" />
                                   Add Point
@@ -899,7 +903,7 @@ export default function VideoNotesPage() {
                                   {section.content.map((point, pIndex) => (
                                     <motion.li
                                       key={pIndex}
-                                      className="flex items-start space-x-3 text-gray-700 leading-relaxed"
+                                    className="flex items-start gap-3 text-sm leading-relaxed text-gray-700 sm:text-base"
                                       initial={{ opacity: 0, x: -10 }}
                                       animate={{ opacity: 1, x: 0 }}
                                       transition={{
@@ -915,14 +919,14 @@ export default function VideoNotesPage() {
 
                                 {/* Learning Objectives */}
                                 {section.learningObjectives && section.learningObjectives.length > 0 && (
-                                  <div className="mt-6 p-4 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30">
-                                    <h4 className="font-semibold text-[#8b7355] mb-3 flex items-center">
+                                  <div className="mt-6 rounded-lg border border-[#c6ac8f]/30 bg-[#f5f1eb] p-3 sm:p-4">
+                                    <h4 className="mb-3 flex items-center text-sm font-semibold text-[#8b7355] sm:text-base">
                                       <BookOpen className="h-4 w-4 mr-2" />
                                       Learning Objectives
                                     </h4>
                                     <ul className="space-y-2">
                                       {section.learningObjectives.map((objective, index) => (
-                                        <li key={index} className="flex items-start space-x-2 text-[#8b7355] text-sm">
+                                        <li key={index} className="flex items-start gap-2 text-sm text-[#8b7355]">
                                           <div className="w-2 h-2 bg-[#c6ac8f] rounded-full mt-2 flex-shrink-0"></div>
                                           <span>{objective}</span>
                                         </li>
@@ -933,14 +937,14 @@ export default function VideoNotesPage() {
 
                                 {/* Key Insights */}
                                 {section.keyInsights && section.keyInsights.length > 0 && (
-                                  <div className="mt-4 p-4 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30">
-                                    <h4 className="font-semibold text-[#8b7355] mb-3 flex items-center">
+                                  <div className="mt-4 rounded-lg border border-[#c6ac8f]/30 bg-[#f5f1eb] p-3 sm:p-4">
+                                    <h4 className="mb-3 flex items-center text-sm font-semibold text-[#8b7355] sm:text-base">
                                       <Sparkles className="h-4 w-4 mr-2" />
                                       Key Insights
                                     </h4>
                                     <ul className="space-y-2">
                                       {section.keyInsights.map((insight, index) => (
-                                        <li key={index} className="flex items-start space-x-2 text-[#8b7355] text-sm">
+                                        <li key={index} className="flex items-start gap-2 text-sm text-[#8b7355]">
                                           <div className="w-2 h-2 bg-[#c6ac8f] rounded-full mt-2 flex-shrink-0"></div>
                                           <span>{insight}</span>
                                         </li>
@@ -955,38 +959,38 @@ export default function VideoNotesPage() {
                       </motion.div>
                     ))}
                   </CardContent>
-                  <CardFooter className="flex justify-between border-t border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white py-6">
-                    <div className="text-sm text-[#8a7559] flex items-center space-x-2">
-                      <div className="w-6 h-6 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center">
+                  <CardFooter className="flex flex-col items-start gap-2 border-t border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
+                    <div className="flex items-center gap-2 text-xs text-[#8a7559] sm:text-sm">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-[#8a7559] to-[#a68b5b]">
                         <Brain className="h-3 w-3 text-white" />
                       </div>
                       <span className="font-medium">Notivio</span>
-                      <span>- AI-powered notes from video content</span>
+                      <span className="break-words">- AI-powered notes from video content</span>
                     </div>
                   </CardFooter>
                 </Card>
               </TabsContent>
 
               <TabsContent value="summary">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-8">
                   {/* Summary */}
                   <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
-                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
-                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                    <CardHeader className="border-b border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white">
+                      <CardTitle className="flex items-center text-lg text-[#8a7559] sm:text-xl">
                         <MessageSquare className="h-5 w-5 mr-2" />
                         Video Summary
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-6">
+                    <CardContent className="px-4 pt-5 sm:px-6 sm:pt-6">
                       {editMode ? (
                         <textarea
                           value={editableNotes?.summary || ""}
                           onChange={(e) => handleEditSummary(e.target.value)}
-                          className="w-full p-4 border border-[#c6ac8f]/30 rounded-lg min-h-[300px] focus:ring-[#c6ac8f] focus:border-[#c6ac8f] shadow-sm resize-none"
+                          className="min-h-[240px] w-full resize-none rounded-lg border border-[#c6ac8f]/30 p-3 shadow-sm focus:border-[#c6ac8f] focus:ring-[#c6ac8f] sm:min-h-[300px] sm:p-4"
                         />
                       ) : (
                         <div className="prose prose-gray max-w-none">
-                          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{notes.summary}</p>
+                          <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-700 sm:text-base">{notes.summary}</p>
                         </div>
                       )}
                     </CardContent>
@@ -995,17 +999,17 @@ export default function VideoNotesPage() {
                   {/* Key Points */}
                   <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
                     <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
-                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                      <CardTitle className="flex items-center text-lg text-[#8a7559] sm:text-xl">
                         <Sparkles className="h-5 w-5 mr-2" />
                         Key Takeaways
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-6">
+                    <CardContent className="px-4 pt-5 sm:px-6 sm:pt-6">
                       <ul className="space-y-4">
                         {notes.keyPoints.map((point, index) => (
                           <motion.li
                             key={index}
-                            className="flex items-start space-x-3"
+                            className="flex items-start gap-3"
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -1013,7 +1017,7 @@ export default function VideoNotesPage() {
                             <div className="w-6 h-6 bg-gradient-to-r from-[#8a7559] to-[#a68b5b] rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5">
                               {index + 1}
                             </div>
-                            <span className="text-gray-700 leading-relaxed">{point}</span>
+                            <span className="break-words text-sm leading-relaxed text-gray-700 sm:text-base">{point}</span>
                           </motion.li>
                         ))}
                       </ul>
@@ -1023,7 +1027,7 @@ export default function VideoNotesPage() {
 
                 {/* Prerequisites & Next Steps */}
                 {(notes.prerequisites?.length > 0 || notes.nextSteps?.length > 0) && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                  <div className="mt-5 grid grid-cols-1 gap-5 lg:mt-8 lg:grid-cols-2 lg:gap-8">
                     {notes.prerequisites?.length > 0 && (
                       <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
                         <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
@@ -1090,31 +1094,31 @@ export default function VideoNotesPage() {
               </TabsContent>
 
               <TabsContent value="study">
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 xl:gap-8">
                   {/* Review Questions */}
                   <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
-                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
-                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                    <CardHeader className="border-b border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white">
+                      <CardTitle className="flex items-center text-lg text-[#8a7559] sm:text-xl">
                         <MessageSquare className="h-5 w-5 mr-2" />
                         Review Questions
                       </CardTitle>
                       <CardDescription>Test your understanding with these thought-provoking questions</CardDescription>
                     </CardHeader>
-                    <CardContent className="pt-6">
+                    <CardContent className="px-4 pt-5 sm:px-6 sm:pt-6">
                       <div className="space-y-4">
                         {notes.studyGuide?.reviewQuestions?.map((question, index) => (
                           <motion.div
                             key={index}
-                            className="p-4 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30"
+                            className="rounded-lg border border-[#c6ac8f]/30 bg-[#f5f1eb] p-3 sm:p-4"
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                           >
-                            <div className="flex items-start space-x-3">
-                              <div className="w-6 h-6 bg-[#c6ac8f] rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                            <div className="flex items-start gap-3">
+                              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#c6ac8f] text-sm font-bold text-white">
                                 Q{index + 1}
                               </div>
-                              <p className="text-gray-700 leading-relaxed">{question}</p>
+                              <p className="break-words text-sm leading-relaxed text-gray-700 sm:text-base">{question}</p>
                             </div>
                           </motion.div>
                         ))}
@@ -1124,28 +1128,28 @@ export default function VideoNotesPage() {
 
                   {/* Practice Exercises */}
                   <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
-                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
-                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                    <CardHeader className="border-b border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white">
+                      <CardTitle className="flex items-center text-lg text-[#8a7559] sm:text-xl">
                         <Zap className="h-5 w-5 mr-2" />
                         Practice Exercises
                       </CardTitle>
                       <CardDescription>Apply your knowledge with these hands-on activities</CardDescription>
                     </CardHeader>
-                    <CardContent className="pt-6">
+                    <CardContent className="px-4 pt-5 sm:px-6 sm:pt-6">
                       <div className="space-y-4">
                         {notes.studyGuide?.practiceExercises?.map((exercise, index) => (
                           <motion.div
                             key={index}
-                            className="p-4 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30"
+                            className="rounded-lg border border-[#c6ac8f]/30 bg-[#f5f1eb] p-3 sm:p-4"
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                           >
-                            <div className="flex items-start space-x-3">
-                              <div className="w-6 h-6 bg-[#c6ac8f] rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                            <div className="flex items-start gap-3">
+                              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#c6ac8f] text-sm font-bold text-white">
                                 {index + 1}
                               </div>
-                              <p className="text-gray-700 leading-relaxed">{exercise}</p>
+                              <p className="break-words text-sm leading-relaxed text-gray-700 sm:text-base">{exercise}</p>
                             </div>
                           </motion.div>
                         ))}
@@ -1155,27 +1159,27 @@ export default function VideoNotesPage() {
 
                   {/* Memory Aids */}
                   <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
-                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
-                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                    <CardHeader className="border-b border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white">
+                      <CardTitle className="flex items-center text-lg text-[#8a7559] sm:text-xl">
                         <Brain className="h-5 w-5 mr-2" />
                         Memory Aids
                       </CardTitle>
                       <CardDescription>Mnemonics and strategies to help you remember key concepts</CardDescription>
                     </CardHeader>
-                    <CardContent className="pt-6">
+                    <CardContent className="px-4 pt-5 sm:px-6 sm:pt-6">
                       <div className="space-y-3">
                         {notes.studyGuide?.memoryAids?.map((aid, index) => (
                           <motion.div
                             key={index}
-                            className="p-3 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30 flex items-center space-x-3"
+                            className="flex items-start gap-3 rounded-lg border border-[#c6ac8f]/30 bg-[#f5f1eb] p-3 sm:items-center"
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                           >
-                            <div className="w-8 h-8 bg-[#c6ac8f] rounded-full flex items-center justify-center">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#c6ac8f]">
                               <Sparkles className="h-4 w-4 text-white" />
                             </div>
-                            <p className="text-gray-700 font-medium">{aid}</p>
+                            <p className="break-words text-sm font-medium text-gray-700 sm:text-base">{aid}</p>
                           </motion.div>
                         ))}
                       </div>
@@ -1184,27 +1188,27 @@ export default function VideoNotesPage() {
 
                   {/* Connections */}
                   <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
-                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
-                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                    <CardHeader className="border-b border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white">
+                      <CardTitle className="flex items-center text-lg text-[#8a7559] sm:text-xl">
                         <FileSearch className="h-5 w-5 mr-2" />
                         Real-World Connections
                       </CardTitle>
                       <CardDescription>How this knowledge connects to other subjects and applications</CardDescription>
                     </CardHeader>
-                    <CardContent className="pt-6">
+                    <CardContent className="px-4 pt-5 sm:px-6 sm:pt-6">
                       <div className="space-y-3">
                         {notes.studyGuide?.connections?.map((connection, index) => (
                           <motion.div
                             key={index}
-                            className="p-3 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30 flex items-center space-x-3"
+                            className="flex items-start gap-3 rounded-lg border border-[#c6ac8f]/30 bg-[#f5f1eb] p-3 sm:items-center"
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                           >
-                            <div className="w-8 h-8 bg-[#c6ac8f] rounded-full flex items-center justify-center">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#c6ac8f]">
                               <Plus className="h-4 w-4 text-white" />
                             </div>
-                            <p className="text-gray-700">{connection}</p>
+                            <p className="break-words text-sm text-gray-700 sm:text-base">{connection}</p>
                           </motion.div>
                         ))}
                       </div>
@@ -1213,27 +1217,27 @@ export default function VideoNotesPage() {
 
                   {/* Advanced Topics */}
                   <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
-                    <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
-                      <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                    <CardHeader className="border-b border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white">
+                      <CardTitle className="flex items-center text-lg text-[#8a7559] sm:text-xl">
                         <Brain className="h-5 w-5 mr-2" />
                         Advanced Topics
                       </CardTitle>
                       <CardDescription>Areas for further study and deeper exploration</CardDescription>
                     </CardHeader>
-                    <CardContent className="pt-6">
+                    <CardContent className="px-4 pt-5 sm:px-6 sm:pt-6">
                       <div className="space-y-3">
                         {notes.studyGuide?.advancedTopics?.map((topic, index) => (
                           <motion.div
                             key={index}
-                            className="p-3 bg-[#f5f1eb] rounded-lg border border-[#c6ac8f]/30 flex items-center space-x-3"
+                            className="flex items-start gap-3 rounded-lg border border-[#c6ac8f]/30 bg-[#f5f1eb] p-3 sm:items-center"
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.3, delay: index * 0.1 }}
                           >
-                            <div className="w-8 h-8 bg-[#c6ac8f] rounded-full flex items-center justify-center">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#c6ac8f]">
                               <Brain className="h-4 w-4 text-white" />
                             </div>
-                            <p className="text-gray-700">{topic}</p>
+                            <p className="break-words text-sm text-gray-700 sm:text-base">{topic}</p>
                           </motion.div>
                         ))}
                       </div>
@@ -1244,16 +1248,16 @@ export default function VideoNotesPage() {
 
               <TabsContent value="raw">
                 <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
-                  <CardHeader className="bg-gradient-to-r from-[#f5f0e8] to-white border-b border-[#c6ac8f]/20">
-                    <CardTitle className="text-xl text-[#8a7559] flex items-center">
+                    <CardHeader className="border-b border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white">
+                    <CardTitle className="flex items-center text-lg text-[#8a7559] sm:text-xl">
                       <Youtube className="h-5 w-5 mr-2" />
                       Raw Transcript
                     </CardTitle>
                     <CardDescription>Original transcript extracted from the video</CardDescription>
                   </CardHeader>
-                  <CardContent className="pt-6">
-                    <div className="bg-gradient-to-r from-[#f5f0e8] to-white p-6 rounded-xl max-h-[600px] overflow-y-auto border border-[#c6ac8f]/20 shadow-inner">
-                      <div className="whitespace-pre-wrap text-gray-700 font-mono text-sm leading-relaxed">
+                  <CardContent className="px-4 pt-5 sm:px-6 sm:pt-6">
+                    <div className="max-h-[600px] overflow-y-auto rounded-xl border border-[#c6ac8f]/20 bg-gradient-to-r from-[#f5f0e8] to-white p-3 shadow-inner sm:p-6">
+                      <div className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-gray-700 sm:text-sm">
                         {notes.transcript}
                       </div>
                     </div>

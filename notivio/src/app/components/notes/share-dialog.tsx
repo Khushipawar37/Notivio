@@ -120,7 +120,12 @@ export function ShareDialog({ noteId, disabled = false }: ShareDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={disabled}>
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={disabled}
+          className="border-[#d8c6b2] bg-[#fff8ee] text-[#6f5b43] hover:bg-[#e7d6c2] hover:text-[#5d4a34]"
+        >
           Share
         </Button>
       </DialogTrigger>

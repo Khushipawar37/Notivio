@@ -94,7 +94,7 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
     <>
       <Link
         href="/"
-        className="absolute left-4 top-5 z-30 text-3xl font-bold font-[cursive] text-[#c6ac8f] sm:left-6 sm:top-8 sm:text-5xl"
+        className="absolute left-4 top-5 z-30 text-3xl font-bold font-[cursive] text-[#8a7559] drop-shadow-sm sm:left-6 sm:top-8 sm:text-5xl"
       >
         Notivio
       </Link>

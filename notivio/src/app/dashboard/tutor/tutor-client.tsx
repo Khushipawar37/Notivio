@@ -454,8 +454,8 @@ export function TutorClient() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f6f1e9] px-4 pb-10 pt-32">
-      <div className="mx-auto grid min-h-[calc(100vh-8rem)] max-w-7xl gap-5 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-stretch">
+    <main className="min-h-screen overflow-x-hidden bg-[#f6f1e9] px-3 pb-8 pt-24 sm:px-4 sm:pb-10 sm:pt-32">
+      <div className="mx-auto grid min-h-[calc(100vh-6rem)] max-w-7xl gap-4 lg:min-h-[calc(100vh-8rem)] lg:grid-cols-[280px_minmax(0,1fr)] lg:items-stretch">
         <aside className="rounded-2xl border border-[#dccbb4] bg-[#fffdf8] p-4 shadow-sm">
           <h2 className="font-serif text-xl text-[#4f3d2d]">Session History</h2>
           <p className="mt-1 text-xs text-[#8e775e]">{contextOneLiner}</p>
@@ -471,7 +471,7 @@ export function TutorClient() {
           </div>
         </aside>
 
-        <section className="flex min-h-[calc(100vh-8rem)] flex-col rounded-2xl border border-[#dccbb4] bg-[#fffdf8] shadow-sm">
+        <section className="flex min-h-[70vh] flex-col rounded-2xl border border-[#dccbb4] bg-[#fffdf8] shadow-sm lg:min-h-[calc(100vh-8rem)]">
           <header className="border-b border-[#eadfcf] px-4 py-3">
             <h1 className="font-serif text-2xl text-[#4f3d2d]">The Tutor</h1>
             <p className="text-xs text-[#8e775e]">A personal AI tutor that asks before it tells.</p>
@@ -531,17 +531,17 @@ export function TutorClient() {
 
           </div>
 
-          <div className="flex-1 min-h-0 space-y-3 overflow-y-auto px-4 py-3">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3 sm:px-4">
             {messages.map((message) => (
-              <div key={message.id} className={`max-w-[86%] rounded-xl px-3 py-2 text-sm ${message.role === "tutor" ? "bg-[#efe5d5] text-[#5d4a34]" : "ml-auto bg-[#8a7559] text-white"}`}>
+              <div key={message.id} className={`max-w-[92%] break-words rounded-xl px-3 py-2 text-sm sm:max-w-[86%] ${message.role === "tutor" ? "bg-[#efe5d5] text-[#5d4a34]" : "ml-auto bg-[#8a7559] text-white"}`}>
                 {message.role === "tutor" && message.text.trim().length === 0 ? <TutorTypingLoader /> : renderTutorMessage(message.text)}
               </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
 
-          <footer className="flex-none border-t border-[#eadfcf] bg-[#fffdf8] px-4 pb-4 pt-3">
-            <div className="flex gap-2">
+          <footer className="flex-none border-t border-[#eadfcf] bg-[#fffdf8] px-3 pb-4 pt-3 sm:px-4">
+            <div className="grid gap-2 sm:flex">
               <input
                 ref={chatAttachRef}
                 type="file"
@@ -554,15 +554,17 @@ export function TutorClient() {
                   void extractAttachmentContext(files);
                 }}
               />
-              <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendChat(); } }} placeholder={mode === "practice" && practiceType === "timed_test" && timedTestExpired && !timedTestEvaluated ? "Time is up. Sending your answers now..." : "Explain your current understanding..."} className="h-20 flex-1 rounded-md border border-[#d8c6b2] p-2 text-sm text-[#5d4a34] disabled:cursor-not-allowed disabled:bg-[#f4efe7]" />
-              <button
-                onClick={() => chatAttachRef.current?.click()}
-                className="rounded-md border border-[#d8c6b2] px-3 py-2 text-xs font-semibold text-[#6c5944]"
-                title="Attach PDF or image"
-              >
-                Attach
-              </button>
-              <button onClick={() => void sendChat()} disabled={loading} className="rounded-md bg-[#8a7559] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{loading ? "Sending..." : "Send"}</button>
+              <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void sendChat(); } }} placeholder={mode === "practice" && practiceType === "timed_test" && timedTestExpired && !timedTestEvaluated ? "Time is up. Sending your answers now..." : "Explain your current understanding..."} className="h-20 min-w-0 flex-1 rounded-md border border-[#d8c6b2] p-2 text-sm text-[#5d4a34] disabled:cursor-not-allowed disabled:bg-[#f4efe7]" />
+              <div className="grid grid-cols-2 gap-2 sm:flex">
+                <button
+                  onClick={() => chatAttachRef.current?.click()}
+                  className="rounded-md border border-[#d8c6b2] px-3 py-2 text-xs font-semibold text-[#6c5944]"
+                  title="Attach PDF or image"
+                >
+                  Attach
+                </button>
+                <button onClick={() => void sendChat()} disabled={loading} className="rounded-md bg-[#8a7559] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{loading ? "Sending..." : "Send"}</button>
+              </div>
             </div>
             {learnFiles.length > 0 ? <p className="mt-1 text-[11px] text-[#7d6850]">Attached: {learnFiles.map((f) => f.name).join(", ")}</p> : null}
             {mode === "learn" && learnAttachmentContext.length > 0 ? (

@@ -327,6 +327,13 @@ export function TipTapEditor({
 
   if (!editor) return null;
 
+  const closeFloatingMenus = () => {
+    setShowColorPicker(false);
+    setShowHighlightPicker(false);
+    setShowTableMenu(false);
+    setShowSymbols(false);
+  };
+
   const ToolbarBtn = ({
     onClick,
     active,
@@ -355,7 +362,7 @@ export function TipTapEditor({
     <div className="tiptap-editor-wrapper flex flex-col h-full">
       {/* Toolbar */}
       {!readOnly && (
-      <div className="tiptap-toolbar flex items-center gap-0.5 overflow-x-auto border-b border-[#e4d7c8] bg-[#f8f1e7] px-2 py-2 sm:flex-wrap sm:gap-y-1 sm:px-3">
+      <div className="tiptap-toolbar relative z-30 flex flex-wrap items-center gap-0.5 gap-y-1 overflow-visible border-b border-[#e4d7c8] bg-[#f8f1e7] px-2 py-2 sm:px-3">
         <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} title="Undo">
           <Undo className="w-4 h-4" />
         </ToolbarBtn>
@@ -423,11 +430,18 @@ export function TipTapEditor({
         </select>
 
         <div className="relative">
-          <ToolbarBtn onClick={() => setShowSymbols((prev) => !prev)} title="Insert Symbol">
+          <ToolbarBtn
+            onClick={() => {
+              const next = !showSymbols;
+              closeFloatingMenus();
+              setShowSymbols(next);
+            }}
+            title="Insert Symbol"
+          >
             <span className="text-xs font-semibold">Ω</span>
           </ToolbarBtn>
           {showSymbols && (
-            <div className="absolute top-full left-0 mt-1 z-50 bg-[#fff8ee] border border-[#d8c6b2] rounded-lg p-2 shadow-xl grid grid-cols-7 gap-1">
+            <div className="absolute left-0 top-[calc(100%+0.25rem)] z-[100] grid grid-cols-4 gap-1 rounded-lg border border-[#d8c6b2] bg-[#fff8ee] p-2 shadow-xl sm:grid-cols-7">
               {SYMBOLS.map((symbol) => (
                 <button
                   key={symbol}
@@ -447,11 +461,19 @@ export function TipTapEditor({
 
         {/* Highlight picker */}
         <div className="relative">
-          <ToolbarBtn onClick={() => setShowHighlightPicker(!showHighlightPicker)} active={editor.isActive("highlight")} title="Highlight">
+          <ToolbarBtn
+            onClick={() => {
+              const next = !showHighlightPicker;
+              closeFloatingMenus();
+              setShowHighlightPicker(next);
+            }}
+            active={editor.isActive("highlight")}
+            title="Highlight"
+          >
             <Highlighter className="w-4 h-4" />
           </ToolbarBtn>
           {showHighlightPicker && (
-            <div className="absolute top-full left-0 mt-1 z-50 bg-[#fff8ee] border border-[#d8c6b2] rounded-lg p-2 shadow-xl flex gap-1.5">
+            <div className="absolute left-0 top-[calc(100%+0.25rem)] z-[100] grid w-max max-w-[calc(100vw-2rem)] grid-cols-4 gap-1.5 rounded-lg border border-[#d8c6b2] bg-[#fff8ee] p-2 shadow-xl sm:flex">
               {HIGHLIGHT_COLORS.map((h) => (
                 <button
                   key={h.color}
@@ -480,11 +502,18 @@ export function TipTapEditor({
 
         {/* Text color */}
         <div className="relative">
-          <ToolbarBtn onClick={() => setShowColorPicker(!showColorPicker)} title="Text Color">
+          <ToolbarBtn
+            onClick={() => {
+              const next = !showColorPicker;
+              closeFloatingMenus();
+              setShowColorPicker(next);
+            }}
+            title="Text Color"
+          >
             <Palette className="w-4 h-4" />
           </ToolbarBtn>
           {showColorPicker && (
-            <div className="absolute top-full left-0 mt-1 z-50 bg-[#fff8ee] border border-[#d8c6b2] rounded-lg p-2 shadow-xl grid grid-cols-5 gap-1.5">
+            <div className="absolute left-0 top-[calc(100%+0.25rem)] z-[100] grid grid-cols-5 gap-1.5 rounded-lg border border-[#d8c6b2] bg-[#fff8ee] p-2 shadow-xl">
               {TEXT_COLORS.map((c) => (
                 <button
                   key={c}
@@ -542,11 +571,19 @@ export function TipTapEditor({
 
         {/* Table controls */}
         <div className="relative">
-          <ToolbarBtn onClick={() => setShowTableMenu(!showTableMenu)} active={editor.isActive("table")} title="Table">
+          <ToolbarBtn
+            onClick={() => {
+              const next = !showTableMenu;
+              closeFloatingMenus();
+              setShowTableMenu(next);
+            }}
+            active={editor.isActive("table")}
+            title="Table"
+          >
             <TableIcon className="w-4 h-4" />
           </ToolbarBtn>
           {showTableMenu && (
-            <div className="absolute top-full left-0 mt-1 z-50 bg-[#fff8ee] border border-[#d8c6b2] rounded-lg p-1 shadow-xl min-w-[180px]">
+            <div className="absolute left-0 top-[calc(100%+0.25rem)] z-[100] min-w-[180px] rounded-lg border border-[#d8c6b2] bg-[#fff8ee] p-1 shadow-xl">
               {!editor.isActive("table") ? (
                 <button
                   onClick={() => {

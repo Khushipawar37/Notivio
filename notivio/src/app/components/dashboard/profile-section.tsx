@@ -185,31 +185,32 @@ export default function ProfileSection({ darkMode = false }: ProfileSectionProps
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-5 sm:space-y-6">
       <Card
         className={`rounded-xl border shadow-sm ${
           darkMode ? "border-gray-700 bg-gray-800 text-white" : "border-[#c6ac8f]/30 bg-white"
         }`}
       >
         <CardHeader className="pb-3">
-          <CardTitle className="text-2xl text-[#6f5b43]">
+          <CardTitle className="break-words text-xl leading-tight text-[#6f5b43] sm:text-2xl">
             Welcome back, {payload.profile.displayName || "Student"} - here's your study snapshot.
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-5 px-4 sm:px-6">
           <div className="grid gap-6 lg:grid-cols-[180px_1fr]">
             <div className="space-y-3">
               <img
                 src={avatarPreview}
                 alt="Profile avatar"
-                className="h-32 w-32 rounded-full border border-[#c6ac8f]/30 object-cover"
+                className="h-28 w-28 rounded-full border border-[#c6ac8f]/30 object-cover sm:h-32 sm:w-32"
               />
               <label className="block text-xs font-medium text-muted-foreground">Avatar URL</label>
-              <div className="flex gap-2">
+              <div className="flex min-w-0 gap-2">
                 <Input
                   value={payload.profile.avatarUrl}
                   onChange={(event) => updateProfileField("avatarUrl", event.target.value)}
                   placeholder="https://..."
+                  className="min-w-0"
                 />
                 <Button type="button" variant="outline" size="icon" className="shrink-0">
                   <Upload className="h-4 w-4" />
@@ -275,8 +276,8 @@ export default function ProfileSection({ darkMode = false }: ProfileSectionProps
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={saveProfile} disabled={saving} className="bg-[#8a7559] hover:bg-[#7a664f]">
+          <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+            <Button onClick={saveProfile} disabled={saving} className="w-full bg-[#8a7559] hover:bg-[#7a664f] sm:w-auto">
               {saving ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -284,19 +285,19 @@ export default function ProfileSection({ darkMode = false }: ProfileSectionProps
               )}
               Save profile
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link href="/notes">Import from YouTube</Link>
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link href="/flashcards">Generate Flashcards</Link>
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link href="/dashboard">Create Notebook</Link>
             </Button>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link href="/">Join Study Circle</Link>
             </Button>
-            <Button onClick={handleLogout} variant="destructive">
+            <Button onClick={handleLogout} variant="destructive" className="w-full sm:w-auto">
               Log out
             </Button>
           </div>
@@ -338,7 +339,7 @@ export default function ProfileSection({ darkMode = false }: ProfileSectionProps
               payload.recentActivity.map((activity) => (
                 <div
                   key={activity.id}
-                  className="flex items-center justify-between rounded-lg border border-[#c6ac8f]/20 bg-[#fffdf9] px-3 py-2"
+                  className="flex flex-col gap-1 rounded-lg border border-[#c6ac8f]/20 bg-[#fffdf9] px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <p className="text-sm font-medium text-[#6f5b43]">{activity.title}</p>

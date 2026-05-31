@@ -17,8 +17,8 @@
   --secondary-foreground: #ffffff; /* White text for secondary buttons */
   --muted: #d9c6b8; /* Soft taupe for muted text */
   --muted-foreground: #4b5563; /* Darker shade for muted text contrast */
-  --accent: #ec4899; /* Accent color for notifications or alerts */
-  --accent-foreground: #ffffff; /* White text for accent elements */
+  --accent: #e7d6c2; /* Warm beige accent for hover states */
+  --accent-foreground: #5d4a34; /* Brown text for accent elements */
   --destructive: #e53e3e; /* Red for destructive actions */
   --destructive-foreground: #ffffff; /* White text for destructive actions */
   --border: #e2e8f0; /* Light gray for borders */
