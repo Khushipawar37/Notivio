@@ -2,17 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUp, Github, Twitter, Instagram, Linkedin, Mail, Heart } from "lucide-react";
+import { ArrowUp, Github, Twitter, Instagram, Linkedin, Mail, Heart, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export default function Footer() {
   const [isVisible, setIsVisible] = useState(false);
-  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem("notivio-footer-theme");
-    setIsDark(savedTheme === "dark");
-
     const toggleVisibility = () => {
       setIsVisible(window.pageYOffset > 500);
     };
@@ -20,14 +16,6 @@ export default function Footer() {
     window.addEventListener("scroll", toggleVisibility);
     return () => window.removeEventListener("scroll", toggleVisibility);
   }, []);
-
-  const toggleTheme = () => {
-    setIsDark((current) => {
-      const next = !current;
-      window.localStorage.setItem("notivio-footer-theme", next ? "dark" : "light");
-      return next;
-    });
-  };
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -39,7 +27,7 @@ export default function Footer() {
     { name: "Convert", href: "/convert" },
     { name: "Tutor", href: "/dashboard/tutor" },
     { name: "Dashboard", href: "/dashboard" },
-    { name: "Contact", href: "/contact" },
+    { name: "Contact", href: "/#contact" },
   ];
 
   const socialLinks = [
@@ -50,27 +38,11 @@ export default function Footer() {
     { name: "Email", icon: Mail, href: "mailto:info@notivio.com" },
   ];
 
-  const theme = isDark
-    ? {
-        shell: "bg-[#2f281f] text-[#f7efe5] border-[#4b3f32]",
-        muted: "text-[#d7c6b3]",
-        panel: "bg-[#3b3227] border-[#5d4a34]",
-        input: "bg-[#271f18] border-[#5d4a34] text-[#f7efe5] placeholder:text-[#bba68f]",
-        button: "bg-[#d6b894] text-[#241c15] hover:bg-[#e4c8a5]",
-      }
-    : {
-        shell: "bg-[#f7efe5] text-[#5d4a34] border-[#d8c6b2]",
-        muted: "text-[#7a6852]",
-        panel: "bg-[#fffaf3] border-[#e4d7c8]",
-        input: "bg-white border-[#d8c6b2] text-[#5d4a34] placeholder:text-[#9b876e]",
-        button: "bg-[#8a7559] text-white hover:bg-[#7a664f]",
-      };
-
   return (
-    <footer className={`relative overflow-hidden border-t ${theme.shell}`}>
+    <footer className="relative overflow-hidden bg-[#211a14] pb-10 pt-20 text-[#d7c6b3]">
       <motion.button
         onClick={scrollToTop}
-        className={`fixed bottom-6 right-6 z-50 rounded-full p-3 shadow-lg transition-all duration-300 ${theme.button}`}
+        className="fixed bottom-8 right-8 z-50 rounded-full bg-[#c6ac8f] p-3 text-black shadow-lg transition-all duration-300 hover:bg-[#d8c0a5]"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: isVisible ? 1 : 0, scale: isVisible ? 1 : 0.8, y: isVisible ? 0 : 20 }}
         transition={{ duration: 0.3 }}
@@ -79,47 +51,24 @@ export default function Footer() {
         <ArrowUp className="h-5 w-5" />
       </motion.button>
 
-      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mb-10 flex flex-col gap-4 border-b border-current/15 pb-8 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-4xl font-bold font-[cursive] text-[#8a7559]">Notivio</h2>
-            <p className={`mt-3 max-w-xl text-sm leading-relaxed ${theme.muted}`}>
-              AI-powered notes, study planning, tutoring, and revision tools in one calm workspace.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className={`inline-flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-colors ${theme.panel}`}
-            aria-label="Toggle footer theme"
-          >
-            <span>{isDark ? "☀️" : "🌙"}</span>
-            {isDark ? "Light footer" : "Dark footer"}
-          </button>
-        </div>
-
-        <div className="grid gap-8 md:grid-cols-3">
-          <section className={`rounded-xl border p-5 ${theme.panel}`}>
-            <h3 className="text-lg font-semibold">Quick Links</h3>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {footerLinks.map((link) => (
-                <Link key={link.name} href={link.href} className={`text-sm transition-colors hover:text-[#8a7559] ${theme.muted}`}>
-                  {link.name}
-                </Link>
-              ))}
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-16 grid grid-cols-1 gap-12 md:grid-cols-3">
+          <section>
+            <div className="relative mb-6 inline-block">
+              <h2 className="text-4xl font-bold font-[cursive] text-[#c6ac8f]">Notivio</h2>
+              <Sparkles className="absolute -right-5 -top-1 h-4 w-4 text-[#c6ac8f]" />
             </div>
-          </section>
-
-          <section className={`rounded-xl border p-5 ${theme.panel}`}>
-            <h3 className="text-lg font-semibold">Connect</h3>
-            <div className="mt-4 flex flex-wrap gap-3">
+            <p className="mb-6 max-w-md leading-relaxed text-gray-400">
+              Transform your learning experience with AI-powered note-taking and study tools.
+            </p>
+            <div className="flex flex-wrap gap-4">
               {socialLinks.map((link) => {
                 const Icon = link.icon;
                 return (
                   <motion.a
                     key={link.name}
                     href={link.href}
-                    className={`rounded-full border p-2 transition-colors hover:text-[#8a7559] ${theme.panel}`}
+                    className="rounded-full border border-[#5d4a34]/50 bg-[#2f281f] p-2 text-[#c6ac8f] transition-colors hover:bg-[#3b3227]"
                     whileHover={{ y: -3 }}
                     whileTap={{ scale: 0.95 }}
                     aria-label={link.name}
@@ -131,27 +80,45 @@ export default function Footer() {
             </div>
           </section>
 
-          <section className={`rounded-xl border p-5 ${theme.panel}`}>
-            <h3 className="text-lg font-semibold">Stay Updated</h3>
-            <p className={`mt-2 text-sm ${theme.muted}`}>Get occasional updates about study tools and features.</p>
-            <form className="mt-4 space-y-3">
+          <section>
+            <h3 className="mb-6 text-lg font-semibold text-[#f7efe5]">Quick Links</h3>
+            <ul className="space-y-3">
+              {footerLinks.map((link) => (
+                <motion.li key={link.name} whileHover={{ x: 5 }}>
+                  <Link href={link.href} className="text-gray-400 transition-colors hover:text-[#c6ac8f]">
+                    {link.name}
+                  </Link>
+                </motion.li>
+              ))}
+            </ul>
+          </section>
+
+          <section>
+            <h3 className="mb-6 text-lg font-semibold text-[#f7efe5]">Stay Updated</h3>
+            <p className="mb-4 text-gray-400">
+              Subscribe to our newsletter for the latest updates and features.
+            </p>
+            <form className="space-y-3">
               <input
                 type="email"
                 placeholder="Your email address"
-                className={`w-full rounded-lg border px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#c6ac8f] ${theme.input}`}
+                className="w-full rounded-lg border border-[#5d4a34]/60 bg-[#2f281f] px-4 py-3 text-[#f7efe5] outline-none focus:ring-2 focus:ring-[#c6ac8f]"
                 required
               />
-              <button type="submit" className={`w-full rounded-lg px-4 py-3 font-medium transition-colors ${theme.button}`}>
+              <button
+                type="submit"
+                className="w-full rounded-lg bg-[#c6ac8f] px-4 py-3 font-medium text-black transition-colors hover:bg-[#d8c0a5]"
+              >
                 Subscribe
               </button>
             </form>
           </section>
         </div>
 
-        <div className={`mt-10 flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between ${theme.muted}`}>
-          <p>© {new Date().getFullYear()} Notivio. All rights reserved.</p>
+        <div className="flex flex-col items-center justify-between border-t border-[#5d4a34]/50 pt-6 text-sm text-[#bda78d] md:flex-row">
+          <p className="mb-4 md:mb-0">© {new Date().getFullYear()} Notivio. All rights reserved.</p>
           <p className="flex items-center">
-            Made with <Heart className="mx-1 h-4 w-4 text-[#8a7559]" /> for learners worldwide
+            Made with <Heart className="mx-1 h-4 w-4 text-[#c6ac8f]" /> for learners worldwide
           </p>
         </div>
       </div>

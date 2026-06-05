@@ -81,7 +81,7 @@ export default function ContactPage() {
   ];
 
   return (
-    <section className="bg-[#f5f0e8] px-4 py-16 sm:py-24">
+    <section id="contact" className="bg-[#f5f0e8] px-4 py-16 sm:py-24">
       <div className="mx-auto mb-10 max-w-4xl text-center text-4xl font-bold leading-tight sm:mb-18 sm:text-6xl">
         We’re Just One <span className="text-[#8a7559]">Message</span> Away
       </div>

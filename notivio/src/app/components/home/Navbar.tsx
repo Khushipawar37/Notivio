@@ -100,7 +100,7 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
       </Link>
 
       <Link
-        href="/contact"
+        href="/#contact"
         className="absolute right-4 top-5 z-30 hidden items-center gap-2 rounded-full bg-[#c6ac8f] px-4 py-2 text-black transition-colors hover:bg-[#b89d7e] sm:right-6 sm:top-8 sm:flex"
       >
         <MessageSquare size={18} />
@@ -134,7 +134,7 @@ export default function Navbar({ isAuthenticated = false }: NavbarProps) {
               />
             ))}
             <Link
-              href="/contact"
+              href="/#contact"
               onClick={() => setMobileMenuOpen(false)}
               className="flex h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-black transition-colors hover:bg-[#b89d7e]/50"
             >
